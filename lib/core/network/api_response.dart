@@ -19,8 +19,12 @@ class ApiResponse<T> {
     Map<String, dynamic> json,
     T Function(Object? json)? fromJsonT,
   ) {
+    // Backend trả về 'success' (boolean) thay vì 'code'
+    final success = (json['success'] as bool?) ?? true;
+    final int statusCode = (json['code'] as num?)?.toInt() ?? (success ? 200 : 400);
+
     return ApiResponse<T>(
-      code: (json['code'] as num?)?.toInt() ?? 200,
+      code: statusCode,
       message: (json['message'] as String?) ?? '',
       data: json['data'] != null && fromJsonT != null
           ? fromJsonT(json['data'])

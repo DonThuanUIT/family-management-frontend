@@ -13,15 +13,15 @@ class EnvConfig {
   /// hoặc Android Emulator (`10.0.2.2:8080`).
   static String get apiBaseUrl {
     if (_definedBaseUrl.isNotEmpty) {
-      return _definedBaseUrl;
+      return _definedBaseUrl.endsWith('/') ? _definedBaseUrl : '$_definedBaseUrl/';
     }
     if (kIsWeb) {
-      return 'http://localhost:8080/api/v1';
+      return 'http://localhost:8080/api/v1/';
     }
     if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:8080/api/v1';
+      return 'http://10.0.2.2:8080/api/v1/';
     }
-    return 'http://localhost:8080/api/v1';
+    return 'http://localhost:8080/api/v1/';
   }
 
   static const Duration connectTimeout = Duration(seconds: 15);
