@@ -174,6 +174,30 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          onPressed: () => context.push('/events'),
+                          icon: const Icon(Icons.celebration_outlined),
+                          label: const Text(
+                            'Quản Lý Sự Kiện & Tế Lễ',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF7A1518),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 14,
+                            ),
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
                         OutlinedButton.icon(
                           onPressed: () async {
                             await ref.read(authStateProvider.notifier).logout();
