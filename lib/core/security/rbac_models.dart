@@ -42,12 +42,22 @@ enum EventContextualRole {
 enum EventLifecycleStatus {
   draft('Draft', 'Bản nháp'),
   registrationOpen('RegistrationOpen', 'Đang mở đăng ký'),
+  registrationClosed('RegistrationClosed', 'Đã chốt danh sách'),
   ongoing('Ongoing', 'Đang diễn ra'),
-  closed('Closed', 'Đã khóa sổ');
+  ended('Ended', 'Đã bế mạc'),
+  closed('Closed', 'Đã khóa sổ (Closed)');
 
   final String code;
   final String displayName;
   const EventLifecycleStatus(this.code, this.displayName);
+
+  static EventLifecycleStatus fromCode(String? code) {
+    if (code == null) return EventLifecycleStatus.draft;
+    for (final status in EventLifecycleStatus.values) {
+      if (status.code.toLowerCase() == code.toLowerCase()) return status;
+    }
+    return EventLifecycleStatus.draft;
+  }
 }
 
 /// Chế độ Không gian làm việc (Portal Workspace) hỗ trợ cả Mobile App lẫn Web App
