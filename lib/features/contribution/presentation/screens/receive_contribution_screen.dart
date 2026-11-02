@@ -1,4 +1,4 @@
-﻿// ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -49,7 +49,8 @@ class _ReceiveContributionScreenState
     return Scaffold(
       backgroundColor: const Color(0xFFFAF9F6), // Warm Canvas
       appBar: AppBar(
-        titleSpacing: 16,
+        leading: IconButton(tooltip: 'Quay láº¡i Trang Chá»§', icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF8B1E1E), size: 18), onPressed: () { if (context.canPop()) { context.pop(); } else { context.go('/home'); } }),
+        titleSpacing: 8,
         title: Row(
           children: [
             Container(

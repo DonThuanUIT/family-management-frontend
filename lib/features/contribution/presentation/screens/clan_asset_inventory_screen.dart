@@ -160,7 +160,8 @@ class _ClanAssetInventoryScreenState
     return Scaffold(
       backgroundColor: const Color(0xFFFAF9F6),
       appBar: AppBar(
-        titleSpacing: 16,
+        leading: IconButton(tooltip: 'Quay láº¡i Trang Chá»§', icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF8B1E1E), size: 18), onPressed: () { if (context.canPop()) { context.pop(); } else { context.go('/home'); } }),
+        titleSpacing: 8,
         title: Row(
           children: [
             Container(

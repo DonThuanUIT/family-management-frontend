@@ -18,8 +18,8 @@ import '../../features/home/presentation/screens/home_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
-/// Provider xác định vị trí khởi đầu của ứng dụng (mặc định là Splash Screen '/').
-final initialLocationProvider = Provider<String>((ref) => '/contributions');
+/// Provider xác định vị trí khởi đầu của ứng dụng (mặc định là Login Screen '/login').
+final initialLocationProvider = Provider<String>((ref) => '/login');
 
 /// Cấu hình điều hướng tập trung với GoRouter hỗ trợ cả Web URL routing và Mobile Deep Linking.
 final appRouterProvider = Provider<GoRouter>((ref) {

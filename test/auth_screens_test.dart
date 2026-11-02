@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('LoginScreen renders all input fields and buttons',
+  testWidgets('LoginScreen renders all input fields, buttons, and demo account selector',
       (WidgetTester tester) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -18,8 +18,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Đăng Nhập Gia Tộc'), findsOneWidget);
+    expect(find.text('TÀI KHOẢN MẪU (DEMO)'), findsOneWidget);
+    expect(find.text('Trưởng Tộc'), findsOneWidget);
+    expect(find.text('Trưởng Chi 2'), findsOneWidget);
+    expect(find.text('Thành Viên'), findsOneWidget);
     expect(find.text('Số điện thoại hoặc Email *'), findsOneWidget);
     expect(find.text('Mật khẩu *'), findsOneWidget);
+    expect(find.text('0901234567'), findsWidgets);
+    expect(find.text('123456'), findsOneWidget);
     expect(find.text('Đăng Nhập Vào Dòng Họ'), findsOneWidget);
     expect(find.text('Quên mật khẩu?'), findsOneWidget);
     expect(find.byIcon(Icons.fingerprint), findsOneWidget);
