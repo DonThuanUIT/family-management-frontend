@@ -404,41 +404,30 @@ class ContributionPdfService {
               ),
               pw.SizedBox(height: 16),
 
-              // Chữ ký 3 bên
+              // Chữ ký 2 bên thực tế (Người dâng lễ - Người thu tiền / Thủ quỹ)
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
                 children: [
                   pw.Column(
                     children: [
                       pw.Text('NGƯỜI DÂNG LỄ',
-                          style: pw.TextStyle(font: boldFont, fontSize: 8.5)),
+                          style: pw.TextStyle(font: boldFont, fontSize: 9)),
                       pw.Text('(Ký & ghi rõ họ tên)',
-                          style: pw.TextStyle(font: italicFont, fontSize: 7)),
-                      pw.SizedBox(height: 24),
+                          style: pw.TextStyle(font: italicFont, fontSize: 7.5)),
+                      pw.SizedBox(height: 28),
                       pw.Text(payerName,
-                          style: pw.TextStyle(font: boldFont, fontSize: 8)),
+                          style: pw.TextStyle(font: boldFont, fontSize: 8.5)),
                     ],
                   ),
                   pw.Column(
                     children: [
-                      pw.Text('NGƯỜI TIẾP NHẬN',
+                      pw.Text('NGƯỜI THU TIỀN / THỦ QUỸ',
+                          style: pw.TextStyle(font: boldFont, fontSize: 9)),
+                      pw.Text('(Ký nhận & đóng mộc chứng thực)',
+                          style: pw.TextStyle(font: italicFont, fontSize: 7.5)),
+                      pw.SizedBox(height: 28),
+                      pw.Text('Ban Tiếp Nhận & Thủ Quỹ Dòng Họ',
                           style: pw.TextStyle(font: boldFont, fontSize: 8.5)),
-                      pw.Text('(Ký & xác nhận)',
-                          style: pw.TextStyle(font: italicFont, fontSize: 7)),
-                      pw.SizedBox(height: 24),
-                      pw.Text('Bàn Tiếp Nhận Sự Kiện',
-                          style: pw.TextStyle(font: boldFont, fontSize: 8)),
-                    ],
-                  ),
-                  pw.Column(
-                    children: [
-                      pw.Text('THỦ QUỸ SỰ KIỆN',
-                          style: pw.TextStyle(font: boldFont, fontSize: 8.5)),
-                      pw.Text('(Chứng thực & đóng mộc)',
-                          style: pw.TextStyle(font: italicFont, fontSize: 7)),
-                      pw.SizedBox(height: 24),
-                      pw.Text('Ban Tài Chính Dòng Họ',
-                          style: pw.TextStyle(font: boldFont, fontSize: 8)),
                     ],
                   ),
                 ],

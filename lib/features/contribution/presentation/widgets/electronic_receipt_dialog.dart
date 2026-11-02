@@ -378,21 +378,19 @@ class ElectronicReceiptDialog extends StatelessWidget {
 
                     const SizedBox(height: 24),
 
-                    // Con dấu & Chữ ký 3 bên
+                    // Con dấu & Chữ ký 2 bên thực tế (Người dâng lễ - Người thu tiền / Thủ quỹ)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildSigner('NGƯỜI DÂNG LỄ', '(Ký & ghi rõ họ tên)',
                             payerName),
-                        _buildReceiverSigner('NGƯỜI TIẾP NHẬN', '(Ký & xác nhận)',
-                            'Bàn Tiếp Nhận Sự Kiện'),
                         Transform.rotate(
-                          angle: -0.06,
+                          angle: -0.05,
                           child: _buildTreasurerStamp(
-                            'THỦ QUỸ SỰ KIỆN',
-                            '(Chứng thực & Đóng dấu)',
-                            'Ban Tài Chính Dòng Họ',
+                            'NGƯỜI THU TIỀN / THỦ QUỸ',
+                            '(Ký nhận & Đóng mộc chứng thực)',
+                            'Ban Tiếp Nhận & Thủ Quỹ Gia Tộc',
                           ),
                         ),
                       ],
@@ -574,63 +572,6 @@ class ElectronicReceiptDialog extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 38),
-        Text(
-          name,
-          style: const TextStyle(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF2B1810),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildReceiverSigner(String title, String subtitle, String name) {
-    return Column(
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 11.5,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF2B1810),
-          ),
-        ),
-        Text(
-          subtitle,
-          style: const TextStyle(
-            fontSize: 10.5,
-            fontStyle: FontStyle.italic,
-            color: Color(0xFF54433E),
-          ),
-        ),
-        const SizedBox(height: 10),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color: const Color(0xFF2E8B43).withAlpha(20),
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: const Color(0xFF2E8B43).withAlpha(70)),
-          ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.check_circle, size: 11, color: Color(0xFF2E8B43)),
-              SizedBox(width: 4),
-              Text(
-                'ĐÃ TIẾP NHẬN',
-                style: TextStyle(
-                  fontFamily: 'monospace',
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2E8B43),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
         Text(
           name,
           style: const TextStyle(
