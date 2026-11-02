@@ -14,6 +14,7 @@ import '../../features/auth/presentation/screens/welcome_screen.dart';
 import '../../features/contribution/presentation/screens/clan_asset_inventory_screen.dart';
 import '../../features/contribution/presentation/screens/receive_contribution_screen.dart';
 import '../../features/event/presentation/screens/event_list_screen.dart';
+import '../../features/genealogy/presentation/screens/edit_root_branch_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/shared/presentation/widgets/heritage_nav_bar.dart';
 
@@ -96,11 +97,23 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AuthScreen(),
       ),
 
-      // Màn hình Chính sau khi Đăng Nhập Thành Công (Placeholder để nhóm tự thiết kế các phân hệ)
+      // Màn hình Chính sau khi Đăng Nhập Thành Công (Cây Phả Hệ)
       GoRoute(
         path: '/home',
         name: 'home',
         builder: (context, state) => const HomeScreen(),
+      ),
+
+      // 9. Biểu mẫu chỉnh sửa thông tin Nhánh Gốc (Task #16)
+      GoRoute(
+        path: '/branches/root/edit',
+        name: 'edit-root-branch',
+        builder: (context, state) => const EditRootBranchScreen(),
+      ),
+      GoRoute(
+        path: '/genealogy/root/edit',
+        name: 'edit-root-branch-alt',
+        builder: (context, state) => const EditRootBranchScreen(),
       ),
 
       // 10. Phân hệ Quản lý & Khởi tạo Sự Kiện Dòng Họ (US-21 & US-22)
