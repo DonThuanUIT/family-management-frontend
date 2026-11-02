@@ -49,7 +49,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             duration: Duration(seconds: 2),
           ),
         );
-        context.go('/home');
+        context.go('/contributions');
       }
     } catch (_) {
       // Error is stored in authStateProvider and displayed on UI

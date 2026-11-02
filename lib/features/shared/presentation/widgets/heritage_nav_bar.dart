@@ -55,7 +55,7 @@ const List<HeritageNavItem> kHeritageNavItems = [
   HeritageNavItem(
     label: 'Cấp Mã Mời',
     shortLabel: 'Mã Mời',
-    route: '/invite-code',
+    route: '/clan-invites',
     icon: Icons.qr_code_2_outlined,
     activeIcon: Icons.qr_code_2,
   ),

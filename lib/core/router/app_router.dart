@@ -15,6 +15,7 @@ import '../../features/contribution/presentation/screens/clan_asset_inventory_sc
 import '../../features/contribution/presentation/screens/receive_contribution_screen.dart';
 import '../../features/event/presentation/screens/event_list_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/shared/presentation/widgets/heritage_nav_bar.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -121,6 +122,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/clan-assets',
         name: 'clan-assets',
         builder: (context, state) => const ClanAssetInventoryScreen(),
+      ),
+
+      // 13. Phân hệ Cấp Mã Mời Gia Tộc (Chưa triển khai - để trống theo yêu cầu)
+      GoRoute(
+        path: '/clan-invites',
+        name: 'clan-invites',
+        builder: (context, state) => const Scaffold(
+          backgroundColor: Color(0xFFFAF6F0),
+          appBar: HeritageNavBar(currentRoute: '/clan-invites'),
+          bottomNavigationBar: HeritageBottomNavBar(currentRoute: '/clan-invites'),
+          body: SizedBox.shrink(),
+        ),
       ),
     ],
   );

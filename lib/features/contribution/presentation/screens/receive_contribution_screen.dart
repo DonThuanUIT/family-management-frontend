@@ -51,7 +51,7 @@ class _ReceiveContributionScreenState
       appBar: const HeritageNavBar(currentRoute: '/contributions'),
       bottomNavigationBar: const HeritageBottomNavBar(currentRoute: '/contributions'),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+        padding: const EdgeInsets.fromLTRB(20, 22, 20, 80),
         child: Center(
           child: Container(
             constraints: const BoxConstraints(maxWidth: 1240),
@@ -79,17 +79,19 @@ class _ReceiveContributionScreenState
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddContributionModal(context),
-        backgroundColor: const Color(0xFF8B1E1E),
-        foregroundColor: Colors.white,
-        elevation: 4,
-        icon: const Icon(Icons.add_circle_outline, size: 22),
-        label: const Text(
-          'Lập Phiếu Đóng Góp Mới',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5),
-        ),
-      ),
+      floatingActionButton: isDesktop
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => _showAddContributionModal(context),
+              backgroundColor: const Color(0xFF8B1E1E),
+              foregroundColor: Colors.white,
+              elevation: 4,
+              icon: const Icon(Icons.add_circle_outline, size: 22),
+              label: const Text(
+                'Lập Phiếu Mới',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+            ),
     );
   }
 
@@ -540,26 +542,48 @@ class _ReceiveContributionScreenState
                   ),
                 ),
                 const SizedBox(width: 12),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Đang xuất sổ cái đối soát ra file PDF / Excel...'),
-                        backgroundColor: Color(0xFF2E8B43),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Đang xuất sổ cái đối soát ra file PDF / Excel...'),
+                            backgroundColor: Color(0xFF2E8B43),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.download, size: 16),
+                      label: const Text('Xuất Sổ Cái PDF'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF2E8B43),
+                        side: const BorderSide(color: Color(0xFF2E8B43)),
+                        minimumSize: const Size(0, 42),
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
-                    );
-                  },
-                  icon: const Icon(Icons.download, size: 16),
-                  label: const Text('Xuất Sổ Cái PDF'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF2E8B43),
-                    side: const BorderSide(color: Color(0xFF2E8B43)),
-                    minimumSize: const Size(0, 42),
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
                     ),
-                  ),
+                    ElevatedButton.icon(
+                      onPressed: () => _showAddContributionModal(context),
+                      icon: const Icon(Icons.add_circle_outline, size: 18),
+                      label: const Text('Lập Phiếu Đóng Góp Mới'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF8B1E1E),
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(0, 42),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        elevation: 1,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -804,10 +828,10 @@ class _ReceiveContributionScreenState
                 ),
               ),
               SizedBox(
-                width: 110,
+                width: 120,
                 child: Text(
                   'TÁC VỤ',
-                  textAlign: TextAlign.right,
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: 'monospace',
                     fontSize: 11,
@@ -1031,23 +1055,32 @@ class _ReceiveContributionScreenState
 
           // Tác vụ
           SizedBox(
-            width: 110,
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (_) => ElectronicReceiptDialog(cashReceipt: r),
-                  );
-                },
-                icon: const Icon(Icons.receipt_long, size: 15),
-                label: const Text('Xem Phiếu'),
-                style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF8B1E1E),
-                  textStyle: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.bold,
+            width: 120,
+            child: Center(
+              child: SizedBox(
+                width: 104,
+                height: 32,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (_) => ElectronicReceiptDialog(cashReceipt: r),
+                    );
+                  },
+                  icon: const Icon(Icons.receipt_long, size: 14),
+                  label: const Text('Xem Phiếu'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF8B1E1E),
+                    side: const BorderSide(color: Color(0xFFD4A0A0)),
+                    backgroundColor: const Color(0xFFFAF9F6),
+                    padding: EdgeInsets.zero,
+                    textStyle: const TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
                   ),
                 ),
               ),
@@ -1252,46 +1285,55 @@ class _ReceiveContributionScreenState
 
           // Tác vụ
           SizedBox(
-            width: 110,
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: isPending
-                  ? ElevatedButton(
-                      onPressed: () => _showProcessLifecycleDialog(r),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8B1E1E),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        minimumSize: const Size(80, 32),
-                        textStyle: const TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.bold,
+            width: 120,
+            child: Center(
+              child: SizedBox(
+                width: 104,
+                height: 32,
+                child: isPending
+                    ? ElevatedButton.icon(
+                        onPressed: () => _showProcessLifecycleDialog(r),
+                        icon: const Icon(Icons.tune, size: 14),
+                        label: const Text('Phân Loại'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF8B1E1E),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: EdgeInsets.zero,
+                          textStyle: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
+                      )
+                    : OutlinedButton.icon(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (_) =>
+                                ElectronicReceiptDialog(inKindReceipt: r),
+                          );
+                        },
+                        icon: const Icon(Icons.receipt_long, size: 14),
+                        label: const Text('Xem Phiếu'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF8B1E1E),
+                          side: const BorderSide(color: Color(0xFFD4A0A0)),
+                          backgroundColor: const Color(0xFFFAF9F6),
+                          padding: EdgeInsets.zero,
+                          textStyle: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
                         ),
                       ),
-                      child: const Text('Phân Loại'),
-                    )
-                  : TextButton.icon(
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (_) =>
-                              ElectronicReceiptDialog(inKindReceipt: r),
-                        );
-                      },
-                      icon: const Icon(Icons.receipt_long, size: 15),
-                      label: const Text('Xem Phiếu'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFF8B1E1E),
-                        textStyle: const TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+              ),
             ),
           ),
         ],
