@@ -1,7 +1,10 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/utils/vietnamese_money_converter.dart';
 import '../../data/models/contribution_models.dart';
+import '../../data/repositories/contribution_repository_impl.dart';
+import '../../domain/repositories/contribution_repository.dart';
 
 /// Trạng thái dữ liệu giao diện Tiếp nhận đóng góp và Quản lý tài sản.
 class ContributionUiState {
@@ -9,12 +12,18 @@ class ContributionUiState {
   final List<InKindElectronicReceiptDto> inKindReceipts;
   final List<ClanAssetDto> clanAssets;
   final String searchQuery;
+  final bool isLoading;
+  final bool isLiveConnected;
+  final String? errorMessage;
 
   const ContributionUiState({
     this.cashReceipts = const [],
     this.inKindReceipts = const [],
     this.clanAssets = const [],
     this.searchQuery = '',
+    this.isLoading = false,
+    this.isLiveConnected = false,
+    this.errorMessage,
   });
 
   ContributionUiState copyWith({
@@ -22,12 +31,18 @@ class ContributionUiState {
     List<InKindElectronicReceiptDto>? inKindReceipts,
     List<ClanAssetDto>? clanAssets,
     String? searchQuery,
+    bool? isLoading,
+    bool? isLiveConnected,
+    String? errorMessage,
   }) {
     return ContributionUiState(
       cashReceipts: cashReceipts ?? this.cashReceipts,
       inKindReceipts: inKindReceipts ?? this.inKindReceipts,
       clanAssets: clanAssets ?? this.clanAssets,
       searchQuery: searchQuery ?? this.searchQuery,
+      isLoading: isLoading ?? this.isLoading,
+      isLiveConnected: isLiveConnected ?? this.isLiveConnected,
+      errorMessage: errorMessage ?? this.errorMessage,
     );
   }
 
@@ -62,9 +77,36 @@ class ContributionUiState {
 }
 
 class ContributionUiNotifier extends Notifier<ContributionUiState> {
+  ContributionRepository get _repository =>
+      ref.read(contributionRepositoryProvider);
+
   @override
   ContributionUiState build() {
-    return _createInitialData();
+    final initial = _createInitialData();
+    // Tự động gọi API backend ở nền (nếu backend đang chạy và có mạng)
+    Future.microtask(() => fetchFromBackend());
+    return initial;
+  }
+
+  /// Tải dữ liệu thật từ Backend qua REST API
+  Future<void> fetchFromBackend({String eventId = 'EVT-GIO-TO-2026'}) async {
+    try {
+      final results = await Future.wait([
+        _repository.getInKindContributionsByEvent(eventId: eventId),
+        _repository.getClanAssets(),
+      ]);
+
+      final inKindList = results[0] as List<InKindElectronicReceiptDto>;
+      final assetList = results[1] as List<ClanAssetDto>;
+
+      state = state.copyWith(
+        inKindReceipts: inKindList.isNotEmpty ? inKindList : state.inKindReceipts,
+        clanAssets: assetList.isNotEmpty ? assetList : state.clanAssets,
+        isLiveConnected: inKindList.isNotEmpty || assetList.isNotEmpty,
+      );
+    } catch (e) {
+      debugPrint('Backend sync offline/fallback mode: $e');
+    }
   }
 
   ContributionUiState _createInitialData() {
@@ -276,18 +318,14 @@ class ContributionUiNotifier extends Notifier<ContributionUiState> {
   }
 
   // Ghi nhận tiền mặt / chuyển khoản
-  ElectronicReceiptDto recordCashContribution({
+  Future<ElectronicReceiptDto> recordCashContribution({
     required String eventId,
     required String payerMemberId,
     required String payerMemberName,
     required double amount,
     required PaymentMethod paymentMethod,
     List<MemberAllocationDto> allocations = const [],
-  }) {
-    final randId = 10000 + Random().nextInt(90000);
-    final receiptNumber = 'PT-${_formatDate(DateTime.now())}-$randId';
-    final contributionId = 'CTB-CASH-$randId';
-
+  }) async {
     final effectiveAllocations = allocations.isNotEmpty
         ? allocations
         : [
@@ -300,30 +338,51 @@ class ContributionUiNotifier extends Notifier<ContributionUiState> {
             ),
           ];
 
-    final receipt = ElectronicReceiptDto(
-      receiptNumber: receiptNumber,
-      contributionId: contributionId,
-      eventId: eventId,
-      eventName: 'Đại Lễ Giỗ Tổ Thủy Tộc Xuân Bính Ngọ 2026',
-      payerMemberId: payerMemberId,
-      payerMemberName: payerMemberName,
-      receiverAccountId: 'ACC-TREASURER-01',
-      amount: amount,
-      amountInWords: _numberToVietnameseWords(amount),
-      paymentMethod: paymentMethod,
-      contributionDate: DateTime.now(),
-      allocations: effectiveAllocations,
-    );
+    try {
+      final remoteReceipt = await _repository.recordCashContribution(
+        eventId: eventId,
+        payerMemberId: payerMemberId,
+        amount: amount,
+        paymentMethod: paymentMethod,
+        allocations: effectiveAllocations,
+      );
+      state = state.copyWith(
+        cashReceipts: [remoteReceipt, ...state.cashReceipts],
+        isLiveConnected: true,
+      );
+      return remoteReceipt;
+    } catch (e) {
+      debugPrint('API call error, using local fallback receipt: $e');
 
-    state = state.copyWith(
-      cashReceipts: [receipt, ...state.cashReceipts],
-    );
+      final randId = 10000 + Random().nextInt(90000);
+      final receiptNumber = 'PT-${_formatDate(DateTime.now())}-$randId';
+      final contributionId = 'CTB-CASH-$randId';
 
-    return receipt;
+      final receipt = ElectronicReceiptDto(
+        receiptNumber: receiptNumber,
+        contributionId: contributionId,
+        eventId: eventId,
+        eventName: 'Đại Lễ Giỗ Tổ Thủy Tộc Xuân Bính Ngọ 2026',
+        payerMemberId: payerMemberId,
+        payerMemberName: payerMemberName,
+        receiverAccountId: 'ACC-TREASURER-01',
+        amount: amount,
+        amountInWords: _numberToVietnameseWords(amount),
+        paymentMethod: paymentMethod,
+        contributionDate: DateTime.now(),
+        allocations: effectiveAllocations,
+      );
+
+      state = state.copyWith(
+        cashReceipts: [receipt, ...state.cashReceipts],
+      );
+
+      return receipt;
+    }
   }
 
   // Ghi nhận hiện vật cúng tiến
-  InKindElectronicReceiptDto recordInKindContribution({
+  Future<InKindElectronicReceiptDto> recordInKindContribution({
     required String eventId,
     required String payerMemberId,
     required String payerMemberName,
@@ -333,11 +392,7 @@ class ContributionUiNotifier extends Notifier<ContributionUiState> {
     required ConversionMethod conversionMethod,
     required double convertedMonetaryValue,
     List<MemberAllocationDto> allocations = const [],
-  }) {
-    final randId = 10000 + Random().nextInt(90000);
-    final receiptNumber = 'PT-${_formatDate(DateTime.now())}-$randId';
-    final contributionId = 'CTB-INKIND-$randId';
-
+  }) async {
     final effectiveAllocations = allocations.isNotEmpty
         ? allocations
         : [
@@ -350,39 +405,79 @@ class ContributionUiNotifier extends Notifier<ContributionUiState> {
             ),
           ];
 
-    final receipt = InKindElectronicReceiptDto(
-      receiptNumber: receiptNumber,
-      contributionId: contributionId,
-      eventId: eventId,
-      eventName: 'Đại Lễ Giỗ Tổ Thủy Tộc Xuân Bính Ngọ 2026',
-      payerMemberId: payerMemberId,
-      payerMemberName: payerMemberName,
-      receiverAccountId: 'ACC-TREASURER-01',
-      itemName: itemName,
-      quantity: quantity,
-      unit: unit,
-      conversionMethod: conversionMethod,
-      convertedMonetaryValue: convertedMonetaryValue,
-      convertedMonetaryValueInWords:
-          _numberToVietnameseWords(convertedMonetaryValue),
-      processingStatus: InKindProcessingStatus.Pending,
-      contributionDate: DateTime.now(),
-      allocations: effectiveAllocations,
-    );
+    try {
+      final remoteReceipt = await _repository.recordInKindContribution(
+        eventId: eventId,
+        payerMemberId: payerMemberId,
+        itemName: itemName,
+        quantity: quantity,
+        unit: unit,
+        conversionMethod: conversionMethod,
+        convertedMonetaryValue: convertedMonetaryValue,
+        allocations: effectiveAllocations,
+      );
+      state = state.copyWith(
+        inKindReceipts: [remoteReceipt, ...state.inKindReceipts],
+        isLiveConnected: true,
+      );
+      return remoteReceipt;
+    } catch (e) {
+      debugPrint('API call error, using local fallback in-kind receipt: $e');
 
-    state = state.copyWith(
-      inKindReceipts: [receipt, ...state.inKindReceipts],
-    );
+      final randId = 10000 + Random().nextInt(90000);
+      final receiptNumber = 'PT-${_formatDate(DateTime.now())}-$randId';
+      final contributionId = 'CTB-INKIND-$randId';
 
-    return receipt;
+      final receipt = InKindElectronicReceiptDto(
+        receiptNumber: receiptNumber,
+        contributionId: contributionId,
+        eventId: eventId,
+        eventName: 'Đại Lễ Giỗ Tổ Thủy Tộc Xuân Bính Ngọ 2026',
+        payerMemberId: payerMemberId,
+        payerMemberName: payerMemberName,
+        receiverAccountId: 'ACC-TREASURER-01',
+        itemName: itemName,
+        quantity: quantity,
+        unit: unit,
+        conversionMethod: conversionMethod,
+        convertedMonetaryValue: convertedMonetaryValue,
+        convertedMonetaryValueInWords:
+            _numberToVietnameseWords(convertedMonetaryValue),
+        processingStatus: InKindProcessingStatus.Pending,
+        contributionDate: DateTime.now(),
+        allocations: effectiveAllocations,
+      );
+
+      state = state.copyWith(
+        inKindReceipts: [receipt, ...state.inKindReceipts],
+      );
+
+      return receipt;
+    }
   }
 
   // Phân loại vòng đời hiện vật sau sự kiện (Task #73 / #74)
-  void processInKindLifecycle({
+  Future<void> processInKindLifecycle({
     required String contributionId,
     required InKindProcessingStatus targetStatus,
     String? storageLocation,
-  }) {
+  }) async {
+    try {
+      await _repository.processInKindLifecycle(
+        contributionId: contributionId,
+        targetStatus: targetStatus,
+        storageLocation: storageLocation,
+      );
+      if (targetStatus == InKindProcessingStatus.AddedToCommonAssets) {
+        final assets = await _repository.getClanAssets();
+        if (assets.isNotEmpty) {
+          state = state.copyWith(clanAssets: assets);
+        }
+      }
+    } catch (e) {
+      debugPrint('API lifecycle update error: $e');
+    }
+
     final updatedList = <InKindElectronicReceiptDto>[];
     InKindElectronicReceiptDto? updatedItem;
 

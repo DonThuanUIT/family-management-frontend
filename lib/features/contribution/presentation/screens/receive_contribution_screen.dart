@@ -2112,7 +2112,7 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
           const SizedBox(height: 24),
 
           ElevatedButton.icon(
-            onPressed: () {
+            onPressed: () async {
               final amount =
                   double.tryParse(_cashAmountController.text.trim()) ?? 0;
               if (amount <= 0) {
@@ -2125,7 +2125,7 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
                 return;
               }
 
-              final newReceipt =
+              final newReceipt = await
                   ref.read(contributionUiProvider.notifier).recordCashContribution(
                         eventId: 'EVT-GIO-TO-2026',
                         payerMemberId: 'MEM-TEMP-${1000 + Random().nextInt(9000)}',
@@ -2134,6 +2134,7 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
                         paymentMethod: _paymentMethod,
                       );
 
+              if (!mounted) return;
               Navigator.of(context).pop();
 
               showDialog(
@@ -2288,12 +2289,12 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
           const SizedBox(height: 24),
 
           ElevatedButton.icon(
-            onPressed: () {
+            onPressed: () async {
               final val =
                   double.tryParse(_convertedValueController.text.trim()) ?? 0;
               final qty = double.tryParse(_quantityController.text.trim()) ?? 1;
 
-              final newReceipt = ref
+              final newReceipt = await ref
                   .read(contributionUiProvider.notifier)
                   .recordInKindContribution(
                     eventId: 'EVT-GIO-TO-2026',
@@ -2306,6 +2307,7 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
                     convertedMonetaryValue: val,
                   );
 
+              if (!mounted) return;
               Navigator.of(context).pop();
 
               showDialog(
