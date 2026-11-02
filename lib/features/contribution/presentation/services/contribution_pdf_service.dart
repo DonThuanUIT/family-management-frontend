@@ -412,6 +412,8 @@ class ContributionPdfService {
                     children: [
                       pw.Text('NGƯỜI DÂNG LỄ',
                           style: pw.TextStyle(font: boldFont, fontSize: 8.5)),
+                      pw.Text('(Ký & ghi rõ họ tên)',
+                          style: pw.TextStyle(font: italicFont, fontSize: 7)),
                       pw.SizedBox(height: 24),
                       pw.Text(payerName,
                           style: pw.TextStyle(font: boldFont, fontSize: 8)),
@@ -419,19 +421,23 @@ class ContributionPdfService {
                   ),
                   pw.Column(
                     children: [
-                      pw.Text('THỦ QUỸ SỰ KIỆN',
+                      pw.Text('NGƯỜI TIẾP NHẬN',
                           style: pw.TextStyle(font: boldFont, fontSize: 8.5)),
+                      pw.Text('(Ký & xác nhận)',
+                          style: pw.TextStyle(font: italicFont, fontSize: 7)),
                       pw.SizedBox(height: 24),
-                      pw.Text('Ban Tài Chính',
+                      pw.Text('Bàn Tiếp Nhận Sự Kiện',
                           style: pw.TextStyle(font: boldFont, fontSize: 8)),
                     ],
                   ),
                   pw.Column(
                     children: [
-                      pw.Text('TỘC TRƯỞNG DUYỆT',
+                      pw.Text('THỦ QUỸ SỰ KIỆN',
                           style: pw.TextStyle(font: boldFont, fontSize: 8.5)),
+                      pw.Text('(Chứng thực & đóng mộc)',
+                          style: pw.TextStyle(font: italicFont, fontSize: 7)),
                       pw.SizedBox(height: 24),
-                      pw.Text('Lê Hữu Đại',
+                      pw.Text('Ban Tài Chính Dòng Họ',
                           style: pw.TextStyle(font: boldFont, fontSize: 8)),
                     ],
                   ),
@@ -440,7 +446,7 @@ class ContributionPdfService {
               pw.Spacer(),
               pw.Center(
                 child: pw.Text(
-                  'Chứng từ điện tử đã niêm phong sổ cái & đối soát 1:1',
+                  'Chứng từ điện tử hợp lệ đã ghi nhận vào Sổ cái gia tộc & đối soát 1:1',
                   style: pw.TextStyle(
                       font: italicFont, fontSize: 7.5, color: PdfColors.grey600),
                 ),

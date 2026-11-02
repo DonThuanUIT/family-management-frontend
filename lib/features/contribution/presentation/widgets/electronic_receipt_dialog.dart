@@ -346,28 +346,55 @@ class ElectronicReceiptDialog extends StatelessWidget {
                       ),
                     ],
 
+                    if (isAddedToClanAssets) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFBF4EB),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFD4A017)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.account_balance,
+                                size: 16, color: Color(0xFF8B1E1E)),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Hiện vật đã được Hội đồng gia tộc thẩm định & nhập Kho Bảo Vật Từ Đường (Đã ghi danh Sổ Vàng Gia Tộc).',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF8B1E1E),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
                     const SizedBox(height: 24),
 
-                    // Con dấu & Chữ ký
+                    // Con dấu & Chữ ký 3 bên
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildSigner('NGƯỜI DÂNG LỄ', '(Ký & ghi rõ họ tên)',
                             payerName),
-                        _buildTreasurerSigner('THỦ QUỸ SỰ KIỆN', '(Ký & xác nhận)',
-                            'Ban Tài Chính'),
-                        if (isAddedToClanAssets)
-                          Transform.rotate(
-                            angle: -0.1, // Con dấu mộc đỏ khi đã được Tộc trưởng phê duyệt & nhập kho
-                            child: _buildSealStamp(),
-                          )
-                        else
-                          _buildPendingClanHeadSigner(
-                            'TỘC TRƯỞNG CHỨNG KIẾN',
-                            '(Ký khi đối soát tổng kết)',
-                            'Lê Hữu Đại (Trưởng tộc)',
+                        _buildReceiverSigner('NGƯỜI TIẾP NHẬN', '(Ký & xác nhận)',
+                            'Bàn Tiếp Nhận Sự Kiện'),
+                        Transform.rotate(
+                          angle: -0.06,
+                          child: _buildTreasurerStamp(
+                            'THỦ QUỸ SỰ KIỆN',
+                            '(Chứng thực & Đóng dấu)',
+                            'Ban Tài Chính Dòng Họ',
                           ),
+                        ),
                       ],
                     ),
 
@@ -388,7 +415,7 @@ class ElectronicReceiptDialog extends StatelessWidget {
                           SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Chứng từ điện tử đã niêm phong sổ cái & đối soát 1:1 sao kê dòng họ',
+                              'Chứng từ điện tử hợp lệ được cấp bởi Ban Tài Chính Sự Kiện 2026. Đã ghi nhận vào Sổ cái gia tộc & đối soát 1:1',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -559,7 +586,7 @@ class ElectronicReceiptDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildTreasurerSigner(String title, String subtitle, String name) {
+  Widget _buildReceiverSigner(String title, String subtitle, String name) {
     return Column(
       children: [
         Text(
@@ -616,83 +643,32 @@ class ElectronicReceiptDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildPendingClanHeadSigner(
-      String title, String subtitle, String name) {
-    return Column(
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 11.5,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF2B1810),
-          ),
-        ),
-        Text(
-          subtitle,
-          style: const TextStyle(
-            fontSize: 10.5,
-            fontStyle: FontStyle.italic,
-            color: Color(0xFF54433E),
-          ),
-        ),
-        const SizedBox(height: 10),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF1F5F9),
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: const Color(0xFFCBD5E1)),
-          ),
-          child: const Text(
-            'CHỜ ĐỐI SOÁT TỔNG KẾT',
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 9.5,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF64748B),
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          name,
-          style: const TextStyle(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF78655C),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSealStamp() {
+  Widget _buildTreasurerStamp(String title, String subtitle, String name) {
     return Stack(
       alignment: Alignment.center,
       children: [
         Column(
-          children: const [
+          children: [
             Text(
-              'TỘC TRƯỞNG DUYỆT',
-              style: TextStyle(
+              title,
+              style: const TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF2B1810),
               ),
             ),
             Text(
-              '(Đóng mộc gia phả)',
-              style: TextStyle(
+              subtitle,
+              style: const TextStyle(
                 fontSize: 10.5,
                 fontStyle: FontStyle.italic,
                 color: Color(0xFF54433E),
               ),
             ),
-            SizedBox(height: 38),
+            const SizedBox(height: 38),
             Text(
-              'Lê Hữu Đại (Trưởng tộc)',
-              style: TextStyle(
+              name,
+              style: const TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF2B1810),
@@ -703,24 +679,24 @@ class ElectronicReceiptDialog extends StatelessWidget {
         Positioned(
           top: 14,
           child: Opacity(
-            opacity: 0.88,
+            opacity: 0.90,
             child: Container(
-              width: 70,
-              height: 70,
+              width: 72,
+              height: 72,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: const Color(0xFFC64545), width: 2.2),
               ),
-              child: Center(
+              child: const Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
+                  children: [
                     Text(
-                      'ĐẠI GIA TỘC',
+                      'BAN TÀI CHÍNH',
                       style: TextStyle(
                         color: Color(0xFFC64545),
                         fontWeight: FontWeight.bold,
-                        fontSize: 7.5,
+                        fontSize: 7.2,
                       ),
                     ),
                     Text(
@@ -728,7 +704,7 @@ class ElectronicReceiptDialog extends StatelessWidget {
                       style: TextStyle(
                         color: Color(0xFFC64545),
                         fontWeight: FontWeight.w900,
-                        fontSize: 6.5,
+                        fontSize: 6.2,
                       ),
                     ),
                     Text(
@@ -736,7 +712,7 @@ class ElectronicReceiptDialog extends StatelessWidget {
                       style: TextStyle(
                         color: Color(0xFFC64545),
                         fontWeight: FontWeight.bold,
-                        fontSize: 7.5,
+                        fontSize: 7.2,
                       ),
                     ),
                   ],
