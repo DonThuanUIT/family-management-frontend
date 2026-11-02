@@ -11,13 +11,15 @@ import '../../features/auth/presentation/screens/register_creator_screen.dart';
 import '../../features/auth/presentation/screens/register_member_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/auth/presentation/screens/welcome_screen.dart';
+import '../../features/contribution/presentation/screens/clan_asset_inventory_screen.dart';
+import '../../features/contribution/presentation/screens/receive_contribution_screen.dart';
 import '../../features/event/presentation/screens/event_list_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 /// Provider xác định vị trí khởi đầu của ứng dụng (mặc định là Splash Screen '/').
-final initialLocationProvider = Provider<String>((ref) => '/');
+final initialLocationProvider = Provider<String>((ref) => '/contributions');
 
 /// Cấu hình điều hướng tập trung với GoRouter hỗ trợ cả Web URL routing và Mobile Deep Linking.
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -105,6 +107,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/events',
         name: 'events',
         builder: (context, state) => const EventListScreen(),
+      ),
+
+      // 11. Bàn Tiếp Nhận Đóng Góp & Sổ Cái Thu Chi (Task #71)
+      GoRoute(
+        path: '/contributions',
+        name: 'contributions',
+        builder: (context, state) => const ReceiveContributionScreen(),
+      ),
+
+      // 12. Kho Hiện Vật & Bảo Vật Từ Đường (Task #74)
+      GoRoute(
+        path: '/clan-assets',
+        name: 'clan-assets',
+        builder: (context, state) => const ClanAssetInventoryScreen(),
       ),
     ],
   );

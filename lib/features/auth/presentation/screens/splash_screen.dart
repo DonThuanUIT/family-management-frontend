@@ -35,15 +35,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     await Future.delayed(const Duration(milliseconds: 1500));
     if (!mounted) return;
 
-    final isAuthenticated =
-        await ref.read(authStateProvider.notifier).checkAuthStatus();
+    await ref.read(authStateProvider.notifier).checkAuthStatus();
     if (!mounted) return;
 
-    if (isAuthenticated) {
-      context.go('/home');
-    } else {
-      context.go('/welcome');
-    }
+    // Thiết lập đi thẳng tới màn hình bàn tiếp nhận đóng góp & sổ cái đã thiết kế (Task #71 & #74) không cần đăng nhập
+    context.go('/contributions');
   }
 
   @override

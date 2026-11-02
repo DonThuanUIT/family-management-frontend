@@ -121,3 +121,5 @@ app.*.symbols
 # UI mockups & sample design previews (Stitch & Figma)
 docs/stitch/
 docs/figma_previews/
+
+agent-skills/
