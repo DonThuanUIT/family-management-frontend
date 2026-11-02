@@ -149,55 +149,6 @@ class AuthNotifier extends Notifier<AuthState> {
         user: response,
       );
     } catch (e) {
-      // Chế độ Offline / Fallback Demo dự phòng khi Backend chưa khởi chạy hoặc mất mạng
-      final trimmedIdentifier = loginIdentifier.trim();
-      final trimmedPassword = password.trim();
-
-      final matchedDemo = kDemoAccounts.cast<DemoAccount?>().firstWhere(
-            (acc) =>
-                acc != null &&
-                (acc.identifier == trimmedIdentifier ||
-                    '${acc.identifier}@gtvn.vn' == trimmedIdentifier) &&
-                acc.password == trimmedPassword,
-            orElse: () => null,
-          );
-
-      if (matchedDemo != null) {
-        final demoResponse = AuthTokenResponseDto(
-          accessToken: 'demo_jwt_token_${matchedDemo.accountId}',
-          refreshToken: 'demo_refresh_token',
-          tokenType: 'Bearer',
-          expiresIn: 86400,
-          accountId: matchedDemo.accountId,
-          phoneNumber: matchedDemo.identifier,
-          fullName: matchedDemo.fullName,
-          roles: matchedDemo.roles,
-          clanId: matchedDemo.clanId,
-          memberId: matchedDemo.memberId,
-        );
-
-        final storage = ref.read(secureTokenStorageProvider);
-        await storage.saveAccessToken(demoResponse.accessToken);
-        if (demoResponse.clanId != null) {
-          await storage.saveActiveClanId(demoResponse.clanId!);
-        }
-
-        final roles = demoResponse.roles.map(SystemRole.fromCode).toSet();
-        ref.read(dualRbacSessionProvider.notifier).state = DualRbacSession(
-          accountId: demoResponse.accountId,
-          memberId: demoResponse.memberId ?? '',
-          fullName: demoResponse.fullName,
-          branchName: 'Chi nhánh gốc (Đại Tôn)',
-          globalRoles: roles.isNotEmpty ? roles : {SystemRole.roleMember},
-        );
-
-        state = state.copyWith(
-          status: AuthStatus.authenticated,
-          user: demoResponse,
-        );
-        return;
-      }
-
       state = state.copyWith(
         status: AuthStatus.error,
         errorMessage: e.toString().replaceFirst('Exception: ', ''),

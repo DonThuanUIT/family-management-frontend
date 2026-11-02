@@ -55,7 +55,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         context.go('/home');
       }
     } catch (_) {
-      // Error is stored in authStateProvider
+      // Error is stored in authStateProvider and displayed on UI
     }
   }
 
@@ -139,7 +139,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Demo Accounts Quick Selector
+                    // Demo Accounts Quick Selector (Prefills real backend-seeded accounts)
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
@@ -282,7 +282,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: 18),
 
-                    // Error Message Banner
+                    // Error Message Banner (Shows real backend error message)
                     if (authState.errorMessage != null) ...[
                       Container(
                         padding: const EdgeInsets.all(12),
@@ -424,7 +424,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Submit Button
+                    // Submit Button (Calls online backend REST API)
                     ElevatedButton(
                       onPressed: authState.isLoading ? null : _submitLogin,
                       style: ElevatedButton.styleFrom(
@@ -453,27 +453,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                             ),
                     ),
-                    const SizedBox(height: 12),
-
-                    // Direct shortcut link for rapid testing of Task #71 & Task #74
-                    Center(
-                      child: TextButton.icon(
-                        onPressed: () => context.push('/contributions'),
-                        icon: const Icon(Icons.arrow_forward,
-                            size: 16, color: Color(0xFF8B1E1E)),
-                        label: const Text(
-                          'Mở trực tiếp Bàn Tiếp Nhận (#71) & Kho Bảo Vật (#74)',
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF8B1E1E),
-                            decoration: TextDecoration.underline,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
 
                     // Biometrics Mockup Option
                     OutlinedButton.icon(
