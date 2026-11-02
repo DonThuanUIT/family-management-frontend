@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../data/models/contribution_models.dart';
+import '../../../../core/utils/vietnamese_money_converter.dart';
 import '../providers/contribution_ui_provider.dart';
 import '../widgets/electronic_receipt_dialog.dart';
 import 'package:familyfund_app/features/shared/presentation/widgets/heritage_nav_bar.dart';
@@ -45,10 +46,21 @@ class _ClanAssetInventoryScreenState
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(_handleTabChange);
+  }
+
+  void _handleTabChange() {
+    if (!_tabController.indexIsChanging) {
+      setState(() {
+        _selectedCategory = 'all';
+        _selectedProcessedFilter = 'all';
+      });
+    }
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
     _searchController.dispose();
     super.dispose();
@@ -109,6 +121,32 @@ class _ClanAssetInventoryScreenState
     return true;
   }
 
+  int _getCategoryCount(String catKey, ContributionUiState uiState) {
+    if (_tabController.index == 0) {
+      return catKey == 'all'
+          ? uiState.clanAssets.length
+          : uiState.clanAssets
+              .where((a) => _matchesItemCategory(a.assetName, catKey))
+              .length;
+    } else if (_tabController.index == 1) {
+      final pendings = uiState.inKindReceipts
+          .where((i) => i.processingStatus == InKindProcessingStatus.Pending);
+      return catKey == 'all'
+          ? pendings.length
+          : pendings
+              .where((i) => _matchesItemCategory(i.itemName, catKey))
+              .length;
+    } else {
+      final processeds = uiState.inKindReceipts
+          .where((i) => i.processingStatus != InKindProcessingStatus.Pending);
+      return catKey == 'all'
+          ? processeds.length
+          : processeds
+              .where((i) => _matchesItemCategory(i.itemName, catKey))
+              .length;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final uiState = ref.watch(contributionUiProvider);
@@ -134,9 +172,19 @@ class _ClanAssetInventoryScreenState
           payer.contains(q);
     }).toList();
 
-    final filteredProcessed = uiState.inKindReceipts.where((item) {
+    // Danh sách lịch sử gốc khớp với phân loại và tìm kiếm
+    final processedBase = uiState.inKindReceipts.where((item) {
       if (item.processingStatus == InKindProcessingStatus.Pending) return false;
       if (!_matchesItemCategory(item.itemName, _selectedCategory)) return false;
+      if (uiState.searchQuery.isEmpty) return true;
+      final q = uiState.searchQuery.toLowerCase();
+      final payer = (item.payerMemberName ?? item.payerMemberId).toLowerCase();
+      return item.itemName.toLowerCase().contains(q) ||
+          item.receiptNumber.toLowerCase().contains(q) ||
+          payer.contains(q);
+    }).toList();
+
+    final filteredProcessed = processedBase.where((item) {
       if (_selectedProcessedFilter == 'consumed' &&
           item.processingStatus != InKindProcessingStatus.Consumed) {
         return false;
@@ -149,12 +197,7 @@ class _ClanAssetInventoryScreenState
           item.processingStatus != InKindProcessingStatus.AddedToCommonAssets) {
         return false;
       }
-      if (uiState.searchQuery.isEmpty) return true;
-      final q = uiState.searchQuery.toLowerCase();
-      final payer = (item.payerMemberName ?? item.payerMemberId).toLowerCase();
-      return item.itemName.toLowerCase().contains(q) ||
-          item.receiptNumber.toLowerCase().contains(q) ||
-          payer.contains(q);
+      return true;
     }).toList();
 
     return Scaffold(
@@ -171,49 +214,74 @@ class _ClanAssetInventoryScreenState
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(7),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF8B1E1E), Color(0xFF6B1414)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFD4A017), width: 1.2),
-                      ),
-                      child: const Icon(
-                        Icons.temple_buddhist,
-                        color: Color(0xFFD4A017),
-                        size: 19,
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF8B1E1E), Color(0xFF6B1414)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFD4A017), width: 1.2),
+                            ),
+                            child: const Icon(
+                              Icons.temple_buddhist,
+                              color: Color(0xFFD4A017),
+                              size: 19,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Kho Bảo Vật & Di Sản Dòng Họ',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                    color: Color(0xFF2B1810),
+                                    letterSpacing: -0.2,
+                                  ),
+                                ),
+                                Text(
+                                  'TỪ ĐƯỜNG TỔ • ĐỊNH DANH MÃ QR',
+                                  style: TextStyle(
+                                    fontFamily: 'monospace',
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.6,
+                                    color: Color(0xFF54433E),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Kho Bảo Vật & Di Sản Dòng Họ',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                            color: Color(0xFF2B1810),
-                            letterSpacing: -0.2,
-                          ),
+                    const SizedBox(width: 12),
+                    ElevatedButton.icon(
+                      onPressed: () => _showAddAssetModal(context),
+                      icon: const Icon(Icons.add_circle_outline, size: 16),
+                      label: const Text('Đăng Ký Bảo Vật Mới'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF8B1E1E),
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(0, 40),
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        elevation: 1,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        Text(
-                          'TỪ ĐƯỜNG TỔ • ĐỊNH DANH MÃ QR',
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.6,
-                            color: Color(0xFF54433E),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
@@ -275,10 +343,11 @@ class _ClanAssetInventoryScreenState
                   child: Row(
                     children: _categories.entries.map((entry) {
                       final isSelected = _selectedCategory == entry.key;
+                      final count = _getCategoryCount(entry.key, uiState);
                       return Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: FilterChip(
-                          label: Text(entry.value),
+                          label: Text('${entry.value} ($count)'),
                           selected: isSelected,
                           onSelected: (selected) {
                             setState(() {
@@ -312,6 +381,62 @@ class _ClanAssetInventoryScreenState
                     }).toList(),
                   ),
                 ),
+
+                // Thanh hiển thị bộ lọc đang kích hoạt kèm nút xóa nhanh 1-chạm
+                if (_selectedCategory != 'all' || uiState.searchQuery.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFBF4E8),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFE2AA36).withAlpha(120)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.filter_alt, size: 15, color: Color(0xFF8B1E1E)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Đang lọc theo: ${_categories[_selectedCategory]}${uiState.searchQuery.isNotEmpty ? ' • Từ khóa: "${uiState.searchQuery}"' : ''}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF8B1E1E),
+                            ),
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () {
+                            _searchController.clear();
+                            ref.read(contributionUiProvider.notifier).setSearchQuery('');
+                            setState(() {
+                              _selectedCategory = 'all';
+                            });
+                          },
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.close, size: 14, color: Color(0xFF8B1E1E)),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Bỏ lọc',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF8B1E1E),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -346,7 +471,7 @@ class _ClanAssetInventoryScreenState
                 Tab(
                   icon: const Icon(Icons.history_edu, size: 20),
                   text:
-                      'Nhật Ký Đã Tiêu Hao & Hoàn Trả (${filteredProcessed.length})',
+                      'Nhật Ký Đã Tiêu Hao & Hoàn Trả (${processedBase.length})',
                 ),
               ],
             ),
@@ -359,7 +484,12 @@ class _ClanAssetInventoryScreenState
               children: [
                 _buildAssetList(filteredAssets, isWide),
                 _buildPendingList(filteredPending),
-                _buildProcessedList(filteredProcessed, uiState, isWide),
+                _buildProcessedList(
+                  filteredProcessed,
+                  processedBase,
+                  uiState,
+                  isWide,
+                ),
               ],
             ),
           ),
@@ -795,8 +925,62 @@ class _ClanAssetInventoryScreenState
 
   // Danh sách hiện vật sự kiện chờ phân loại vòng đời
   Widget _buildPendingList(List<InKindElectronicReceiptDto> pendingItems) {
-
     if (pendingItems.isEmpty) {
+      final isFiltered = _selectedCategory != 'all' ||
+          ref.read(contributionUiProvider).searchQuery.isNotEmpty;
+      if (isFiltered) {
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5F0E8),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFE6DFD8)),
+                  ),
+                  child: const Icon(Icons.filter_list_off,
+                      size: 44, color: Color(0xFF78655C)),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Không tìm thấy hiện vật chờ xử lý phù hợp bộ lọc',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2B1810),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Không có hiện vật nào thuộc phân loại "${_categories[_selectedCategory]}" đang chờ phân loại.',
+                  style: const TextStyle(color: Color(0xFF4A3B32), fontSize: 13),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    _searchController.clear();
+                    ref.read(contributionUiProvider.notifier).setSearchQuery('');
+                    setState(() => _selectedCategory = 'all');
+                  },
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: const Text('Đặt Lại Bộ Lọc'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF8B1E1E),
+                    side: const BorderSide(color: Color(0xFF8B1E1E)),
+                    minimumSize: const Size(0, 40),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
@@ -1001,8 +1185,12 @@ class _ClanAssetInventoryScreenState
   }
 
   // Danh sách hiện vật đã xử lý vòng đời (Đã tiêu hao cỗ bàn / Hoàn trả / Nhập kho)
-  Widget _buildProcessedList(List<InKindElectronicReceiptDto> processedItems, ContributionUiState state, bool isWide) {
-
+  Widget _buildProcessedList(
+    List<InKindElectronicReceiptDto> processedItems,
+    List<InKindElectronicReceiptDto> processedBase,
+    ContributionUiState state,
+    bool isWide,
+  ) {
     return Column(
       children: [
         // Heritage Audit Notice & Sub-filter Chips
@@ -1061,27 +1249,35 @@ class _ClanAssetInventoryScreenState
                     _buildProcessedFilterChip(
                       'Tất cả lịch sử',
                       'all',
-                      state.processedInKindCount,
+                      processedBase.length,
                     ),
                     const SizedBox(width: 8),
                     _buildProcessedFilterChip(
                       'Đã tiêu hao cỗ bàn',
                       'consumed',
-                      state.consumedInKindCount,
+                      processedBase
+                          .where((i) =>
+                              i.processingStatus ==
+                              InKindProcessingStatus.Consumed)
+                          .length,
                       color: const Color(0xFF475569),
                     ),
                     const SizedBox(width: 8),
                     _buildProcessedFilterChip(
                       'Đã hoàn trả gia chủ',
                       'returned',
-                      state.returnedInKindCount,
+                      processedBase
+                          .where((i) =>
+                              i.processingStatus ==
+                              InKindProcessingStatus.Returned)
+                          .length,
                       color: const Color(0xFF0284C7),
                     ),
                     const SizedBox(width: 8),
                     _buildProcessedFilterChip(
                       'Đã nhập kho từ đường',
                       'assets',
-                      state.inKindReceipts
+                      processedBase
                           .where((i) =>
                               i.processingStatus ==
                               InKindProcessingStatus.AddedToCommonAssets)
@@ -1112,25 +1308,49 @@ class _ClanAssetInventoryScreenState
                             shape: BoxShape.circle,
                             border: Border.all(color: const Color(0xFFE6DFD8)),
                           ),
-                          child: const Icon(Icons.history_toggle_off,
+                          child: const Icon(Icons.filter_alt_off,
                               size: 44, color: Color(0xFF78655C)),
                         ),
                         const SizedBox(height: 14),
                         const Text(
-                          'Chưa có hiện vật nào trong mục này',
+                          'Không tìm thấy hiện vật phù hợp bộ lọc',
                           style: TextStyle(
-                            fontSize: 15,
+                            fontSize: 15.5,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF2B1810),
                           ),
                         ),
                         const SizedBox(height: 6),
-                        const Text(
-                          'Khi bạn phân loại đồ lễ ở tab "Hiện Vật Chờ Xử Lý", các món đã xử lý sẽ được lưu giữ tại đây.',
+                        Text(
+                          _selectedCategory != 'all'
+                              ? 'Không có hiện vật nào thuộc danh mục "${_categories[_selectedCategory]}" trong mục này.'
+                              : 'Chưa có hiện vật nào ở nhóm xử lý đã chọn.',
                           textAlign: TextAlign.center,
                           style:
-                              TextStyle(color: Color(0xFF54433E), fontSize: 13),
+                              const TextStyle(color: Color(0xFF54433E), fontSize: 13),
                         ),
+                        if (_selectedCategory != 'all' ||
+                            _selectedProcessedFilter != 'all' ||
+                            state.searchQuery.isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              _searchController.clear();
+                              ref.read(contributionUiProvider.notifier).setSearchQuery('');
+                              setState(() {
+                                _selectedCategory = 'all';
+                                _selectedProcessedFilter = 'all';
+                              });
+                            },
+                            icon: const Icon(Icons.refresh, size: 16),
+                            label: const Text('Xem Tất Cả Lịch Sử'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF8B1E1E),
+                              side: const BorderSide(color: Color(0xFF8B1E1E)),
+                              minimumSize: const Size(0, 40),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -1779,6 +1999,289 @@ class _ClanAssetInventoryScreenState
     showDialog(
       context: context,
       builder: (_) => ElectronicReceiptDialog(inKindReceipt: receipt),
+    );
+  }
+
+  // Modal Đăng Ký Trực Tiếp Bảo Vật Mới Vào Kho Từ Đường (Task #74)
+  void _showAddAssetModal(BuildContext context) {
+    final formKey = GlobalKey<FormState>();
+    final nameCtrl = TextEditingController();
+    final qtyCtrl = TextEditingController(text: '1');
+    final unitCtrl = TextEditingController(text: 'bộ');
+    final valCtrl = TextEditingController(text: '10000000');
+    final locCtrl = TextEditingController(text: 'Gian chính từ đường đại gia tộc');
+    final donorCtrl = TextEditingController();
+    String valWords = VietnameseMoneyConverter.toWords(10000000);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (modalCtx, setModalState) {
+          return Center(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 580),
+              margin: EdgeInsets.only(
+                bottom: MediaQuery.of(ctx).viewInsets.bottom,
+                top: 30,
+                left: 16,
+                right: 16,
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.all(Radius.circular(16)),
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Header
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF8B1E1E).withAlpha(15),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(Icons.add_box_outlined,
+                                    color: Color(0xFF8B1E1E), size: 22),
+                              ),
+                              const SizedBox(width: 10),
+                              const Text(
+                                'Đăng Ký Bảo Vật Vào Kho',
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF2B1810),
+                                ),
+                              ),
+                            ],
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Color(0xFF54433E)),
+                            onPressed: () => Navigator.of(ctx).pop(),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'Định danh và quản lý các đồ thờ gia bảo, cổ vật lưu giữ tại nhà thờ tổ dòng họ.',
+                        style: TextStyle(fontSize: 12.5, color: Color(0xFF78655C)),
+                      ),
+                      const Divider(height: 24, color: Color(0xFFE6DFD8)),
+
+                      // Tên bảo vật
+                      const Text(
+                        'Tên hiện vật / Đồ thờ gia bảo *',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2B1810),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: nameCtrl,
+                        decoration: InputDecoration(
+                          hintText: 'VD: Đỉnh đồng chạm tam khí, Hoành phi Phúc Mãn Đường...',
+                          hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF78655C)),
+                          filled: true,
+                          fillColor: const Color(0xFFFAF9F6),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        ),
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Vui lòng nhập tên hiện vật' : null,
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Số lượng & Đơn vị
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Số lượng *',
+                                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF2B1810)),
+                                ),
+                                const SizedBox(height: 6),
+                                TextFormField(
+                                  controller: qtyCtrl,
+                                  keyboardType: TextInputType.number,
+                                  decoration: InputDecoration(
+                                    filled: true,
+                                    fillColor: const Color(0xFFFAF9F6),
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                  ),
+                                  validator: (v) => (v == null || int.tryParse(v.trim()) == null) ? 'Hợp lệ > 0' : null,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Đơn vị tính *',
+                                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF2B1810)),
+                                ),
+                                const SizedBox(height: 6),
+                                TextFormField(
+                                  controller: unitCtrl,
+                                  decoration: InputDecoration(
+                                    hintText: 'bộ, chiếc, pho...',
+                                    filled: true,
+                                    fillColor: const Color(0xFFFAF9F6),
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                  ),
+                                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Nhập đơn vị' : null,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Giá trị thẩm định ước tính
+                      const Text(
+                        'Giá trị thẩm định ước tính (VNĐ) *',
+                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF2B1810)),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: valCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: const Color(0xFFFAF9F6),
+                          suffixText: 'VNĐ',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        ),
+                        onChanged: (v) {
+                          final parsed = double.tryParse(v.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+                          setModalState(() {
+                            valWords = VietnameseMoneyConverter.toWords(parsed);
+                          });
+                        },
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) return 'Nhập giá trị';
+                          final num = double.tryParse(v.replaceAll(RegExp(r'[^0-9]'), ''));
+                          return (num == null || num <= 0) ? 'Giá trị phải lớn hơn 0' : null;
+                        },
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFBF8F2),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFFD4A017).withAlpha(80)),
+                        ),
+                        child: Text(
+                          'Bằng chữ: $valWords',
+                          style: const TextStyle(fontSize: 11.5, fontStyle: FontStyle.italic, color: Color(0xFF7A1518), fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Vị trí lưu kho
+                      const Text(
+                        'Vị trí lưu kho tại từ đường *',
+                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF2B1810)),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: locCtrl,
+                        decoration: InputDecoration(
+                          hintText: 'VD: Ban thờ cụ Thủy Tổ, Hậu cung, Tủ kính số 1...',
+                          filled: true,
+                          fillColor: const Color(0xFFFAF9F6),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        ),
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Vui lòng nhập vị trí' : null,
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Nguồn gốc / Người cung tiến
+                      const Text(
+                        'Nguồn gốc / Người cung tiến (Tùy chọn)',
+                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF2B1810)),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: donorCtrl,
+                        decoration: InputDecoration(
+                          hintText: 'VD: Gia bảo tiền nhân để lại, Chi 1 hiến tặng...',
+                          filled: true,
+                          fillColor: const Color(0xFFFAF9F6),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+
+                      // CTA Button
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          if (!formKey.currentState!.validate()) return;
+                          final parsedVal = double.tryParse(valCtrl.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+                          final parsedQty = int.tryParse(qtyCtrl.text.trim()) ?? 1;
+
+                          ref.read(contributionUiProvider.notifier).addDirectClanAsset(
+                            assetName: nameCtrl.text.trim(),
+                            quantity: parsedQty,
+                            unit: unitCtrl.text.trim(),
+                            assessedValue: parsedVal,
+                            storageLocation: locCtrl.text.trim(),
+                            originDonorName: donorCtrl.text.trim().isNotEmpty ? donorCtrl.text.trim() : 'Gia phả tiền nhân',
+                          );
+
+                          Navigator.of(ctx).pop();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Đã đăng ký "${nameCtrl.text.trim()}" vào kho từ đường thành công!'),
+                              backgroundColor: const Color(0xFF2E8B43),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.qr_code_2, size: 20),
+                        label: const Text(
+                          'Lưu Vào Kho & Cấp Mã Định Danh QR',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF8B1E1E),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          elevation: 2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }

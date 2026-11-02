@@ -519,6 +519,31 @@ class ContributionUiNotifier extends Notifier<ContributionUiState> {
     );
   }
 
+  /// Trực tiếp đăng ký bảo vật, đồ thờ gia truyền vào kho dòng họ (Task #74)
+  void addDirectClanAsset({
+    required String assetName,
+    required int quantity,
+    required String unit,
+    required double assessedValue,
+    required String storageLocation,
+    String? originDonorName,
+  }) {
+    final randAssetId = 100 + Random().nextInt(900);
+    final asset = ClanAssetDto(
+      assetId: 'AST-2026-$randAssetId',
+      assetName: assetName,
+      quantity: quantity,
+      unit: unit,
+      assessedValue: assessedValue,
+      storageLocation: storageLocation,
+      originDonorName: originDonorName,
+      createdAt: DateTime.now(),
+    );
+    state = state.copyWith(
+      clanAssets: [asset, ...state.clanAssets],
+    );
+  }
+
   void setSearchQuery(String query) {
     state = state.copyWith(searchQuery: query);
   }
