@@ -2,13 +2,13 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/utils/vietnamese_money_converter.dart';
 import '../../data/models/contribution_models.dart';
 import '../providers/contribution_ui_provider.dart';
 import '../widgets/electronic_receipt_dialog.dart';
+import 'package:familyfund_app/features/shared/presentation/widgets/heritage_nav_bar.dart';
 
 /// Task #71: Giao diện Bàn Tiếp Nhận Đóng Góp của Thủ Quỹ (TiepNhanDongGopUI).
 /// Chuẩn hóa theo tiêu chuẩn Warm Editorial Heritage & UI/UX Pro Max:
@@ -48,93 +48,8 @@ class _ReceiveContributionScreenState
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAF9F6), // Warm Canvas
-      appBar: AppBar(
-        leading: IconButton(tooltip: 'Quay láº¡i Trang Chá»§', icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF8B1E1E), size: 18), onPressed: () { if (context.canPop()) { context.pop(); } else { context.go('/home'); } }),
-        titleSpacing: 8,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF8B1E1E), Color(0xFF6B1414)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFD4A017), width: 1.2),
-              ),
-              child: const Icon(
-                Icons.account_balance,
-                color: Color(0xFFD4A017),
-                size: 19,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Bàn Tiếp Nhận Đóng Góp & Sổ Cái',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 17,
-                    color: Color(0xFF2B1810),
-                    letterSpacing: -0.2,
-                  ),
-                ),
-                Row(
-                  children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF2E8B43),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 5),
-                    const Text(
-                      'KỲ LỄ 2026 • ĐỐI SOÁT BẤT BIẾN',
-                      style: TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.6,
-                        color: Color(0xFF54433E),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0.8,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(color: const Color(0xFFE6DFD8), height: 1),
-        ),
-        actions: [
-          OutlinedButton.icon(
-            onPressed: () => context.push('/clan-assets'),
-            icon: const Icon(Icons.inventory_2_outlined, size: 17),
-            label: const Text('Kho Bảo Vật Từ Đường'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF8B1E1E),
-              side: const BorderSide(color: Color(0xFF8B1E1E), width: 1.2),
-              minimumSize: const Size(0, 42),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-          const SizedBox(width: 14),
-        ],
-      ),
+      appBar: const HeritageNavBar(currentRoute: '/contributions'),
+      bottomNavigationBar: const HeritageBottomNavBar(currentRoute: '/contributions'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
         child: Center(
@@ -298,6 +213,16 @@ class _ReceiveContributionScreenState
               ],
             ),
             const SizedBox(height: 8),
+            const Text(
+              'Bàn Tiếp Nhận Đóng Góp & Sổ Cái',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF7A1518),
+                letterSpacing: -0.3,
+              ),
+            ),
+            const SizedBox(height: 4),
             const Text(
               'Đại Lễ Giỗ Tổ Thủy Tộc Xuân Bính Ngọ 2026',
               style: TextStyle(

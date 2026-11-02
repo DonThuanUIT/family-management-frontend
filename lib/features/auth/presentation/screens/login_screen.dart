@@ -13,7 +13,6 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  int _selectedDemoIndex = 0;
   late final TextEditingController _identifierController;
   late final TextEditingController _passwordController;
   bool _obscurePassword = true;
@@ -22,11 +21,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    // Mặc định điền sẵn thông tin tài khoản mẫu Trưởng Tộc (0901234567 / 123456)
-    _identifierController =
-        TextEditingController(text: kDemoAccounts[0].identifier);
-    _passwordController =
-        TextEditingController(text: kDemoAccounts[0].password);
+    // Mặc định điền sẵn thông tin tài khoản đăng nhập (0901234567 / 123456)
+    _identifierController = TextEditingController(text: '0901234567');
+    _passwordController = TextEditingController(text: '123456');
   }
 
   @override
@@ -137,150 +134,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         color: Color(0xFF6B584E),
                       ),
                     ),
-                    const SizedBox(height: 20),
-
-                    // Demo Accounts Quick Selector (Prefills real backend-seeded accounts)
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF9EE),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                            color: const Color(0xFFE8C882), width: 1.2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFD4A017).withAlpha(18),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.stars,
-                                  color: Color(0xFFB36E1B), size: 18),
-                              const SizedBox(width: 8),
-                              const Expanded(
-                                child: Text(
-                                  'TÀI KHOẢN MẪU (DEMO)',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.5,
-                                    color: Color(0xFF7A1518),
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF2E8B43).withAlpha(30),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: const Text(
-                                  'Có sẵn dữ liệu',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF2E8B43),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: List.generate(kDemoAccounts.length, (index) {
-                              final account = kDemoAccounts[index];
-                              final isSelected = _selectedDemoIndex == index;
-                              return ChoiceChip(
-                                selected: isSelected,
-                                label: Text(
-                                  account.roleName,
-                                  style: TextStyle(
-                                    fontSize: 12.5,
-                                    fontWeight: isSelected
-                                        ? FontWeight.bold
-                                        : FontWeight.w500,
-                                    color: isSelected
-                                        ? Colors.white
-                                        : const Color(0xFF54433E),
-                                  ),
-                                ),
-                                avatar: Icon(
-                                  index == 0
-                                      ? Icons.shield_outlined
-                                      : index == 1
-                                          ? Icons.account_balance_outlined
-                                          : Icons.person_outline,
-                                  size: 16,
-                                  color: isSelected
-                                      ? Colors.white
-                                      : const Color(0xFF7A1518),
-                                ),
-                                selectedColor: const Color(0xFF7A1518),
-                                backgroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  side: BorderSide(
-                                    color: isSelected
-                                        ? const Color(0xFF7A1518)
-                                        : const Color(0xFFD6C8BF),
-                                  ),
-                                ),
-                                onSelected: (selected) {
-                                  if (selected) {
-                                    setState(() {
-                                      _selectedDemoIndex = index;
-                                      _identifierController.text =
-                                          account.identifier;
-                                      _passwordController.text =
-                                          account.password;
-                                    });
-                                  }
-                                },
-                              );
-                            }),
-                          ),
-                          const SizedBox(height: 10),
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                  color: const Color(0xFFEADBCE)),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.info_outline,
-                                    size: 15, color: Color(0xFF8B1E1E)),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    '${kDemoAccounts[_selectedDemoIndex].fullName} (${kDemoAccounts[_selectedDemoIndex].identifier}) • ${kDemoAccounts[_selectedDemoIndex].roleDescription}',
-                                    style: const TextStyle(
-                                      fontSize: 11.5,
-                                      color: Color(0xFF6B584E),
-                                      height: 1.3,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 28),
 
                     // Error Message Banner (Shows real backend error message)
                     if (authState.errorMessage != null) ...[

@@ -10,6 +10,7 @@ import '../widgets/create_event_sheet.dart';
 import '../widgets/event_card.dart';
 import '../widgets/event_detail_dialog.dart';
 import '../widgets/event_notifications_dialog.dart';
+import 'package:familyfund_app/features/shared/presentation/widgets/heritage_nav_bar.dart';
 
 class EventListScreen extends ConsumerStatefulWidget {
   const EventListScreen({super.key});
@@ -678,6 +679,7 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
       ),
 
       // 3. Floating Action Center Button (Native feel)
+      bottomNavigationBar: const HeritageBottomNavBar(currentRoute: '/events'),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openCreateEventSheet,
         backgroundColor: const Color(0xFF7A1518),

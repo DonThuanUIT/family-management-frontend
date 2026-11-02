@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../data/models/contribution_models.dart';
 import '../providers/contribution_ui_provider.dart';
 import '../widgets/electronic_receipt_dialog.dart';
+import 'package:familyfund_app/features/shared/presentation/widgets/heritage_nav_bar.dart';
 
 /// Task #74: Màn hình Quản lý Kho Bảo Vật – Di Sản Dòng Họ và Vòng Đời Hiện Vật Sự Kiện.
 /// Chuẩn hóa theo phong cách Warm Editorial Heritage & UI/UX Pro Max:
@@ -159,93 +159,8 @@ class _ClanAssetInventoryScreenState
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAF9F6),
-      appBar: AppBar(
-        leading: IconButton(tooltip: 'Quay láº¡i Trang Chá»§', icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF8B1E1E), size: 18), onPressed: () { if (context.canPop()) { context.pop(); } else { context.go('/home'); } }),
-        titleSpacing: 8,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF8B1E1E), Color(0xFF6B1414)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFD4A017), width: 1.2),
-              ),
-              child: const Icon(
-                Icons.temple_buddhist,
-                color: Color(0xFFD4A017),
-                size: 19,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Kho Bảo Vật & Di Sản Dòng Họ',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 17,
-                    color: Color(0xFF2B1810),
-                    letterSpacing: -0.2,
-                  ),
-                ),
-                Row(
-                  children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFB45309),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 5),
-                    const Text(
-                      'TỪ ĐƯỜNG TỔ • ĐỊNH DANH MÃ QR',
-                      style: TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.6,
-                        color: Color(0xFF54433E),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0.8,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(color: const Color(0xFFE6DFD8), height: 1),
-        ),
-        actions: [
-          OutlinedButton.icon(
-            onPressed: () => context.push('/contributions'),
-            icon: const Icon(Icons.receipt_long, size: 17),
-            label: const Text('Bàn Tiếp Nhận'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF8B1E1E),
-              side: const BorderSide(color: Color(0xFF8B1E1E), width: 1.2),
-              minimumSize: const Size(0, 42),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-          const SizedBox(width: 14),
-        ],
-      ),
+      appBar: const HeritageNavBar(currentRoute: '/clan-assets'),
+      bottomNavigationBar: const HeritageBottomNavBar(currentRoute: '/clan-assets'),
       body: Column(
         children: [
           // Header summary statistics & Search
@@ -255,6 +170,54 @@ class _ClanAssetInventoryScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF8B1E1E), Color(0xFF6B1414)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFD4A017), width: 1.2),
+                      ),
+                      child: const Icon(
+                        Icons.temple_buddhist,
+                        color: Color(0xFFD4A017),
+                        size: 19,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Kho Bảo Vật & Di Sản Dòng Họ',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Color(0xFF2B1810),
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                        Text(
+                          'TỪ ĐƯỜNG TỔ • ĐỊNH DANH MÃ QR',
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.6,
+                            color: Color(0xFF54433E),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 _buildOverviewStats(uiState, isWide),
                 const SizedBox(height: 14),
 

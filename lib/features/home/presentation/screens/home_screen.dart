@@ -4,10 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/security/rbac_models.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
+import 'package:familyfund_app/features/shared/presentation/widgets/heritage_nav_bar.dart';
 
 /// Màn hình chính sau khi đăng nhập thành công.
-/// Đóng vai trò là placeholder trang trọng để nhóm phát triển tự xây dựng
-/// các màn hình chức năng tiếp theo (Gia phả, Sự kiện, Tài chính...).
+/// Tích hợp thanh điều hướng HeritageNavBar chuẩn Stitch Warm Editorial.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -29,35 +29,14 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAF6F0),
-      appBar: AppBar(
-        title: const Text(
-          'Gia Tộc Việt Nam',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF7A1518),
-          ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 1,
-        actions: [
-          IconButton(
-            tooltip: 'Đăng xuất',
-            icon: const Icon(Icons.logout, color: Color(0xFF7A1518)),
-            onPressed: () async {
-              await ref.read(authStateProvider.notifier).logout();
-              if (context.mounted) {
-                context.go('/welcome');
-              }
-            },
-          ),
-        ],
-      ),
+      appBar: const HeritageNavBar(currentRoute: '/home'),
+      bottomNavigationBar: const HeritageBottomNavBar(currentRoute: '/home'),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600),
+              constraints: const BoxConstraints(maxWidth: 800),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -163,9 +142,8 @@ class HomeScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 8),
                         const Text(
-                          'Phân hệ Xác thực & Phân quyền tĩnh đã hoàn tất kết nối với Backend API. '
-                          'Các màn hình nghiệp vụ tiếp theo (Gia phả, Sự kiện, Thu chi, Quản lý chi...) '
-                          'sẽ do nhóm của bạn tự do thiết kế và lắp ráp tại đây.',
+                          'Hệ thống quản trị tài chính & phả hệ dòng họ FamilyFund đã kết nối thành công. '
+                          'Bạn có thể sử dụng thanh Navbar phía trên hoặc các nút nhanh bên dưới để chuyển đổi giữa các phân hệ.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 13.5,
@@ -174,103 +152,87 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        ElevatedButton.icon(
-                          onPressed: () => context.push('/events'),
-                          icon: const Icon(Icons.celebration_outlined),
-                          label: const Text(
-                            'Quản Lý Sự Kiện & Tế Lễ',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          alignment: WrapAlignment.center,
+                          children: [
+                            ElevatedButton.icon(
+                              onPressed: () => context.go('/contributions'),
+                              icon: const Icon(Icons.receipt_long),
+                              label: const Text('Sổ Cái Tài Chính (#71)'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF8B1E1E),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
                             ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF7A1518),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 14,
+                            ElevatedButton.icon(
+                              onPressed: () => context.go('/clan-assets'),
+                              icon: const Icon(Icons.inventory_2),
+                              label: const Text('Kho Bảo Vật Từ Đường (#74)'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFB36E1B),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
                             ),
-                            elevation: 2,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                            ElevatedButton.icon(
+                              onPressed: () => context.go('/events'),
+                              icon: const Icon(Icons.celebration),
+                              label: const Text('Sự Kiện Giỗ Tổ'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2E8B43),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        ElevatedButton.icon(
-                          onPressed: () => context.push('/contributions'),
-                          icon: const Icon(Icons.account_balance_wallet_outlined),
-                          label: const Text(
-                            'Bàn Tiếp Nhận Đóng Góp (Thủ Quỹ - #71)',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                            OutlinedButton.icon(
+                              onPressed: () => context.push('/invite-code'),
+                              icon: const Icon(Icons.qr_code_2),
+                              label: const Text('Cấp Mã Mời Gia Tộc'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFF7A1518),
+                                side: const BorderSide(color: Color(0xFF7A1518)),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
                             ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2E8B43),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 14,
+                            OutlinedButton.icon(
+                              onPressed: () async {
+                                await ref.read(authStateProvider.notifier).logout();
+                                if (context.mounted) {
+                                  context.go('/welcome');
+                                }
+                              },
+                              icon: const Icon(Icons.logout, color: Color(0xFF7A1518)),
+                              label: const Text('Đăng Xuất Tài Khoản'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFF7A1518),
+                                side: const BorderSide(color: Color(0xFFDAC1BA)),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
                             ),
-                            elevation: 2,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        ElevatedButton.icon(
-                          onPressed: () => context.push('/clan-assets'),
-                          icon: const Icon(Icons.temple_buddhist_outlined),
-                          label: const Text(
-                            'Kho Hiện Vật & Bảo Vật Từ Đường (#74)',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFB36E1B),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 14,
-                            ),
-                            elevation: 2,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        OutlinedButton.icon(
-                          onPressed: () async {
-                            await ref.read(authStateProvider.notifier).logout();
-                            if (context.mounted) {
-                              context.go('/welcome');
-                            }
-                          },
-                          icon: const Icon(Icons.logout, color: Color(0xFF7A1518)),
-                          label: const Text(
-                            'Đăng Xuất Tài Khoản',
-                            style: TextStyle(
-                              color: Color(0xFF7A1518),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFF7A1518)),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
+                          ],
                         ),
                       ],
                     ),
@@ -295,8 +257,9 @@ class HomeScreen extends ConsumerWidget {
             child: Text(
               label,
               style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF54433E),
                 fontSize: 13,
-                color: Color(0xFF6B584E),
               ),
             ),
           ),
@@ -304,9 +267,8 @@ class HomeScreen extends ConsumerWidget {
             child: Text(
               value,
               style: const TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w600,
                 color: Color(0xFF2B1810),
+                fontSize: 13,
               ),
             ),
           ),
