@@ -1,8 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/utils/vietnamese_money_converter.dart';
 import '../../data/models/contribution_models.dart';
+import '../services/contribution_pdf_service.dart';
 
 /// Task #74: Hộp thoại In / Xuất Phiếu Thu Điện Tử & Chứng Nhận Công Đức Dòng Họ.
 /// Chuẩn hóa theo tiêu chuẩn UI/UX Pro Max:
@@ -432,13 +433,22 @@ class ElectronicReceiptDialog extends StatelessWidget {
                     spacing: 12,
                     children: [
                       OutlinedButton.icon(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Đang tạo tệp PDF phiếu thu điện tử...'),
-                              backgroundColor: Color(0xFF2E8B43),
-                            ),
-                          );
+                        onPressed: () async {
+                          try {
+                            await ContributionPdfService.exportReceiptPdf(
+                              cashReceipt: cashReceipt,
+                              inKindReceipt: inKindReceipt,
+                            );
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Lỗi tải tệp PDF: $e'),
+                                  backgroundColor: const Color(0xFFBA1A1A),
+                                ),
+                              );
+                            }
+                          }
                         },
                         icon: const Icon(Icons.download, size: 16),
                         label: const Text('Tải PDF'),
@@ -450,14 +460,22 @@ class ElectronicReceiptDialog extends StatelessWidget {
                         ),
                       ),
                       ElevatedButton.icon(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                  'Đang gửi lệnh in phiếu thu $receiptNumber ra máy in nhiệt/A5...'),
-                              backgroundColor: const Color(0xFF8B1E1E),
-                            ),
-                          );
+                        onPressed: () async {
+                          try {
+                            await ContributionPdfService.exportReceiptPdf(
+                              cashReceipt: cashReceipt,
+                              inKindReceipt: inKindReceipt,
+                            );
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Lỗi in phiếu thu: $e'),
+                                  backgroundColor: const Color(0xFFBA1A1A),
+                                ),
+                              );
+                            }
+                          }
                         },
                         icon: const Icon(Icons.print, size: 16),
                         label: const Text('In Phiếu Thu'),

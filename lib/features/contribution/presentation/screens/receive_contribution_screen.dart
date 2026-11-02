@@ -8,6 +8,7 @@ import '../../../../core/utils/vietnamese_money_converter.dart';
 import '../../data/models/contribution_models.dart';
 import '../providers/contribution_ui_provider.dart';
 import '../widgets/electronic_receipt_dialog.dart';
+import '../services/contribution_pdf_service.dart';
 import 'package:familyfund_app/features/shared/presentation/widgets/heritage_nav_bar.dart';
 
 /// Task #71: Giao diện Bàn Tiếp Nhận Đóng Góp của Thủ Quỹ (TiepNhanDongGopUI).
@@ -548,13 +549,23 @@ class _ReceiveContributionScreenState
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     OutlinedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Đang xuất sổ cái đối soát ra file PDF / Excel...'),
-                            backgroundColor: Color(0xFF2E8B43),
-                          ),
-                        );
+                      onPressed: () async {
+                        try {
+                          await ContributionPdfService.exportLedgerPdf(
+                            eventName: 'Đại Lễ Giỗ Tổ Thủy Tộc Xuân Bính Ngọ 2026',
+                            cashReceipts: filteredCash,
+                            inKindReceipts: filteredInKind,
+                          );
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Không thể mở tệp PDF: $e'),
+                                backgroundColor: const Color(0xFFBA1A1A),
+                              ),
+                            );
+                          }
+                        }
                       },
                       icon: const Icon(Icons.download, size: 16),
                       label: const Text('Xuất Sổ Cái PDF'),
