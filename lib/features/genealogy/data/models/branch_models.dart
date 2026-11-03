@@ -154,3 +154,61 @@ class BranchTreeNodeDto {
     );
   }
 }
+
+/// Model thông tin thành viên hiển thị trong bảng sidebar chi nhánh
+class BranchMemberItem {
+  final String memberId;
+  final String fullName;
+  final int generation;
+  final String? birthDeathInfo;
+  final String roleInBranch;
+  final String gender;
+  final bool isActivated;
+  final String? phone;
+
+  const BranchMemberItem({
+    required this.memberId,
+    required this.fullName,
+    required this.generation,
+    this.birthDeathInfo,
+    required this.roleInBranch,
+    this.gender = 'male',
+    this.isActivated = true,
+    this.phone,
+  });
+}
+
+/// Model hiển thị thông tin chi tiết một chi/nhánh trên Sidebar / BottomSheet
+class BranchUiDetail {
+  final String id;
+  final String name;
+  final String badge;
+  final String code;
+  final String representative;
+  final String representativeSubtext;
+  final int memberCount;
+  final int activatedMemberCount;
+  final String fundAmount;
+  final String kycStatus;
+  final String description;
+  final List<String> successionChain;
+  final List<BranchMemberItem> members;
+  final bool isRoot;
+
+  const BranchUiDetail({
+    required this.id,
+    required this.name,
+    required this.badge,
+    required this.code,
+    required this.representative,
+    required this.representativeSubtext,
+    required this.memberCount,
+    required this.activatedMemberCount,
+    required this.fundAmount,
+    this.kycStatus = 'Đã xác minh KYC 100%',
+    required this.description,
+    this.successionChain = const [],
+    this.members = const [],
+    this.isRoot = false,
+  });
+}
