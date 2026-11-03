@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../data/models/event_models.dart';
 import 'assign_personnel_dialog.dart';
@@ -186,6 +187,25 @@ class EventDetailDialog extends StatelessWidget {
                 ),
 
               const SizedBox(height: 18),
+
+              // Nút xem danh sách công việc chuẩn bị (US-07)
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  context.push('/events/${event.eventId}/tasks');
+                },
+                icon: const Icon(Icons.assignment_outlined, size: 16),
+                label: const Text('Xem & Phân Công Công Việc (US-07)'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF7A1518),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 11),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
 
               // Action Buttons
               Row(

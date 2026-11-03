@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../data/models/event_models.dart';
 
@@ -268,6 +269,21 @@ class EventCard extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF4A3B32),
                           ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      tooltip: 'Công việc chuẩn bị (US-07)',
+                      onPressed: () =>
+                          context.push('/events/${event.eventId}/tasks'),
+                      icon: const Icon(Icons.assignment_outlined, size: 18),
+                      color: const Color(0xFF5C4A42),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(color: Color(0xFFD4C8BE)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                     ),

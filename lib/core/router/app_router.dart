@@ -14,6 +14,7 @@ import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/auth/presentation/screens/welcome_screen.dart';
 import '../../features/event/presentation/screens/event_list_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/task/presentation/screens/event_task_list_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -111,6 +112,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/events',
         name: 'events',
         builder: (context, state) => const EventListScreen(),
+        routes: [
+          // 10.1. Phân hệ Quản lý Công việc & Phân công Chuẩn bị Sự Kiện (US-07)
+          GoRoute(
+            path: ':eventId/tasks',
+            name: 'event-tasks',
+            builder: (context, state) {
+              final eventId = state.pathParameters['eventId'] ?? '';
+              return EventTaskListScreen(eventId: eventId);
+            },
+          ),
+        ],
       ),
     ],
   );
