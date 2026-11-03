@@ -57,7 +57,7 @@ class RootBranchNotifier extends Notifier<RootBranchState> {
       branch: FamilyBranchDetail(
         branchId: 'BR_ROOT_TB',
         clanId: 'CLAN_DEFAULT',
-        clanName: 'DÒNG HỌ LÊ VIỆT NAM • Nam Trung, Thái Bình',
+        clanName: 'Họ Lê - Nam Trung, Thái Bình',
         branchName: 'Chi Gốc Nam Trung, Thái Bình',
         generationLevel: 1,
         representativeId: 'MEM-001',

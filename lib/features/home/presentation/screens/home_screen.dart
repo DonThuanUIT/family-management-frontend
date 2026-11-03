@@ -131,15 +131,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 children: [
                                   const Icon(Icons.lan_outlined, size: 18, color: kPrimaryColor),
                                   const SizedBox(width: 8),
-                                  Text(
-                                    rootBranch?.clanName.isNotEmpty == true
-                                        ? '${rootBranch!.clanName} • Cụ Khởi Tổ 1890'
-                                        : 'Gốc Nam Trung, Thái Bình • Cụ Khởi Tổ 1890',
-                                    style: const TextStyle(
-                                      fontFamily: 'Plus Jakarta Sans',
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF1C1C1A),
+                                  Flexible(
+                                    child: Text(
+                                      rootBranch?.clanName.isNotEmpty == true
+                                          ? '${rootBranch!.clanName} • Cụ Khởi Tổ 1890'
+                                          : 'Gốc Nam Trung, Thái Bình • Cụ Khởi Tổ 1890',
+                                      style: const TextStyle(
+                                        fontFamily: 'Plus Jakarta Sans',
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF1C1C1A),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],
