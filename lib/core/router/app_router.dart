@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/data/models/auth_models.dart';
 import '../../features/auth/presentation/screens/auth_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/invite_code_screen.dart';
@@ -76,7 +77,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/pending-approval',
         name: 'pending-approval',
-        builder: (context, state) => const PendingApprovalScreen(),
+        builder: (context, state) {
+          final request = state.extra is JoinRequestResponseDto
+              ? state.extra as JoinRequestResponseDto
+              : null;
+          return PendingApprovalScreen(joinRequest: request);
+        },
       ),
 
       // 8. Màn hình Quên Mật Khẩu (Forgot Password)

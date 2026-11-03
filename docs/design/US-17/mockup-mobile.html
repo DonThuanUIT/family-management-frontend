@@ -1,0 +1,500 @@
+﻿<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Gia Nhập Dòng Họ - FamilyFund</title>
+<!-- Google Fonts: Merriweather & Be Vietnam Pro -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&amp;family=Merriweather:ital,wght@0,400;0,700;0,900;1,400&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "outline": "#87736d",
+            "tertiary-container": "#986d00",
+            "on-secondary-fixed-variant": "#00531e",
+            "tertiary": "#785600",
+            "primary": "#8f482f",
+            "on-secondary-fixed": "#002108",
+            "on-tertiary-fixed": "#271900",
+            "on-tertiary-container": "#fffbff",
+            "background": "#fff8f6",
+            "tertiary-fixed": "#ffdea6",
+            "on-primary-fixed-variant": "#75331c",
+            "surface-container-high": "#f3e5e2",
+            "surface-bright": "#fff8f6",
+            "secondary-fixed-dim": "#7edb89",
+            "tertiary-fixed-dim": "#f7bd48",
+            "inverse-surface": "#362f2d",
+            "on-secondary": "#ffffff",
+            "outline-variant": "#dac1ba",
+            "surface-tint": "#924a31",
+            "surface-container": "#f9ebe7",
+            "on-surface-variant": "#54433e",
+            "on-surface": "#211a18",
+            "surface-container-low": "#fff1ed",
+            "on-primary-container": "#fffbff",
+            "secondary-fixed": "#99f8a2",
+            "surface-variant": "#ede0dc",
+            "on-error-container": "#93000a",
+            "error-container": "#ffdad6",
+            "error": "#ba1a1a",
+            "surface-container-highest": "#ede0dc",
+            "inverse-on-surface": "#fceeea",
+            "on-primary-fixed": "#390c00",
+            "surface": "#fff8f6",
+            "on-error": "#ffffff",
+            "primary-fixed": "#ffdbd0",
+            "surface-dim": "#e4d7d4",
+            "secondary": "#006e2a",
+            "on-background": "#211a18",
+            "on-secondary-container": "#0d742f",
+            "on-tertiary-fixed-variant": "#5d4200",
+            "inverse-primary": "#ffb59d",
+            "on-tertiary": "#ffffff",
+            "primary-container": "#ad5f45",
+            "secondary-container": "#99f8a2",
+            "on-primary": "#ffffff",
+            "primary-fixed-dim": "#ffb59d",
+            "surface-container-lowest": "#ffffff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-lg": "1.5rem",
+            "space-xs": "0.25rem",
+            "gutter-mobile": "1rem",
+            "space-xl": "2.5rem",
+            "gutter": "1.5rem",
+            "margin": "3rem",
+            "space-md": "1rem",
+            "space-sm": "0.5rem",
+            "margin-mobile": "1rem"
+          },
+          "fontFamily": {
+            "headline-lg-mobile": ["Merriweather"],
+            "label-md": ["Be Vietnam Pro"],
+            "headline-lg": ["Merriweather"],
+            "title-md": ["Be Vietnam Pro"],
+            "body-md": ["Be Vietnam Pro"],
+            "headline-sm": ["Merriweather"],
+            "display-hero": ["Merriweather"],
+            "headline-md-mobile": ["Merriweather"],
+            "display-hero-mobile": ["Merriweather"],
+            "body-lg": ["Be Vietnam Pro"],
+            "label-lg": ["Be Vietnam Pro"],
+            "title-lg": ["Be Vietnam Pro"],
+            "label-sm": ["Be Vietnam Pro"],
+            "body-sm": ["Be Vietnam Pro"],
+            "headline-md": ["Merriweather"]
+          },
+          "fontSize": {
+            "headline-lg-mobile": ["1.75rem", { "lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "label-md": ["0.75rem", { "lineHeight": "1.2", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "headline-lg": ["2.25rem", { "lineHeight": "1.25", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "title-md": ["1rem", { "lineHeight": "1.45", "fontWeight": "600" }],
+            "body-md": ["0.9375rem", { "lineHeight": "1.55", "fontWeight": "400" }],
+            "headline-sm": ["1.25rem", { "lineHeight": "1.4", "fontWeight": "600" }],
+            "display-hero": ["3.25rem", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-md-mobile": ["1.375rem", { "lineHeight": "1.35", "fontWeight": "600" }],
+            "display-hero-mobile": ["2.25rem", { "lineHeight": "1.25", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "body-lg": ["1.125rem", { "lineHeight": "1.6", "fontWeight": "400" }],
+            "label-lg": ["0.875rem", { "lineHeight": "1.2", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "title-lg": ["1.125rem", { "lineHeight": "1.4", "fontWeight": "600" }],
+            "label-sm": ["0.6875rem", { "lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "body-sm": ["0.8125rem", { "lineHeight": "1.5", "fontWeight": "400" }],
+            "headline-md": ["1.75rem", { "lineHeight": "1.3", "fontWeight": "600" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 20px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-smoothing: antialiased;
+      vertical-align: middle;
+    }
+    
+    /* Archival Subtle Watermark & Scroll Styling */
+    body {
+      background-color: #FAF9F5;
+      color: #211a18;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .paper-pattern {
+      background-image: radial-gradient(#dac1ba 0.75px, transparent 0.75px);
+      background-size: 16px 16px;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen flex justify-center bg-background antialiased">
+<!-- Mobile Viewport Wrapper (390px targeted layout) -->
+<div class="w-full max-w-[390px] min-h-screen bg-surface flex flex-col relative pb-12 shadow-sm border-x border-outline-variant/30">
+<!-- TopAppBar (From Shared Component JSON - Linear/Focused sub-task) -->
+<header class="bg-surface sticky top-0 z-40 flex justify-between items-center w-full px-space-md py-space-sm border-b border-outline-variant/40 shadow-none">
+<button aria-label="Quay lại" class="p-2 -ml-2 rounded-lg text-primary hover:bg-surface-container active:scale-95 transition-transform duration-150 flex items-center justify-center" type="button">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="text-headline-sm font-headline-sm text-primary tracking-tight font-bold">
+        Gia Nhập Dòng Họ
+      </h1>
+<button aria-label="Trợ giúp và hướng dẫn" class="p-2 -mr-2 rounded-lg text-primary hover:bg-surface-container active:scale-95 transition-transform duration-150 flex items-center justify-center" type="button">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+</header>
+<!-- Main Form Scrollable Area -->
+<main class="flex-1 px-4 py-4 space-y-5">
+<!-- SECTION 2: Clan Header & Verified Invite Code -->
+<section class="bg-surface-container-low rounded-xl p-4 border border-outline-variant/50 relative overflow-hidden">
+<!-- Subtle archival seal watermark decoration -->
+<div class="absolute -right-6 -bottom-6 w-28 h-28 rounded-full border border-primary/10 flex items-center justify-center pointer-events-none">
+<div class="w-20 h-20 rounded-full border border-dashed border-primary/20"></div>
+</div>
+<div class="flex items-start gap-3.5">
+<!-- Traditional Clan Crest / Emblem -->
+<div class="w-14 h-14 rounded-full bg-primary flex-shrink-0 flex items-center justify-center text-on-primary border-2 border-tertiary-fixed shadow-sm relative">
+<div class="text-center leading-none">
+<span class="block text-[8px] tracking-wider uppercase opacity-80">Nguyễn Tộc</span>
+<span class="font-headline-sm text-sm font-bold tracking-tight">ĐẠI TÔN</span>
+</div>
+<div class="absolute -bottom-1 -right-1 bg-surface-container-lowest text-secondary rounded-full p-0.5 border border-outline-variant/40 shadow-xs flex items-center justify-center">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-1.5 flex-wrap">
+<h2 class="font-headline-sm text-title-md text-on-surface font-bold leading-tight">
+                Nguyễn Tộc • Đại Tôn
+              </h2>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[15px] text-tertiary">temple_buddhist</span>
+              Từ đường Tiên Lục, Lạng Giang, Bắc Giang
+            </p>
+</div>
+</div>
+<!-- Validated Invite Code Banner -->
+<div class="mt-3.5 bg-surface-container-lowest/90 rounded-lg p-2.5 border border-secondary/30 flex items-center justify-between gap-2">
+<div class="flex items-center gap-2 min-w-0">
+<span class="w-2.5 h-2.5 rounded-full bg-secondary flex-shrink-0 animate-pulse"></span>
+<div class="min-w-0">
+<span class="text-[11px] block font-label-sm text-on-surface-variant uppercase tracking-wider">Mã mời hợp lệ</span>
+<span class="font-mono text-label-lg font-bold text-on-surface tracking-wide select-all">NGUYEN-DAITON-2025</span>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 bg-secondary-fixed/50 text-on-secondary-fixed-variant font-label-sm text-label-sm px-2 py-1 rounded-md">
+<span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+            Xác thực
+          </span>
+</div>
+<p class="mt-3 font-body-sm text-body-sm text-on-surface-variant/90 leading-snug italic border-l-2 border-primary/40 pl-2.5">
+          "Kính mời con cháu đăng ký thông tin để ghi danh vào sổ Tộc Phả điện tử, phụng tự tiên tổ, kết nối tông đường."
+        </p>
+</section>
+<!-- SECTION 3: Lineage Placement Card (Hộp chọn vị trí phả hệ) -->
+<section class="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/60 shadow-xs">
+<div class="flex items-center justify-between mb-3 border-b border-outline-variant/30 pb-2.5">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-md bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-base">account_tree</span>
+</div>
+<h3 class="font-headline-sm text-title-md text-on-surface font-bold">Vị trí trong Tộc Phả</h3>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary bg-tertiary-fixed/30 px-2 py-0.5 rounded-md">
+            Cây phả hệ
+          </span>
+</div>
+<!-- Segmented Tab Selector -->
+<div class="grid grid-cols-2 p-1 bg-surface-container rounded-lg gap-1 mb-4 text-center">
+<button class="py-1.5 px-2 rounded-md font-label-md text-label-md transition-all shadow-xs bg-surface-container-lowest text-primary font-bold border border-outline-variant/30" id="tab-branch-existing" type="button">
+            Chọn chi nhánh hiện có
+          </button>
+<button class="py-1.5 px-2 rounded-md font-label-md text-label-md transition-all text-on-surface-variant hover:text-on-surface" id="tab-branch-new" type="button">
+            Đề xuất nhánh con mới
+          </button>
+</div>
+<!-- Tab 1 Content: Tree Visualization & Branch Radio List -->
+<div class="space-y-3" id="content-branch-existing">
+<div class="text-[11px] font-label-sm text-on-surface-variant flex items-center justify-between">
+<span class="uppercase tracking-wider">Cấu trúc chi phái phụ thuộc:</span>
+<span class="text-primary font-medium">Bấm chọn 1 chi</span>
+</div>
+<!-- Tree Root Hierarchy Indicator -->
+<div class="bg-surface-container-high/60 rounded-lg p-2.5 border border-outline-variant/40 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">home_pin</span>
+<div class="text-xs">
+<span class="font-bold text-on-surface font-title-md">[Gốc] Đệ Nhất Phái</span>
+<span class="text-on-surface-variant text-[11px] ml-1">(Thủy Tổ Khởi Thảo • Đời I)</span>
+</div>
+</div>
+<!-- Connected Nodes -->
+<div class="pl-4 relative space-y-2.5 before:content-[''] before:absolute before:left-2 before:top-2 before:bottom-3 before:w-[1.5px] before:bg-outline-variant/70">
+<!-- Chi 1 (Selected) -->
+<label class="relative flex items-start gap-3 p-2.5 rounded-lg border-2 border-primary bg-primary-fixed/20 cursor-pointer transition-all block">
+<div class="absolute -left-[17px] top-4 w-3.5 h-[1.5px] bg-primary"></div>
+<input checked="" class="mt-1 text-primary focus:ring-primary h-4 w-4 border-outline" name="selected_branch" type="radio" value="chi_1"/>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-label-lg text-label-lg font-bold text-primary">Chi 1: Chi Trưởng - Phụng Từ</span>
+<span class="text-[10px] font-label-sm bg-primary text-on-primary px-1.5 py-0.2 rounded font-medium">Đang chọn</span>
+</div>
+<p class="text-[11px] text-on-surface-variant font-body-sm mt-0.5">Trưởng chi: Cụ Nguyễn Đình Thược • 14 đời kế truyền</p>
+<div class="flex items-center gap-2 mt-1.5">
+<span class="text-[10px] text-secondary font-medium bg-secondary-fixed/40 px-1.5 py-0.5 rounded">68 hộ gia đình</span>
+<span class="text-[10px] text-tertiary font-medium bg-tertiary-fixed/30 px-1.5 py-0.5 rounded">Được lưu giữ từ đường</span>
+</div>
+</div>
+</label>
+<!-- Chi 2 -->
+<label class="relative flex items-start gap-3 p-2.5 rounded-lg border border-outline-variant/60 bg-surface hover:bg-surface-container-low cursor-pointer transition-all block">
+<div class="absolute -left-[17px] top-4 w-3.5 h-[1.5px] bg-outline-variant/70"></div>
+<input class="mt-1 text-primary focus:ring-primary h-4 w-4 border-outline" name="selected_branch" type="radio" value="chi_2"/>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-label-lg text-label-lg font-bold text-on-surface">Chi 2: Chi Thứ Hai - Quán Thôn</span>
+<span class="text-[10px] text-on-surface-variant font-label-sm">45 hộ</span>
+</div>
+<p class="text-[11px] text-on-surface-variant font-body-sm mt-0.5">Trưởng chi: Ông Nguyễn Văn Lương • Làng Quán</p>
+</div>
+</label>
+<!-- Chi 3 -->
+<label class="relative flex items-start gap-3 p-2.5 rounded-lg border border-outline-variant/60 bg-surface hover:bg-surface-container-low cursor-pointer transition-all block">
+<div class="absolute -left-[17px] top-4 w-3.5 h-[1.5px] bg-outline-variant/70"></div>
+<input class="mt-1 text-primary focus:ring-primary h-4 w-4 border-outline" name="selected_branch" type="radio" value="chi_3"/>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-label-lg text-label-lg font-bold text-on-surface">Chi 3: Chi Thứ Ba - Tả Vu</span>
+<span class="text-[10px] text-on-surface-variant font-label-sm">32 hộ</span>
+</div>
+<p class="text-[11px] text-on-surface-variant font-body-sm mt-0.5">Trưởng chi: Ông Nguyễn Đình Chấn • Khu Nam</p>
+</div>
+</label>
+</div>
+<!-- Generation Stepper / Dropdown -->
+<div class="mt-3 pt-3 border-t border-outline-variant/40">
+<label class="block font-label-md text-label-md text-on-surface mb-1.5 flex items-center justify-between">
+<span>Đời thứ đề xuất trong dòng họ:</span>
+<span class="text-[11px] text-primary font-normal">Quy ước thế thứ</span>
+</label>
+<div class="relative">
+<select class="w-full bg-surface-container-lowest border border-outline-variant text-on-surface text-label-lg font-label-lg rounded-lg py-2 pl-3 pr-8 focus:border-primary focus:ring-1 focus:ring-primary appearance-none">
+<option value="14">Đời thứ 14 (Chữ lót thường dùng: Phúc / Quốc)</option>
+<option selected="" value="15">Đời thứ 15 (Chữ lót thường dùng: Văn / Đình)</option>
+<option value="16">Đời thứ 16 (Chữ lót thường dùng: Khắc / Quang)</option>
+<option value="17">Đời thứ 17 (Hậu duệ trẻ niên thiếu)</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">unfold_more</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Tab 2 Content (Hidden state preview note) -->
+<div class="hidden space-y-3 pt-1" id="content-branch-new">
+<div class="bg-surface-container-low rounded-lg p-3 border border-outline-variant/60">
+<label class="block font-label-md text-label-md text-on-surface mb-1">Tên nhánh chi đề xuất mới</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant text-body-md rounded-lg p-2 text-on-surface focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Ví dụ: Phân chi Di cư Miền Nam - TP.HCM" type="text"/>
+<p class="text-[11px] text-on-surface-variant mt-1.5 leading-normal">
+              * Nhánh mới cần cung cấp căn cứ phả đồ chi tiết để Hội đồng Gia tộc đối chiếu sắc phong hoặc văn tự cúng tế.
+            </p>
+</div>
+</div>
+</section>
+<!-- SECTION 4: Personal Information Form (Thông tin cá nhân) -->
+<section class="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/60 shadow-xs space-y-3.5">
+<div class="flex items-center gap-2 border-b border-outline-variant/30 pb-2.5">
+<div class="w-7 h-7 rounded-md bg-secondary-fixed/50 flex items-center justify-center text-on-secondary-fixed-variant">
+<span class="material-symbols-outlined text-base">person</span>
+</div>
+<h3 class="font-headline-sm text-title-md text-on-surface font-bold">Thông tin cá nhân ghi danh</h3>
+</div>
+<!-- Field: Họ và tên -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">
+            Họ và tên khai sinh <span class="text-error">*</span>
+</label>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg py-2 px-3 text-body-md text-on-surface font-title-md focus:border-primary focus:ring-1 focus:ring-primary pl-9" type="text" value="Nguyễn Đình Khang"/>
+<span class="material-symbols-outlined absolute left-2.5 top-2.5 text-on-surface-variant text-base">badge</span>
+</div>
+</div>
+<!-- Field: Số điện thoại (Tên đăng nhập) -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">
+            Số điện thoại liên lạc <span class="text-error">*</span>
+<span class="text-[11px] font-normal text-on-surface-variant">(Dùng đăng nhập hệ thống)</span>
+</label>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg py-2 px-3 text-body-md text-on-surface font-mono focus:border-primary focus:ring-1 focus:ring-primary pl-9" type="tel" value="0918 342 988"/>
+<span class="material-symbols-outlined absolute left-2.5 top-2.5 text-on-surface-variant text-base">call</span>
+</div>
+</div>
+<!-- Field: Ngày sinh & Âm lịch gợi ý -->
+<div>
+<div class="flex items-center justify-between mb-1">
+<label class="font-label-md text-label-md text-on-surface">
+              Ngày tháng năm sinh <span class="text-error">*</span>
+</label>
+<span class="text-[11px] font-label-sm text-secondary flex items-center gap-0.5 bg-secondary-fixed/30 px-1.5 py-0.2 rounded">
+<span class="material-symbols-outlined text-[13px]">calendar_today</span>
+              Âm lịch: 02/07 Bính Tý
+            </span>
+</div>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg py-2 px-3 text-body-md text-on-surface font-mono focus:border-primary focus:ring-1 focus:ring-primary pl-9" type="text" value="15/08/1996"/>
+<span class="material-symbols-outlined absolute left-2.5 top-2.5 text-on-surface-variant text-base">event</span>
+</div>
+</div>
+<!-- Field: Giới tính -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1.5">
+            Giới tính <span class="text-error">*</span>
+</label>
+<div class="grid grid-cols-2 gap-2.5">
+<label class="flex items-center justify-center gap-2 p-2 rounded-lg border-2 border-primary bg-primary-fixed/20 cursor-pointer">
+<input checked="" class="text-primary focus:ring-primary h-4 w-4" name="gender" type="radio" value="nam"/>
+<span class="font-label-md text-label-md text-primary font-bold">Nam (Đinh)</span>
+</label>
+<label class="flex items-center justify-center gap-2 p-2 rounded-lg border border-outline-variant bg-surface hover:bg-surface-container cursor-pointer">
+<input class="text-primary focus:ring-primary h-4 w-4" name="gender" type="radio" value="nu"/>
+<span class="font-label-md text-label-md text-on-surface">Nữ (Ngoại)</span>
+</label>
+</div>
+</div>
+<!-- Field: Mật khẩu -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">
+            Thiết lập mật khẩu bảo mật <span class="text-error">*</span>
+</label>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg py-2 px-3 text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary pl-9 pr-10" id="input-password" type="password" value="KhangNguyen@1996"/>
+<span class="material-symbols-outlined absolute left-2.5 top-2.5 text-on-surface-variant text-base">lock</span>
+<button class="absolute right-2.5 top-2 text-on-surface-variant hover:text-on-surface p-1" id="btn-toggle-pwd" type="button">
+<span class="material-symbols-outlined text-base" id="icon-toggle-pwd">visibility</span>
+</button>
+</div>
+<p class="text-[10px] text-on-surface-variant mt-1">Dùng để tra cứu hồ sơ phả hệ cá nhân và quản lý quỹ dòng tộc sau khi duyệt.</p>
+</div>
+</section>
+<!-- SECTION 5: Kinship & Verifiable Notes (Ghi chú mối quan hệ) -->
+<section class="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/60 shadow-xs space-y-3">
+<div class="flex items-center gap-2 border-b border-outline-variant/30 pb-2.5">
+<div class="w-7 h-7 rounded-md bg-tertiary-fixed flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-base">family_restroom</span>
+</div>
+<h3 class="font-headline-sm text-title-md text-on-surface font-bold">Thân nhân &amp; Minh chứng</h3>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">
+            Quan hệ trực hệ với người đã có tên trong Tộc Phả
+          </label>
+<textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg p-2.5 text-body-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary leading-relaxed" placeholder="Ví dụ: Con trai thứ 2 của ông Nguyễn Đình Phúc (Chi Trưởng), cháu đích tôn cụ Nguyễn Đình Hựu..." rows="3">Con trai thứ 2 của ông Nguyễn Đình Phúc (Chi Trưởng), cháu nội cụ cố Nguyễn Đình Hựu (nhánh Tiên Lục).</textarea>
+</div>
+<!-- Document / Genealogy Photo Attachment -->
+<div class="bg-surface-container-low rounded-lg p-3 border border-dashed border-outline flex items-center justify-between gap-2">
+<div class="flex items-center gap-2.5 min-w-0">
+<span class="material-symbols-outlined text-primary text-xl">photo_library</span>
+<div class="min-w-0">
+<span class="text-xs font-bold text-on-surface block truncate">Ảnh sổ phả giấy hoặc căn cước</span>
+<span class="text-[10px] text-on-surface-variant block">Đã đính kèm: trang_so_pha_doi14.jpg (1.8 MB)</span>
+</div>
+</div>
+<button class="flex-shrink-0 bg-surface-container-lowest text-primary border border-primary/40 font-label-sm text-[11px] px-2.5 py-1.5 rounded hover:bg-primary-fixed/20 transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-xs">upload_file</span>
+            Thay đổi
+          </button>
+</div>
+</section>
+<!-- SECTION 6: Pledge Checkbox (Cam kết gia phong) -->
+<section class="bg-surface-container-low/70 rounded-xl p-3.5 border border-outline-variant/40">
+<label class="flex items-start gap-3 cursor-pointer">
+<input checked="" class="mt-0.5 rounded text-primary focus:ring-primary h-4 w-4 border-outline" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-on-surface leading-snug">
+            Tôi xác nhận thông tin trên là chính xác và cam kết tuân thủ <strong>Gia quy, Hương ước</strong>, giữ gìn truyền thống đạo lý <em class="text-primary font-medium">"Uống nước nhớ nguồn"</em> của dòng tộc Nguyễn.
+          </span>
+</label>
+</section>
+<!-- SECTION 7: Action CTA & Approval Timeline Notice -->
+<section class="space-y-3 pt-1 pb-2">
+<button class="w-full bg-primary hover:bg-[#7e3f28] active:scale-[0.98] transition-all text-on-primary py-3.5 px-4 rounded-lg font-headline-sm text-title-md font-bold tracking-wide shadow-md flex items-center justify-center gap-2 border-t border-primary-fixed/30" type="button">
+<span class="material-symbols-outlined text-xl">send</span>
+          Gửi Đơn Gia Nhập Dòng Họ
+        </button>
+<!-- Trust & Approval Flow Notice -->
+<div class="flex items-center justify-center gap-2 text-center px-2 py-1">
+<span class="material-symbols-outlined text-secondary text-base" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+<p class="text-[11px] font-label-md text-on-surface-variant leading-tight">
+            Hồ sơ sẽ được chuyển tới <span class="font-bold text-on-surface">Ban Trị Sự / Trưởng tộc</span> phê duyệt trong vòng <strong>24–48 giờ</strong>.
+          </p>
+</div>
+</section>
+</main>
+</div>
+<!-- Inline UI Micro-interactions for tab switching and password visibility -->
+<script>
+    // Tab Segment Logic
+    const tabExisting = document.getElementById('tab-branch-existing');
+    const tabNew = document.getElementById('tab-branch-new');
+    const contentExisting = document.getElementById('content-branch-existing');
+    const contentNew = document.getElementById('content-branch-new');
+
+    tabExisting.addEventListener('click', () => {
+      tabExisting.className = 'py-1.5 px-2 rounded-md font-label-md text-label-md transition-all shadow-xs bg-surface-container-lowest text-primary font-bold border border-outline-variant/30';
+      tabNew.className = 'py-1.5 px-2 rounded-md font-label-md text-label-md transition-all text-on-surface-variant hover:text-on-surface';
+      contentExisting.classList.remove('hidden');
+      contentNew.classList.add('hidden');
+    });
+
+    tabNew.addEventListener('click', () => {
+      tabNew.className = 'py-1.5 px-2 rounded-md font-label-md text-label-md transition-all shadow-xs bg-surface-container-lowest text-primary font-bold border border-outline-variant/30';
+      tabExisting.className = 'py-1.5 px-2 rounded-md font-label-md text-label-md transition-all text-on-surface-variant hover:text-on-surface';
+      contentNew.classList.remove('hidden');
+      contentExisting.classList.add('hidden');
+    });
+
+    // Password Toggle Interaction
+    const pwdInput = document.getElementById('input-password');
+    const toggleBtn = document.getElementById('btn-toggle-pwd');
+    const toggleIcon = document.getElementById('icon-toggle-pwd');
+
+    toggleBtn.addEventListener('click', () => {
+      if (pwdInput.type === 'password') {
+        pwdInput.type = 'text';
+        toggleIcon.textContent = 'visibility_off';
+      } else {
+        pwdInput.type = 'password';
+        toggleIcon.textContent = 'visibility';
+      }
+    });
+  </script>
+</body></html>
