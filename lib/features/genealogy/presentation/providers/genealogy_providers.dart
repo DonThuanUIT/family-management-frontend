@@ -57,10 +57,10 @@ class RootBranchNotifier extends Notifier<RootBranchState> {
       branch: FamilyBranchDetail(
         branchId: 'BR_ROOT_TB',
         clanId: 'CLAN_DEFAULT',
-        clanName: 'Họ Lê - Nam Trung, Thái Bình',
+        clanName: 'DÒNG HỌ LÊ VIỆT NAM • Nam Trung, Thái Bình',
         branchName: 'Chi Gốc Nam Trung, Thái Bình',
         generationLevel: 1,
-        representativeId: 'MEM_ANCESTOR_01',
+        representativeId: 'MEM-001',
         representativeName: 'Cụ Lê Phúc Khang (1890 – 1968)',
         description:
             'Nhánh Thủy tổ khởi lập từ cụ Lê Phúc Khang năm 1890 tại làng Nam Trung. Cội nguồn phát tích toàn bộ con cháu các chi phái hiện nay.',

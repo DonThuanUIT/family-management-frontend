@@ -1848,14 +1848,14 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
 
   // Form tiền
   final _cashPayerController =
-      TextEditingController(text: 'Lê Văn Cường (Chi 2 - Đời 5)');
+      TextEditingController(text: 'Lê Hữu Đạt (Chi 2 - Đời 5)');
   final _cashAmountController = TextEditingController(text: '2000000');
   PaymentMethod _paymentMethod = PaymentMethod.BankTransfer;
   String _liveCashWords = 'Hai triệu đồng chẵn';
 
   // Form hiện vật
   final _inKindPayerController =
-      TextEditingController(text: 'Lê Quang Huy (Chi 3 - Đời 5)');
+      TextEditingController(text: 'Lê Quang Huy (Chi 2 - Đời 4)');
   final _itemNameController = TextEditingController(text: 'Cặp hoành phi chữ Hán cổ');
   final _quantityController = TextEditingController(text: '1');
   final _unitController = TextEditingController(text: 'cặp');
