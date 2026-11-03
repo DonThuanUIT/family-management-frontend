@@ -82,7 +82,7 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
 
     final fullName = authState.user?.fullName.isNotEmpty == true
         ? authState.user!.fullName
-        : (session.fullName.isNotEmpty ? session.fullName : 'Nguyễn Trọng Hoàng');
+        : (session.fullName.isNotEmpty ? session.fullName : 'Lê Hữu Tuấn');
     final branchRole = authState.user?.roles.contains('ROLE_CLAN_HEAD') == true
         ? 'Trưởng Tộc • Chi Gốc'
         : (session.branchName.isNotEmpty ? session.branchName : 'Chi 2 (Đời 5)');
@@ -405,8 +405,8 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                             child: Center(
                               child: Text(
                                 fullName.isNotEmpty
-                                    ? fullName.trim()[0].toUpperCase()
-                                    : 'H',
+                                    ? fullName.trim().split(' ').last[0].toUpperCase()
+                                    : 'T',
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,

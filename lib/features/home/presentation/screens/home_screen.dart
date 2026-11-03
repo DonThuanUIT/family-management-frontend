@@ -7,12 +7,47 @@ import '../../../genealogy/presentation/providers/genealogy_providers.dart';
 import '../../../genealogy/presentation/widgets/branch_detail_sidebar.dart';
 import '../../../genealogy/data/models/branch_models.dart';
 
+/// Họa sĩ vẽ nhánh chẽ chữ T chuẩn hình học phả hệ (pixel-perfect)
+class TreeForkPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+
+  const TreeForkPainter({
+    required this.color,
+    this.strokeWidth = 2.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final centerX = size.width / 2;
+    final midY = size.height / 2;
+
+    // Đường đứng từ trên xuống điểm giữa (center stem up)
+    canvas.drawLine(Offset(centerX, 0), Offset(centerX, midY), paint);
+    // Thanh ngang nối từ mép trái sang mép phải (crossbar)
+    canvas.drawLine(Offset(0, midY), Offset(size.width, midY), paint);
+    // Đường đứng mép trái xuống tâm Chi 1 (left drop)
+    canvas.drawLine(Offset(0, midY), Offset(0, size.height), paint);
+    // Đường đứng mép phải xuống tâm Chi 2 (right drop)
+    canvas.drawLine(Offset(size.width, midY), Offset(size.width, size.height), paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant TreeForkPainter oldDelegate) =>
+      oldDelegate.color != color || oldDelegate.strokeWidth != strokeWidth;
+}
+
 /// Màn hình Cây Phả Hệ Trực Quan Đa Chi Phái (Stitch Warm Editorial Heritage)
-/// Đã được tinh chỉnh hoàn thiện:
-/// 1. Hiển thị đầy đủ danh sách 24 thành viên cho Chi 2 (và 18 thành viên cho Chi 1, 42 thành viên cho Chi Gốc).
-/// 2. Bấm vào bất kỳ card nào (kể cả Đời 3, Đời 4, Đời 5) đều mở bảng chi tiết Sidebar.
-/// 3. Sơ đồ chuỗi phả hệ dưới cùng có bộ chuyển đổi giữa Tuyến Chi Trưởng (Cụ An) và Tuyến Chi Thứ (Cụ Bình).
-/// 4. Nút cấp mã mời được thiết kế lại thanh lịch, không bị tràn viền hay mất chữ.
+/// Đã được hoàn thiện theo phản hồi chuyên sâu:
+/// 1. Tách biệt cột con cháu Chi 1 và Chi 2 rõ ràng (Đời 3, Đời 4, Đời 5 nằm đúng trục dọc dưới từng chi).
+/// 2. Bỏ hộp chuyển tuyến chuỗi gia phả ở đáy màn hình (không scale được khi mở rộng nhiều chi).
+/// 3. Đồng bộ danh tính người dùng với tài khoản Lê Hữu Tuấn (Đời 5 • Chi 2).
+/// 4. Click vào bất kỳ node nào (Khởi tổ, Chi 1, Chi 2, Đời 3, 4, 5) đều mở Sidebar chi tiết.
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -26,9 +61,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   // Chi/nhánh hoặc nhân vật đang được chọn để hiển thị chi tiết ở Sidebar bên phải
   BranchUiDetail? _selectedBranch;
-
-  // Tuyến chuỗi gia phả hiển thị ở dưới: 'chi1' (Chi Trưởng) hoặc 'chi2' (Chi Thứ)
-  String _activeLineageRoute = 'chi2';
 
   @override
   void initState() {
@@ -52,6 +84,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final rootDetail = _getRootDetail(rootBranch?.branchName, rootBranch?.description);
     final chi1Detail = _getChi1Detail();
     final chi2Detail = _getChi2Detail();
+
+    // Dữ liệu con cháu Chi 1 (Trưởng Phái)
+    final gen3TuanAnhDetail = _getGen3TuanAnhDetail();
+    final gen4KhoiDetail = _getGen4KhoiDetail();
+    final gen5LongDetail = _getGen5LongDetail();
+
+    // Dữ liệu con cháu Chi 2 (Thứ Phái)
     final gen3HungDetail = _getGen3HungDetail();
     final gen4NamDetail = _getGen4NamDetail();
     final gen5TuanDetail = _getGen5TuanDetail();
@@ -168,118 +207,155 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           context: context,
                           detail: rootDetail,
                           isSelected: _selectedBranch?.id == rootDetail.id,
-                          onTap: () {
-                            setState(() => _activeLineageRoute = 'root');
-                            _handleSelectBranch(rootDetail, isWide);
-                          },
+                          onTap: () => _handleSelectBranch(rootDetail, isWide),
                         ),
 
-                        // Đường nối phân nhánh (Vertical Tree Connector)
+                        // Đường nối dọc từ Khởi Tổ xuống chạc phân nhánh
                         Container(
                           width: 2,
-                          height: 32,
-                          color: kPrimaryColor,
-                        ),
-                        Container(
-                          width: 320,
-                          height: 2,
+                          height: 24,
                           color: kPrimaryColor,
                         ),
 
-                        // CÁC CHI PHÁI ĐỜI 2 (Side-by-side)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 0),
-                          child: Wrap(
-                            alignment: WrapAlignment.center,
-                            spacing: 24,
-                            runSpacing: 20,
+                        // KHUNG PHÂN NHÁNH 2 CỘT (CHI 1 & CHI 2) CÓ KHẢ NĂNG CUỘN NGANG KHI MÀN HÌNH HẸP
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              _buildBranchNodeCard(
-                                context: context,
-                                detail: chi1Detail,
-                                isSelected: _selectedBranch?.id == chi1Detail.id,
-                                isWide: isWide,
-                                onSelect: () {
-                                  setState(() => _activeLineageRoute = 'chi1');
-                                  _handleSelectBranch(chi1Detail, isWide);
-                                },
+                              // Chạc nối hình chữ T nối giữa tâm Cột Chi 1 (160px) và tâm Cột Chi 2 (514px)
+                              const SizedBox(
+                                width: 354,
+                                height: 36,
+                                child: CustomPaint(
+                                  painter: TreeForkPainter(color: kPrimaryColor, strokeWidth: 2),
+                                ),
                               ),
-                              _buildBranchNodeCard(
-                                context: context,
-                                detail: chi2Detail,
-                                isSelected: _selectedBranch?.id == chi2Detail.id,
-                                isWide: isWide,
-                                onSelect: () {
-                                  setState(() => _activeLineageRoute = 'chi2');
-                                  _handleSelectBranch(chi2Detail, isWide);
-                                },
+
+                              // Hàng chứa 2 CỘT PHẢ HỆ ĐỨNG SONG SONG (Chi 1 bên trái, Chi 2 bên phải)
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // ==================== CỘT 1: CHI 1 (TRƯỞNG PHÁI) ====================
+                                  SizedBox(
+                                    width: 320,
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        _buildBranchNodeCard(
+                                          context: context,
+                                          detail: chi1Detail,
+                                          isSelected: _selectedBranch?.id == chi1Detail.id,
+                                          isWide: isWide,
+                                          onSelect: () => _handleSelectBranch(chi1Detail, isWide),
+                                        ),
+
+                                        if (_isFullTreeExpanded) ...[
+                                          // Đường nối dọc
+                                          Container(width: 2, height: 24, color: kPrimaryColor),
+
+                                          // Đời 3: Bác Lê Tuấn Anh (Trưởng Chi 1)
+                                          _buildSubGenerationCard(
+                                            generation: 'ĐỜI 3',
+                                            title: 'Bác Lê Tuấn Anh',
+                                            subtitle: 'Sinh 1950 • Trưởng Nam Chi 1',
+                                            color: const Color(0xFF8F482F),
+                                            isSelected: _selectedBranch?.id == gen3TuanAnhDetail.id,
+                                            onTap: () => _handleSelectBranch(gen3TuanAnhDetail, isWide),
+                                          ),
+
+                                          // Đường nối dọc
+                                          Container(width: 2, height: 24, color: kPrimaryColor),
+
+                                          // Đời 4: Chú Lê Đình Khôi
+                                          _buildSubGenerationCard(
+                                            generation: 'ĐỜI 4',
+                                            title: 'Chú Lê Đình Khôi',
+                                            subtitle: 'Sinh 1976 • Ban Quản Lý & Từ Thiện',
+                                            color: const Color(0xFFAD5F45),
+                                            isSelected: _selectedBranch?.id == gen4KhoiDetail.id,
+                                            onTap: () => _handleSelectBranch(gen4KhoiDetail, isWide),
+                                          ),
+
+                                          // Đường nối dọc
+                                          Container(width: 2, height: 24, color: kPrimaryColor),
+
+                                          // Đời 5: Lê Hoàng Long
+                                          _buildSubGenerationCard(
+                                            generation: 'ĐỜI 5',
+                                            title: 'Lê Hoàng Long',
+                                            subtitle: 'Sinh 2002 • Kế Thừa Chi Trưởng',
+                                            color: const Color(0xFFC27B66),
+                                            isSelected: _selectedBranch?.id == gen5LongDetail.id,
+                                            onTap: () => _handleSelectBranch(gen5LongDetail, isWide),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+
+                                  const SizedBox(width: 34),
+
+                                  // ==================== CỘT 2: CHI 2 (THỨ PHÁI) ====================
+                                  SizedBox(
+                                    width: 320,
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        _buildBranchNodeCard(
+                                          context: context,
+                                          detail: chi2Detail,
+                                          isSelected: _selectedBranch?.id == chi2Detail.id,
+                                          isWide: isWide,
+                                          onSelect: () => _handleSelectBranch(chi2Detail, isWide),
+                                        ),
+
+                                        if (_isFullTreeExpanded) ...[
+                                          // Đường nối dọc
+                                          Container(width: 2, height: 24, color: kPrimaryColor),
+
+                                          // Đời 3: Bác Lê Văn Hùng (Trưởng Chi 2)
+                                          _buildSubGenerationCard(
+                                            generation: 'ĐỜI 3',
+                                            title: 'Bác Lê Văn Hùng',
+                                            subtitle: '(1954 – 2021) • Trưởng Chi 2',
+                                            color: const Color(0xFF8F482F),
+                                            isSelected: _selectedBranch?.id == gen3HungDetail.id,
+                                            onTap: () => _handleSelectBranch(gen3HungDetail, isWide),
+                                          ),
+
+                                          // Đường nối dọc
+                                          Container(width: 2, height: 24, color: kPrimaryColor),
+
+                                          // Đời 4: Chú Lê Hữu Nam
+                                          _buildSubGenerationCard(
+                                            generation: 'ĐỜI 4',
+                                            title: 'Chú Lê Hữu Nam',
+                                            subtitle: 'Sinh 1980 • Đại diện Ban Liên Lạc',
+                                            color: const Color(0xFFAD5F45),
+                                            isSelected: _selectedBranch?.id == gen4NamDetail.id,
+                                            onTap: () => _handleSelectBranch(gen4NamDetail, isWide),
+                                          ),
+
+                                          // Đường nối dọc
+                                          Container(width: 2, height: 24, color: kPrimaryColor),
+
+                                          // Đời 5: Lê Hữu Tuấn (VỊ TRÍ TÀI KHOẢN CỦA BẠN TRONG DÒNG HỌ)
+                                          _buildCurrentUserGen5Card(
+                                            detail: gen5TuanDetail,
+                                            isSelected: _selectedBranch?.id == gen5TuanDetail.id,
+                                            onTap: () => _handleSelectBranch(gen5TuanDetail, isWide),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
                         ),
-
-                        // 3. PHẦN MỞ RỘNG CÁC ĐỜI CON CHÁU TIẾP NỐI (ĐỜI 3 -> ĐỜI 4 -> ĐỜI 5)
-                        if (_isFullTreeExpanded) ...[
-                          const SizedBox(height: 12),
-                          // Đường nối dọc từ Chi 2 xuống
-                          Container(
-                            width: 2,
-                            height: 36,
-                            color: kPrimaryColor,
-                          ),
-
-                          // Card Đời 3: Bác Lê Văn Hùng (BẤM VÀO ĐƯỢC ĐỂ XEM CHI TIẾT)
-                          _buildSubGenerationCard(
-                            generation: 'ĐỜI 3',
-                            title: 'Bác Lê Văn Hùng',
-                            subtitle: '(1954 – 2021) • Trưởng Chi 2',
-                            badge: 'Thế Hệ Trực Hệ',
-                            color: const Color(0xFF8F482F),
-                            isSelected: _selectedBranch?.id == gen3HungDetail.id,
-                            onTap: () {
-                              setState(() => _activeLineageRoute = 'chi2');
-                              _handleSelectBranch(gen3HungDetail, isWide);
-                            },
-                          ),
-
-                          Container(
-                            width: 2,
-                            height: 24,
-                            color: kPrimaryColor,
-                          ),
-
-                          // Card Đời 4: Chú Lê Hữu Nam (BẤM VÀO ĐƯỢC ĐỂ XEM CHI TIẾT)
-                          _buildSubGenerationCard(
-                            generation: 'ĐỜI 4',
-                            title: 'Chú Lê Hữu Nam',
-                            subtitle: 'Sinh 1980 • Đại diện Ban Liên Lạc',
-                            badge: 'Kế Thừa Chi',
-                            color: const Color(0xFFAD5F45),
-                            isSelected: _selectedBranch?.id == gen4NamDetail.id,
-                            onTap: () {
-                              setState(() => _activeLineageRoute = 'chi2');
-                              _handleSelectBranch(gen4NamDetail, isWide);
-                            },
-                          ),
-
-                          Container(
-                            width: 2,
-                            height: 24,
-                            color: kPrimaryColor,
-                          ),
-
-                          // Card Đời 5: Con cháu thế hệ hiện tại (Lê Hữu Tuấn - BẤM VÀO ĐƯỢC)
-                          _buildCurrentUserGen5Card(
-                            detail: gen5TuanDetail,
-                            isSelected: _selectedBranch?.id == gen5TuanDetail.id,
-                            activeRoute: _activeLineageRoute,
-                            onSwitchRoute: (route) => setState(() => _activeLineageRoute = route),
-                            onTap: () {
-                              setState(() => _activeLineageRoute = 'chi2');
-                              _handleSelectBranch(gen5TuanDetail, isWide);
-                            },
-                          ),
-                        ],
 
                         const SizedBox(height: 36),
 
@@ -297,7 +373,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'Mẹo: Nhấp vào bất kỳ nhánh nào (Khởi tổ, Chi 1, Chi 2, Đời 3, 4, 5) để xem chi tiết đầy đủ thành viên trên bảng sidebar.',
+                                  'Mẹo: Nhấp vào bất kỳ thẻ nào trên sơ đồ cây để xem toàn bộ danh sách thành viên, quỹ chi và chuỗi kế thừa trực hệ trên bảng chi tiết sidebar.',
                                   style: TextStyle(
                                     fontFamily: 'Plus Jakarta Sans',
                                     fontSize: 12,
@@ -776,10 +852,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               decoration: const BoxDecoration(
                 border: Border(top: BorderSide(color: Color(0xFFEFECE8))),
               ),
-              child: Row(
+              child: const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Xem bảng chi tiết',
                     style: TextStyle(
                       fontFamily: 'Plus Jakarta Sans',
@@ -788,7 +864,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       color: kPrimaryColor,
                     ),
                   ),
-                  const Icon(Icons.arrow_forward, size: 14, color: kPrimaryColor),
+                  Icon(Icons.arrow_forward, size: 14, color: kPrimaryColor),
                 ],
               ),
             ),
@@ -798,12 +874,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // 3. Sub-Generation Cards (Đời 3, Đời 4) - ĐÃ ĐƯỢC GẮN ONTAP ĐỂ MỞ SIDEBAR
+  // 3. Sub-Generation Cards (Đời 3, Đời 4, Đời 5 con cháu)
   Widget _buildSubGenerationCard({
     required String generation,
     required String title,
     required String subtitle,
-    required String badge,
     required Color color,
     required bool isSelected,
     required VoidCallback onTap,
@@ -849,7 +924,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -862,14 +937,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF1C1C1A),
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
+                  const SizedBox(height: 1),
                   Text(
                     subtitle,
                     style: const TextStyle(
                       fontFamily: 'Plus Jakarta Sans',
-                      fontSize: 11,
+                      fontSize: 10.5,
                       color: Color(0xFF6B584E),
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
@@ -894,191 +974,180 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // 4. Current User Gen 5 Card (Highlight vị trí bạn) - CÓ BỘ CHUYỂN TUYẾN GIA PHẢ CHI 1 / CHI 2
+  // 4. Current User Gen 5 Card (Highlight vị trí tài khoản của bạn tại Đời 5 Chi 2)
   Widget _buildCurrentUserGen5Card({
     required BranchUiDetail detail,
     required bool isSelected,
-    required String activeRoute,
-    required ValueChanged<String> onSwitchRoute,
     required VoidCallback onTap,
   }) {
+    const kPrimaryColor = Color(0xFF8F482F);
+
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        width: double.infinity,
-        constraints: const BoxConstraints(maxWidth: 580),
-        padding: const EdgeInsets.all(16),
+        width: 320,
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          color: const Color(0xFFFCF6F3),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? const Color(0xFF006E2A) : const Color(0xFF8F482F),
-            width: isSelected ? 2 : 1.5,
+            color: isSelected ? const Color(0xFF006E2A) : kPrimaryColor,
+            width: 2,
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF8F482F).withValues(alpha: isSelected ? 0.16 : 0.08),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
+              color: kPrimaryColor.withValues(alpha: isSelected ? 0.2 : 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header vị trí người dùng
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            // Top badge row (Responsive Wrap)
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 6,
+              runSpacing: 4,
               children: [
-                const Icon(Icons.pin_drop, size: 20, color: Color(0xFF8F482F)),
-                const SizedBox(width: 6),
-                const Text(
-                  'Vị trí của bạn trong gia phả: ',
-                  style: TextStyle(
-                    fontFamily: 'Plus Jakarta Sans',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1C1C1A),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: kPrimaryColor,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.pin_drop, size: 12, color: Colors.white),
+                      SizedBox(width: 4),
+                      Text(
+                        'VỊ TRÍ CỦA BẠN • ĐỜI 5',
+                        style: TextStyle(
+                          fontFamily: 'JetBrains Mono',
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const Text(
-                  'Lê Hữu Tuấn',
-                  style: TextStyle(
-                    fontFamily: 'Plus Jakarta Sans',
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF8F482F),
-                  ),
-                ),
-                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF8F482F).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
+                    color: const Color(0xFF006E2A).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Text(
-                    'Đời 5 • Chi 2',
+                    '● Đã kích hoạt',
                     style: TextStyle(
                       fontFamily: 'JetBrains Mono',
-                      fontSize: 10.5,
+                      fontSize: 9.5,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF8F482F),
+                      color: Color(0xFF006E2A),
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 6),
-            const Text(
-              'Mã hồ sơ: LE-CHI2-DOI5-9821 • Đã kích hoạt liên kết tài khoản',
-              style: TextStyle(
-                fontFamily: 'JetBrains Mono',
-                fontSize: 11,
-                color: Color(0xFF6B584E),
-              ),
-            ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
 
-            // BỘ CHUYỂN TUYẾN HUYẾT THỐNG (Chi Trưởng Cụ An vs Chi Thứ Cụ Bình)
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF4EFEA),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: InkWell(
-                      onTap: () => onSwitchRoute('chi1'),
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        decoration: BoxDecoration(
-                          color: activeRoute == 'chi1' ? Colors.white : Colors.transparent,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: activeRoute == 'chi1'
-                              ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)]
-                              : null,
-                        ),
-                        child: Text(
-                          'Tuyến Chi Trưởng (Cụ An)',
-                          style: TextStyle(
-                            fontFamily: 'Plus Jakarta Sans',
-                            fontSize: 11.5,
-                            fontWeight: activeRoute == 'chi1' ? FontWeight.bold : FontWeight.w500,
-                            color: activeRoute == 'chi1' ? const Color(0xFF8F482F) : const Color(0xFF6B584E),
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
+            // Person info
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 17,
+                  backgroundColor: kPrimaryColor.withValues(alpha: 0.15),
+                  child: const Text(
+                    'T',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: kPrimaryColor,
+                      fontSize: 14,
                     ),
                   ),
-                  Expanded(
-                    child: InkWell(
-                      onTap: () => onSwitchRoute('chi2'),
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        decoration: BoxDecoration(
-                          color: activeRoute == 'chi2' ? Colors.white : Colors.transparent,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: activeRoute == 'chi2'
-                              ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)]
-                              : null,
-                        ),
-                        child: Text(
-                          'Tuyến Chi Thứ (Cụ Bình)',
-                          style: TextStyle(
-                            fontFamily: 'Plus Jakarta Sans',
-                            fontSize: 11.5,
-                            fontWeight: activeRoute == 'chi2' ? FontWeight.bold : FontWeight.w500,
-                            color: activeRoute == 'chi2' ? const Color(0xFF8F482F) : const Color(0xFF6B584E),
-                          ),
-                          textAlign: TextAlign.center,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        detail.representative,
+                        style: const TextStyle(
+                          fontFamily: 'Merriweather',
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1C1C1A),
                         ),
                       ),
+                      const SizedBox(height: 1),
+                      const Text(
+                        'Sinh 1998 • Chi 2 (Nhánh Nam)',
+                        style: TextStyle(
+                          fontFamily: 'Plus Jakarta Sans',
+                          fontSize: 11,
+                          color: Color(0xFF6B584E),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (isSelected)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF006E2A),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'Đang xem',
+                      style: TextStyle(fontSize: 9.5, color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  )
+                else
+                  const Icon(Icons.chevron_right, size: 18, color: kPrimaryColor),
+              ],
+            ),
+            const SizedBox(height: 8),
+
+            // Mã hồ sơ & nút xem chi tiết
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFFDAC1BA).withValues(alpha: 0.5)),
+              ),
+              child: Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 6,
+                runSpacing: 4,
+                children: [
+                  Text(
+                    'Mã: ${detail.code}',
+                    style: const TextStyle(
+                      fontFamily: 'JetBrains Mono',
+                      fontSize: 10,
+                      color: Color(0xFF6B584E),
+                    ),
+                  ),
+                  const Text(
+                    'Xem hồ sơ →',
+                    style: TextStyle(
+                      fontFamily: 'Plus Jakarta Sans',
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.bold,
+                      color: kPrimaryColor,
                     ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 10),
-
-            // Nội dung chuỗi trực hệ hiển thị động theo tuyến chọn
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFAF7F4),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFEAE5E0)),
-              ),
-              child: Text(
-                activeRoute == 'chi1'
-                    ? 'Khởi Tổ (1890) ➔ Cụ An (1918) ➔ Bác Tuấn Anh (1950) ➔ Chú Khôi (1976) ➔ Long (2002)'
-                    : 'Khởi Tổ (1890) ➔ Cụ Bình (1922) ➔ Bác Hùng (1954) ➔ Chú Nam (1980) ➔ Tuấn (1998)',
-                style: const TextStyle(
-                  fontFamily: 'JetBrains Mono',
-                  fontSize: 11,
-                  color: Color(0xFF8F482F),
-                  fontWeight: FontWeight.w600,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              activeRoute == 'chi1'
-                  ? '📌 Chuỗi trực hệ Chi Trưởng (Phái con cháu cụ Cả Lê Văn An)'
-                  : '📌 Chuỗi trực hệ Chi Thứ (Phái con cháu cụ Lê Văn Bình - Nhánh của bạn)',
-              style: const TextStyle(
-                fontFamily: 'Plus Jakarta Sans',
-                fontSize: 11,
-                color: Color(0xFF6B584E),
-                fontStyle: FontStyle.italic,
-              ),
-              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -1124,11 +1193,98 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       fundAmount: '42.000.000 đ',
       description: 'Nhánh Trưởng Nam tiếp quản nhà thờ tổ làng Nam Trung, phụ trách nghi lễ cúng giỗ truyền thống dòng họ.',
       successionChain: const [
+        'Cụ Lê Phúc Khang (Khởi tổ 1890)',
         'Cụ Lê Văn An (Đời 2)',
-        'Lê Tuấn Anh (Đời 3 - 8 nhân khẩu)',
-        'Lê Đình Khôi (Đời 4 - Ban từ thiện)',
+        'Bác Lê Tuấn Anh (Đời 3)',
+        'Chú Lê Đình Khôi (Đời 4)',
+        'Lê Hoàng Long (Đời 5)',
       ],
       members: _generateChi118Members(),
+    );
+  }
+
+  BranchUiDetail _getGen3TuanAnhDetail() {
+    return const BranchUiDetail(
+      id: 'GEN3_TUAN_ANH',
+      name: 'Nhánh Bác Lê Tuấn Anh',
+      badge: 'Đời 3 • Trưởng Chi 1',
+      code: 'LE-CHI1-DOI3-ANH',
+      representative: 'Bác Lê Tuấn Anh',
+      representativeSubtext: 'Sinh 1950 • Trưởng Nam Cụ An',
+      memberCount: 10,
+      activatedMemberCount: 8,
+      fundAmount: '26.000.000 đ',
+      description: 'Bác Lê Tuấn Anh tiếp quản phụng dưỡng từ đường Chi Trưởng tại làng Nam Trung, phụ trách các nghi thức đại lễ giỗ tổ hàng năm của dòng họ.',
+      successionChain: [
+        'Cụ Lê Phúc Khang (Khởi tổ 1890)',
+        'Cụ Lê Văn An (Đời 2)',
+        'Bác Lê Tuấn Anh (Đời 3)',
+        'Chú Lê Đình Khôi (Đời 4)',
+        'Lê Hoàng Long (Đời 5)',
+      ],
+      members: [
+        BranchMemberItem(memberId: 'MEM-102', fullName: 'Lê Tuấn Anh', generation: 3, birthDeathInfo: 'Sinh 1950', roleInBranch: 'Trưởng Nam Chi 1', isActivated: true),
+        BranchMemberItem(memberId: 'MEM-102B', fullName: 'Đỗ Thị Nga', generation: 3, birthDeathInfo: 'Sinh 1952', roleInBranch: 'Dâu Chi 1', gender: 'female', isActivated: true),
+        BranchMemberItem(memberId: 'MEM-104', fullName: 'Lê Đình Khôi', generation: 4, birthDeathInfo: 'Sinh 1976', roleInBranch: 'Trưởng nam Bác Tuấn Anh', isActivated: true),
+        BranchMemberItem(memberId: 'MEM-104B', fullName: 'Nguyễn Thùy Chi', generation: 4, birthDeathInfo: 'Sinh 1978', roleInBranch: 'Dâu Đời 4', gender: 'female', isActivated: true),
+        BranchMemberItem(memberId: 'MEM-105', fullName: 'Lê Đình Bảo', generation: 4, birthDeathInfo: 'Sinh 1982', roleInBranch: 'Thứ nam Bác Tuấn Anh', isActivated: true),
+        BranchMemberItem(memberId: 'MEM-108', fullName: 'Lê Hoàng Long', generation: 5, birthDeathInfo: 'Sinh 2002', roleInBranch: 'Trưởng nam Đời 5 Chi 1', isActivated: false),
+        BranchMemberItem(memberId: 'MEM-109', fullName: 'Lê Thảo My', generation: 5, birthDeathInfo: 'Sinh 2005', roleInBranch: 'Con gái Chú Khôi', gender: 'female', isActivated: true),
+        BranchMemberItem(memberId: 'MEM-110', fullName: 'Lê Minh Triết', generation: 5, birthDeathInfo: 'Sinh 2008', roleInBranch: 'Con trai Chú Bảo', isActivated: true),
+      ],
+    );
+  }
+
+  BranchUiDetail _getGen4KhoiDetail() {
+    return const BranchUiDetail(
+      id: 'GEN4_KHOI',
+      name: 'Gia Đình Chú Lê Đình Khôi',
+      badge: 'Đời 4 • Ban Quản Lý',
+      code: 'LE-CHI1-DOI4-KHOI',
+      representative: 'Chú Lê Đình Khôi',
+      representativeSubtext: 'Sinh 1976 • Trưởng Nam Bác Tuấn Anh',
+      memberCount: 4,
+      activatedMemberCount: 4,
+      fundAmount: '16.000.000 đ',
+      description: 'Chú Lê Đình Khôi sinh năm 1976, phụ trách ban quản lý từ đường và tổ chức các hoạt động thiện nguyện, khuyến học trong Chi Trưởng.',
+      successionChain: [
+        'Cụ Lê Phúc Khang (Khởi tổ 1890)',
+        'Cụ Lê Văn An (Đời 2)',
+        'Bác Lê Tuấn Anh (Đời 3)',
+        'Chú Lê Đình Khôi (Đời 4)',
+        'Lê Hoàng Long (Đời 5)',
+      ],
+      members: [
+        BranchMemberItem(memberId: 'MEM-104', fullName: 'Lê Đình Khôi', generation: 4, birthDeathInfo: 'Sinh 1976', roleInBranch: 'Chủ hộ • Đời 4', isActivated: true),
+        BranchMemberItem(memberId: 'MEM-104B', fullName: 'Nguyễn Thùy Chi', generation: 4, birthDeathInfo: 'Sinh 1978', roleInBranch: 'Vợ (Dâu họ)', gender: 'female', isActivated: true),
+        BranchMemberItem(memberId: 'MEM-108', fullName: 'Lê Hoàng Long', generation: 5, birthDeathInfo: 'Sinh 2002', roleInBranch: 'Con trai trưởng', isActivated: false),
+        BranchMemberItem(memberId: 'MEM-109', fullName: 'Lê Thảo My', generation: 5, birthDeathInfo: 'Sinh 2005', roleInBranch: 'Con gái', gender: 'female', isActivated: true),
+      ],
+    );
+  }
+
+  BranchUiDetail _getGen5LongDetail() {
+    return const BranchUiDetail(
+      id: 'GEN5_LONG',
+      name: 'Hồ Sơ: Lê Hoàng Long',
+      badge: 'Đời 5 • Chi Trưởng',
+      code: 'LE-CHI1-DOI5-0312',
+      representative: 'Lê Hoàng Long',
+      representativeSubtext: 'Sinh 2002 • Kế thừa Chi 1',
+      memberCount: 1,
+      activatedMemberCount: 1,
+      fundAmount: '2.500.000 đ',
+      description: 'Lê Hoàng Long sinh năm 2002, con cháu thế hệ thứ 5 thuộc Chi Trưởng (Cụ Lê Văn An), nhiệt tình tham gia số hóa phả hệ họ tộc.',
+      successionChain: [
+        'Cụ Lê Phúc Khang (Khởi tổ 1890)',
+        'Cụ Lê Văn An (Đời 2)',
+        'Bác Lê Tuấn Anh (Đời 3)',
+        'Chú Lê Đình Khôi (Đời 4)',
+        'Lê Hoàng Long (Đời 5)',
+      ],
+      members: [
+        BranchMemberItem(memberId: 'MEM-108', fullName: 'Lê Hoàng Long', generation: 5, birthDeathInfo: 'Sinh 2002 (24 tuổi)', roleInBranch: 'Con cháu Đời 5 Chi Trưởng', isActivated: true),
+      ],
     );
   }
 
@@ -1145,9 +1301,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       fundAmount: '85.650.000 đ',
       description: 'Nhánh Thứ Phái phát triển mạnh mẽ về kinh tế và giáo dục, phụ trách quỹ khuyến học và quỹ công đức xây dựng.',
       successionChain: const [
-        'Lê Văn Hùng (Trưởng Chi 2 • Đời 3)',
-        'Lê Hữu Nam (Đời 4)',
-        'Lê Hữu Tuấn (Đời 5 - Vừa gia nhập)',
+        'Cụ Lê Phúc Khang (Khởi tổ 1890)',
+        'Cụ Lê Văn Bình (Đời 2)',
+        'Bác Lê Văn Hùng (Trưởng Chi 2 • Đời 3)',
+        'Chú Lê Hữu Nam (Đời 4)',
+        'Lê Hữu Tuấn (Đời 5 - Vị trí của bạn)',
       ],
       members: _generateChi224Members(),
     );
@@ -1166,6 +1324,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       fundAmount: '56.200.000 đ',
       description: 'Bác Lê Văn Hùng là Trưởng Nam của Cụ Bình, phụ trách phát triển và kết nối dòng họ Chi 2, duy trì ngày cúng giỗ truyền thống.',
       successionChain: [
+        'Cụ Lê Phúc Khang (Khởi tổ 1890)',
         'Cụ Lê Văn Bình (Đời 2)',
         'Bác Lê Văn Hùng (Đời 3)',
         'Chú Lê Hữu Nam (Đời 4)',
@@ -1200,10 +1359,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       fundAmount: '28.450.000 đ',
       description: 'Chú Lê Hữu Nam sinh năm 1980, phụ trách Ban Liên Lạc Dòng Họ Chi 2, kết nối các thế hệ con cháu thanh niên và số hóa phả hệ.',
       successionChain: [
+        'Cụ Lê Phúc Khang (Khởi tổ 1890)',
+        'Cụ Lê Văn Bình (Đời 2)',
         'Bác Lê Văn Hùng (Đời 3)',
         'Chú Lê Hữu Nam (Đời 4)',
         'Lê Hữu Tuấn (Đời 5)',
-        'Lê Hữu Đạt (Đời 5)',
       ],
       members: [
         BranchMemberItem(memberId: 'MEM-204', fullName: 'Lê Hữu Nam', generation: 4, birthDeathInfo: 'Sinh 1980', roleInBranch: 'Chủ hộ • Đời 4', isActivated: true),
@@ -1228,11 +1388,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       fundAmount: '5.000.000 đ',
       description: 'Lê Hữu Tuấn sinh năm 1998, vị trí tài khoản đăng nhập hiện tại trong dòng họ. Thuộc nhánh Chi 2 của Cụ Lê Văn Bình.',
       successionChain: [
-        'Khởi Tổ 1890',
-        'Cụ Bình 1922',
-        'Bác Hùng 1954',
-        'Chú Nam 1980',
-        'Tuấn 1998',
+        'Cụ Lê Phúc Khang (Khởi tổ 1890)',
+        'Cụ Lê Văn Bình (Đời 2)',
+        'Bác Lê Văn Hùng (Đời 3)',
+        'Chú Lê Hữu Nam (Đời 4)',
+        'Lê Hữu Tuấn (Đời 5 - Tài khoản của bạn)',
       ],
       members: [
         BranchMemberItem(memberId: 'MEM-208', fullName: 'Lê Hữu Tuấn', generation: 5, birthDeathInfo: 'Sinh 1998 (28 tuổi)', roleInBranch: 'Tài khoản chính • Đã xác thực', isActivated: true),

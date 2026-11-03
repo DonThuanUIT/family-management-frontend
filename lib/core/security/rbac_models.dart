@@ -166,8 +166,8 @@ class DualRbacSessionNotifier extends Notifier<DualRbacSession> {
     return const DualRbacSession(
       accountId: 'ACC_HOANG_01',
       memberId: 'MEM_001',
-      fullName: 'Nguyễn Trọng Hoàng',
-      branchName: 'Chi 1 - Nhánh Trưởng',
+      fullName: 'Lê Hữu Tuấn',
+      branchName: 'Chi 2 • Nhánh Nam',
       globalRoles: {
         SystemRole.roleClanHead,
         SystemRole.roleBranchHead,

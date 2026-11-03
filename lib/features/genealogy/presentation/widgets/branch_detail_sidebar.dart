@@ -185,13 +185,17 @@ class _BranchDetailSidebarState extends State<BranchDetailSidebar> {
               color: isSelected ? activeColor : const Color(0xFF6B584E),
             ),
             const SizedBox(width: 6),
-            Text(
-              title,
-              style: TextStyle(
-                fontFamily: 'Plus Jakarta Sans',
-                fontSize: 12.5,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected ? activeColor : const Color(0xFF6B584E),
+            Flexible(
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: 'Plus Jakarta Sans',
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                  color: isSelected ? activeColor : const Color(0xFF6B584E),
+                ),
               ),
             ),
           ],
