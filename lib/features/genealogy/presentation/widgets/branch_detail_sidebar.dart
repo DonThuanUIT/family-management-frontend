@@ -681,31 +681,84 @@ class _BranchDetailSidebarState extends State<BranchDetailSidebar> {
                 ),
         ),
 
-        // Add Member Button Bottom
+        // Thanh đếm số lượng & Add Member Button Bottom
         Container(
-          padding: const EdgeInsets.all(12),
-          decoration: const BoxDecoration(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          decoration: BoxDecoration(
             color: Colors.white,
-            border: Border(top: BorderSide(color: Color(0xFFEAE5E0))),
-          ),
-          child: ElevatedButton.icon(
-            onPressed: () {
-              context.push('/clan-invites');
-            },
-            icon: const Icon(Icons.person_add_alt_1, size: 16, color: Colors.white),
-            label: const Text(
-              'Cấp Mã Mời Thêm Thành Viên',
-              style: TextStyle(
-                fontFamily: 'Plus Jakarta Sans',
-                fontSize: 12.5,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+            border: const Border(top: BorderSide(color: Color(0xFFEAE5E0))),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, -2),
               ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryColor,
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ],
+          ),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Hiển thị: ${members.length} / ${widget.branch.memberCount} thành viên',
+                      style: const TextStyle(
+                        fontFamily: 'JetBrains Mono',
+                        fontSize: 11,
+                        color: Color(0xFF6B584E),
+                      ),
+                    ),
+                    Text(
+                      '${widget.branch.activatedMemberCount} đã kích hoạt',
+                      style: const TextStyle(
+                        fontFamily: 'JetBrains Mono',
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF006E2A),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  height: 44,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      context.push('/clan-invites');
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      elevation: 1,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.qr_code_2, size: 18, color: Colors.white),
+                        SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            'Cấp Mã Mời Thành Viên',
+                            style: TextStyle(
+                              fontFamily: 'Plus Jakarta Sans',
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
