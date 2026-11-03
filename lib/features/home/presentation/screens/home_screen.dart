@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/security/rbac_models.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../shared/presentation/widgets/heritage_nav_bar.dart';
 import '../../../genealogy/presentation/providers/genealogy_providers.dart';
 import '../../../genealogy/presentation/widgets/branch_detail_sidebar.dart';
@@ -61,6 +63,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   // Chi/nhánh hoặc nhân vật đang được chọn để hiển thị chi tiết ở Sidebar bên phải
   BranchUiDetail? _selectedBranch;
+  bool _initialBranchInitialized = false;
 
   @override
   void initState() {
@@ -73,6 +76,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final branchState = ref.watch(rootBranchProvider);
     final rootBranch = branchState.branch;
 
+    final authState = ref.watch(authStateProvider);
+    final session = ref.watch(dualRbacSessionProvider);
+
+    final currentUserName = authState.user?.fullName.isNotEmpty == true
+        ? authState.user!.fullName
+        : (session.fullName.isNotEmpty ? session.fullName : 'Lê Hữu Tuấn');
+    final isClanHead = authState.user?.roles.contains('ROLE_CLAN_HEAD') == true ||
+        (session.globalRoles.contains(SystemRole.roleClanHead) && !session.fullName.contains('Tuấn'));
+    final isBranchHead = authState.user?.roles.contains('ROLE_BRANCH_HEAD') == true ||
+        session.globalRoles.contains(SystemRole.roleBranchHead);
+    final currentMemberId = authState.user?.memberId ?? session.memberId;
+
+    final isNguyenClan = currentUserName.startsWith('Nguyễn');
+
+    // Xác định vị trí người dùng hiện tại trên cây phả hệ
+    final isGen5TuanCurrentUser = (currentUserName == 'Lê Hữu Tuấn' || currentMemberId == 'MEM-208') && !isNguyenClan;
+    final isRootCurrentUser = isClanHead && !isGen5TuanCurrentUser;
+    final isChi1CurrentUser = (currentUserName == 'Nguyễn Văn An' || currentUserName == 'Lê Tuấn Anh' || currentMemberId == 'MEM_TRUONG_CHI');
+    final isChi2CurrentUser = !isChi1CurrentUser && !isRootCurrentUser && !isGen5TuanCurrentUser && isBranchHead;
+
     const kPrimaryColor = Color(0xFF8F482F);
     const kBgColor = Color(0xFFFCF9F6);
     const kSurfaceColor = Color(0xFFFFFFFF);
@@ -80,20 +103,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final isWide = MediaQuery.of(context).size.width >= 900;
 
-    // Dữ liệu chi tiết các nhánh & nhân vật
-    final rootDetail = _getRootDetail(rootBranch?.branchName, rootBranch?.description);
-    final chi1Detail = _getChi1Detail();
-    final chi2Detail = _getChi2Detail();
+    // Dữ liệu chi tiết các nhánh & nhân vật theo Dòng Họ của tài khoản đăng nhập
+    final BranchUiDetail rootDetail;
+    final BranchUiDetail chi1Detail;
+    final BranchUiDetail chi2Detail;
+    final BranchUiDetail gen3TuanAnhDetail;
+    final BranchUiDetail gen4KhoiDetail;
+    final BranchUiDetail gen5LongDetail;
+    final BranchUiDetail gen3HungDetail;
+    final BranchUiDetail gen4NamDetail;
+    final BranchUiDetail gen5TuanDetail;
 
-    // Dữ liệu con cháu Chi 1 (Trưởng Phái)
-    final gen3TuanAnhDetail = _getGen3TuanAnhDetail();
-    final gen4KhoiDetail = _getGen4KhoiDetail();
-    final gen5LongDetail = _getGen5LongDetail();
+    if (isNguyenClan) {
+      rootDetail = _getNguyenRootDetail(isClanHead: isRootCurrentUser);
+      chi1Detail = _getNguyenChi1Detail(isCurrentUser: isChi1CurrentUser);
+      chi2Detail = _getNguyenChi2Detail(isCurrentUser: isChi2CurrentUser);
+      gen3TuanAnhDetail = _getNguyenGen3MaiAnhDetail(isCurrentUser: currentUserName == 'Nguyễn Thị Mai Anh');
+      gen4KhoiDetail = _getNguyenGen4LongDetail();
+      gen5LongDetail = _getNguyenGen5Detail();
+      gen3HungDetail = _getNguyenGen3NamDetail();
+      gen4NamDetail = _getNguyenGen4DatDetail();
+      gen5TuanDetail = _getNguyenGen5TuanDetail();
+    } else {
+      rootDetail = _getRootDetail(rootBranch?.branchName, rootBranch?.description, isCurrentUser: isRootCurrentUser);
+      chi1Detail = _getChi1Detail(isCurrentUser: isChi1CurrentUser);
+      chi2Detail = _getChi2Detail(isCurrentUser: isChi2CurrentUser);
+      gen3TuanAnhDetail = _getGen3TuanAnhDetail();
+      gen4KhoiDetail = _getGen4KhoiDetail();
+      gen5LongDetail = _getGen5LongDetail();
+      gen3HungDetail = _getGen3HungDetail();
+      gen4NamDetail = _getGen4NamDetail();
+      gen5TuanDetail = _getGen5TuanDetail(isCurrentUser: isGen5TuanCurrentUser);
+    }
 
-    // Dữ liệu con cháu Chi 2 (Thứ Phái)
-    final gen3HungDetail = _getGen3HungDetail();
-    final gen4NamDetail = _getGen4NamDetail();
-    final gen5TuanDetail = _getGen5TuanDetail();
+    if (!_initialBranchInitialized) {
+      _initialBranchInitialized = true;
+      if (isRootCurrentUser) {
+        _selectedBranch = rootDetail;
+      } else if (isChi1CurrentUser) {
+        _selectedBranch = chi1Detail;
+      }
+    }
 
     return Scaffold(
       backgroundColor: kBgColor,
@@ -133,9 +183,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   const SizedBox(width: 8),
                                   Flexible(
                                     child: Text(
-                                      rootBranch?.clanName.isNotEmpty == true
-                                          ? '${rootBranch!.clanName} • Cụ Khởi Tổ 1890'
-                                          : 'Gốc Nam Trung, Thái Bình • Cụ Khởi Tổ 1890',
+                                      isNguyenClan
+                                          ? 'Dòng Họ Nguyễn Việt Nam • Chi Gốc'
+                                          : (rootBranch?.clanName.isNotEmpty == true
+                                              ? '${rootBranch!.clanName} • Cụ Khởi Tổ 1890'
+                                              : 'Họ Lê - Nam Trung, Thái Bình • Cụ Khởi Tổ 1890'),
                                       style: const TextStyle(
                                         fontFamily: 'Plus Jakarta Sans',
                                         fontSize: 13,
@@ -211,6 +263,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           context: context,
                           detail: rootDetail,
                           isSelected: _selectedBranch?.id == rootDetail.id,
+                          isCurrentUser: isRootCurrentUser,
                           onTap: () => _handleSelectBranch(rootDetail, isWide),
                         ),
 
@@ -252,6 +305,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                           detail: chi1Detail,
                                           isSelected: _selectedBranch?.id == chi1Detail.id,
                                           isWide: isWide,
+                                          isCurrentUser: isChi1CurrentUser,
                                           onSelect: () => _handleSelectBranch(chi1Detail, isWide),
                                         ),
 
@@ -259,24 +313,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                           // Đường nối dọc
                                           Container(width: 2, height: 24, color: kPrimaryColor),
 
-                                          // Đời 3: Bác Lê Tuấn Anh (Trưởng Chi 1)
+                                          // Đời 3: Bác Lê Tuấn Anh / Nguyễn Thị Mai Anh
                                           _buildSubGenerationCard(
                                             generation: 'ĐỜI 3',
-                                            title: 'Bác Lê Tuấn Anh',
-                                            subtitle: 'Sinh 1950 • Trưởng Nam Chi 1',
+                                            title: isNguyenClan ? 'Nguyễn Thị Mai Anh' : 'Bác Lê Tuấn Anh',
+                                            subtitle: gen3TuanAnhDetail.representativeSubtext,
                                             color: const Color(0xFF8F482F),
                                             isSelected: _selectedBranch?.id == gen3TuanAnhDetail.id,
+                                            isCurrentUser: isNguyenClan ? (currentUserName == 'Nguyễn Thị Mai Anh') : false,
+                                            currentUserBadge: '★ VỊ TRÍ CỦA BẠN • ĐỜI 3',
                                             onTap: () => _handleSelectBranch(gen3TuanAnhDetail, isWide),
                                           ),
 
                                           // Đường nối dọc
                                           Container(width: 2, height: 24, color: kPrimaryColor),
 
-                                          // Đời 4: Chú Lê Đình Khôi
+                                          // Đời 4: Chú Lê Đình Khôi / Nguyễn Hoàng Long
                                           _buildSubGenerationCard(
                                             generation: 'ĐỜI 4',
-                                            title: 'Chú Lê Đình Khôi',
-                                            subtitle: 'Sinh 1976 • Ban Quản Lý & Từ Thiện',
+                                            title: isNguyenClan ? 'Nguyễn Hoàng Long' : 'Chú Lê Đình Khôi',
+                                            subtitle: gen4KhoiDetail.representativeSubtext,
                                             color: const Color(0xFFAD5F45),
                                             isSelected: _selectedBranch?.id == gen4KhoiDetail.id,
                                             onTap: () => _handleSelectBranch(gen4KhoiDetail, isWide),
@@ -285,11 +341,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                           // Đường nối dọc
                                           Container(width: 2, height: 24, color: kPrimaryColor),
 
-                                          // Đời 5: Lê Hoàng Long
+                                          // Đời 5: Lê Hoàng Long / Nguyễn Minh Triết
                                           _buildSubGenerationCard(
                                             generation: 'ĐỜI 5',
-                                            title: 'Lê Hoàng Long',
-                                            subtitle: 'Sinh 2002 • Kế Thừa Chi Trưởng',
+                                            title: isNguyenClan ? 'Nguyễn Minh Triết' : 'Lê Hoàng Long',
+                                            subtitle: gen5LongDetail.representativeSubtext,
                                             color: const Color(0xFFC27B66),
                                             isSelected: _selectedBranch?.id == gen5LongDetail.id,
                                             onTap: () => _handleSelectBranch(gen5LongDetail, isWide),
@@ -312,6 +368,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                           detail: chi2Detail,
                                           isSelected: _selectedBranch?.id == chi2Detail.id,
                                           isWide: isWide,
+                                          isCurrentUser: isChi2CurrentUser,
                                           onSelect: () => _handleSelectBranch(chi2Detail, isWide),
                                         ),
 
@@ -319,11 +376,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                           // Đường nối dọc
                                           Container(width: 2, height: 24, color: kPrimaryColor),
 
-                                          // Đời 3: Bác Lê Văn Hùng (Trưởng Chi 2)
+                                          // Đời 3: Bác Lê Văn Hùng / Bác Nguyễn Hữu Nam
                                           _buildSubGenerationCard(
                                             generation: 'ĐỜI 3',
-                                            title: 'Bác Lê Văn Hùng',
-                                            subtitle: '(1954 – 2021) • Trưởng Chi 2',
+                                            title: isNguyenClan ? 'Bác Nguyễn Hữu Nam' : 'Bác Lê Văn Hùng',
+                                            subtitle: gen3HungDetail.representativeSubtext,
                                             color: const Color(0xFF8F482F),
                                             isSelected: _selectedBranch?.id == gen3HungDetail.id,
                                             onTap: () => _handleSelectBranch(gen3HungDetail, isWide),
@@ -332,11 +389,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                           // Đường nối dọc
                                           Container(width: 2, height: 24, color: kPrimaryColor),
 
-                                          // Đời 4: Chú Lê Hữu Nam
+                                          // Đời 4: Chú Lê Hữu Nam / Chú Nguyễn Hữu Đạt
                                           _buildSubGenerationCard(
                                             generation: 'ĐỜI 4',
-                                            title: 'Chú Lê Hữu Nam',
-                                            subtitle: 'Sinh 1980 • Đại diện Ban Liên Lạc',
+                                            title: isNguyenClan ? 'Chú Nguyễn Hữu Đạt' : 'Chú Lê Hữu Nam',
+                                            subtitle: gen4NamDetail.representativeSubtext,
                                             color: const Color(0xFFAD5F45),
                                             isSelected: _selectedBranch?.id == gen4NamDetail.id,
                                             onTap: () => _handleSelectBranch(gen4NamDetail, isWide),
@@ -346,11 +403,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                           Container(width: 2, height: 24, color: kPrimaryColor),
 
                                           // Đời 5: Lê Hữu Tuấn (VỊ TRÍ TÀI KHOẢN CỦA BẠN TRONG DÒNG HỌ)
-                                          _buildCurrentUserGen5Card(
-                                            detail: gen5TuanDetail,
-                                            isSelected: _selectedBranch?.id == gen5TuanDetail.id,
-                                            onTap: () => _handleSelectBranch(gen5TuanDetail, isWide),
-                                          ),
+                                          if (isGen5TuanCurrentUser) ...[
+                                            _buildCurrentUserGen5Card(
+                                              detail: gen5TuanDetail,
+                                              isSelected: _selectedBranch?.id == gen5TuanDetail.id,
+                                              onTap: () => _handleSelectBranch(gen5TuanDetail, isWide),
+                                            ),
+                                          ] else ...[
+                                            _buildSubGenerationCard(
+                                              generation: 'ĐỜI 5',
+                                              title: isNguyenClan ? 'Nguyễn Hữu Tuấn' : 'Lê Hữu Tuấn',
+                                              subtitle: gen5TuanDetail.representativeSubtext,
+                                              color: const Color(0xFFC27B66),
+                                              isSelected: _selectedBranch?.id == gen5TuanDetail.id,
+                                              onTap: () => _handleSelectBranch(gen5TuanDetail, isWide),
+                                            ),
+                                          ],
                                         ],
                                       ],
                                     ),
@@ -450,6 +518,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     required BranchUiDetail detail,
     required bool isSelected,
     required VoidCallback onTap,
+    bool isCurrentUser = false,
   }) {
     const kPrimaryColor = Color(0xFF8F482F);
     const kDarkSurface = Color(0xFF31302F);
@@ -463,11 +532,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         decoration: BoxDecoration(
           color: kDarkSurface,
           borderRadius: BorderRadius.circular(16),
-          border: isSelected ? Border.all(color: const Color(0xFFFFB59D), width: 2) : null,
+          border: isCurrentUser
+              ? Border.all(color: const Color(0xFF006E2A), width: 2)
+              : (isSelected ? Border.all(color: const Color(0xFFFFB59D), width: 2) : null),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isSelected ? 0.25 : 0.12),
-              blurRadius: isSelected ? 24 : 16,
+              color: isCurrentUser
+                  ? const Color(0xFF006E2A).withValues(alpha: 0.3)
+                  : Colors.black.withValues(alpha: isSelected ? 0.25 : 0.12),
+              blurRadius: isCurrentUser || isSelected ? 24 : 16,
               offset: const Offset(0, 6),
             ),
           ],
@@ -480,36 +553,66 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    runSpacing: 8,
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: kPrimaryColor.withValues(alpha: 0.4),
+                          color: isCurrentUser
+                              ? const Color(0xFF006E2A)
+                              : kPrimaryColor.withValues(alpha: 0.4),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Row(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.military_tech, size: 14, color: Color(0xFFFFB59D)),
-                            SizedBox(width: 6),
+                            Icon(
+                              isCurrentUser ? Icons.stars : Icons.military_tech,
+                              size: 14,
+                              color: isCurrentUser ? Colors.white : const Color(0xFFFFB59D),
+                            ),
+                            const SizedBox(width: 6),
                             Text(
-                              'CỤ KHỞI TỔ • ĐỜI 1',
+                              isCurrentUser
+                                  ? '★ VỊ TRÍ CỦA BẠN • TRƯỞNG TỘC'
+                                  : detail.badge,
                               style: TextStyle(
                                 fontFamily: 'JetBrains Mono',
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFFFFB59D),
+                                color: isCurrentUser ? Colors.white : const Color(0xFFFFB59D),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      Row(
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
                         children: [
+                          if (isCurrentUser)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF006E2A),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Text(
+                                '● Đang quản trị',
+                                style: TextStyle(
+                                  fontFamily: 'JetBrains Mono',
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
                           if (isSelected)
                             Container(
-                              margin: const EdgeInsets.only(right: 8),
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFFFB59D),
@@ -546,9 +649,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: const Color(0xFF54433E),
-                          border: Border.all(color: const Color(0xFFFFB59D), width: 1.5),
+                          border: Border.all(
+                            color: isCurrentUser ? const Color(0xFF006E2A) : const Color(0xFFFFB59D),
+                            width: 1.5,
+                          ),
                         ),
-                        child: const Icon(Icons.person, color: Color(0xFFFFB59D), size: 30),
+                        child: Center(
+                          child: Text(
+                            detail.representative.isNotEmpty
+                                ? detail.representative.replaceAll('Cụ ', '').replaceAll('Bác ', '')[0]
+                                : 'H',
+                            style: TextStyle(
+                              fontFamily: 'Merriweather',
+                              color: isCurrentUser ? Colors.white : const Color(0xFFFFB59D),
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -659,6 +777,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     required bool isSelected,
     required bool isWide,
     required VoidCallback onSelect,
+    bool isCurrentUser = false,
   }) {
     const kPrimaryColor = Color(0xFF8F482F);
     const kBorderColor = Color(0xFFDAC1BA);
@@ -669,16 +788,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: Container(
         width: 320,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isCurrentUser ? const Color(0xFFFCF6F3) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? kPrimaryColor : kBorderColor,
-            width: isSelected ? 2 : 1,
+            color: isCurrentUser
+                ? const Color(0xFF006E2A)
+                : (isSelected ? kPrimaryColor : kBorderColor),
+            width: isCurrentUser || isSelected ? 2 : 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: isSelected ? kPrimaryColor.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.04),
-              blurRadius: isSelected ? 16 : 8,
+              color: isCurrentUser
+                  ? const Color(0xFF006E2A).withValues(alpha: 0.15)
+                  : (isSelected ? kPrimaryColor.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.04)),
+              blurRadius: isCurrentUser || isSelected ? 16 : 8,
               offset: const Offset(0, 4),
             ),
           ],
@@ -696,9 +819,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: isSelected
-                            ? kPrimaryColor
-                            : const Color(0xFF8F482F).withValues(alpha: 0.1),
+                        color: isCurrentUser
+                            ? const Color(0xFF006E2A)
+                            : (isSelected
+                                ? kPrimaryColor
+                                : const Color(0xFF8F482F).withValues(alpha: 0.1)),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -707,7 +832,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           fontFamily: 'JetBrains Mono',
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: isSelected ? Colors.white : kPrimaryColor,
+                          color: (isCurrentUser || isSelected) ? Colors.white : kPrimaryColor,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -886,6 +1011,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     required Color color,
     required bool isSelected,
     required VoidCallback onTap,
+    bool isCurrentUser = false,
+    String? currentUserBadge,
   }) {
     return InkWell(
       onTap: onTap,
@@ -894,18 +1021,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         width: 320,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isCurrentUser ? const Color(0xFFFCF6F3) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? const Color(0xFF8F482F) : const Color(0xFFDAC1BA),
-            width: isSelected ? 2 : 1,
+            color: isCurrentUser
+                ? const Color(0xFF006E2A)
+                : (isSelected ? const Color(0xFF8F482F) : const Color(0xFFDAC1BA)),
+            width: isCurrentUser || isSelected ? 2 : 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: isSelected
-                  ? const Color(0xFF8F482F).withValues(alpha: 0.12)
-                  : Colors.black.withValues(alpha: 0.03),
-              blurRadius: isSelected ? 12 : 8,
+              color: isCurrentUser
+                  ? const Color(0xFF006E2A).withValues(alpha: 0.15)
+                  : (isSelected
+                      ? const Color(0xFF8F482F).withValues(alpha: 0.12)
+                      : Colors.black.withValues(alpha: 0.03)),
+              blurRadius: isCurrentUser || isSelected ? 12 : 8,
               offset: const Offset(0, 2),
             ),
           ],
@@ -915,7 +1046,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
+                color: isCurrentUser
+                    ? const Color(0xFF006E2A).withValues(alpha: 0.12)
+                    : color.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
@@ -924,7 +1057,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   fontFamily: 'JetBrains Mono',
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
-                  color: color,
+                  color: isCurrentUser ? const Color(0xFF006E2A) : color,
                 ),
               ),
             ),
@@ -955,6 +1088,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  if (isCurrentUser) ...[
+                    const SizedBox(height: 3),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF006E2A),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        currentUserBadge ?? '★ VỊ TRÍ CỦA BẠN',
+                        style: const TextStyle(
+                          fontFamily: 'JetBrains Mono',
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -1160,11 +1312,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   // --- MOCK / HELPER DATA CHO CÁC CHI NHÁNH & NHÂN VẬT ---
-  BranchUiDetail _getRootDetail(String? name, String? desc) {
+  BranchUiDetail _getRootDetail(String? name, String? desc, {bool isCurrentUser = false}) {
     return BranchUiDetail(
       id: 'BR_ROOT',
       name: name?.isNotEmpty == true ? name! : 'Chi Gốc Nam Trung, Thái Bình',
-      badge: 'CỤ KHỞI TỔ • ĐỜI 1',
+      badge: isCurrentUser ? '★ VỊ TRÍ CỦA BẠN • TRƯỞNG TỘC' : 'CỤ KHỞI TỔ • ĐỜI 1',
       code: 'BR_ROOT_TB',
       representative: 'Cụ Lê Phúc Khang (1890 – 1968)',
       representativeSubtext: 'Thủy Tổ Đại Tôn Khởi Phái',
@@ -1184,11 +1336,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  BranchUiDetail _getChi1Detail() {
+  BranchUiDetail _getChi1Detail({bool isCurrentUser = false}) {
     return BranchUiDetail(
       id: 'CHI_01',
       name: 'Chi 1 - Trưởng Chi An',
-      badge: 'Chi 1 (Trưởng Phái) • Đời 2',
+      badge: isCurrentUser ? '★ VỊ TRÍ CỦA BẠN • TRƯỞNG CHI' : 'Chi 1 (Trưởng Phái) • Đời 2',
       code: 'CHI-01',
       representative: 'Cụ Lê Văn An (1918 – 1995)',
       representativeSubtext: 'Cụ Cả Trưởng Tộc • Phái Chi Bắc Bộ',
@@ -1292,11 +1444,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  BranchUiDetail _getChi2Detail() {
+  BranchUiDetail _getChi2Detail({bool isCurrentUser = false}) {
     return BranchUiDetail(
       id: 'CHI_02',
       name: 'Chi 2 - Nhánh Nam',
-      badge: 'Chi 2 (Thứ Phái) • Đời 2',
+      badge: isCurrentUser ? '★ VỊ TRÍ CỦA BẠN • TRƯỞNG CHI' : 'Chi 2 (Thứ Phái) • Đời 2',
       code: 'CHI-02-ROOT',
       representative: 'Cụ Lê Văn Bình (1922 – 2004)',
       representativeSubtext: 'Phái Chi Nam Bộ & Bắc Bộ',
@@ -1379,29 +1531,284 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  BranchUiDetail _getGen5TuanDetail() {
-    return const BranchUiDetail(
+  BranchUiDetail _getGen5TuanDetail({bool isCurrentUser = true}) {
+    return BranchUiDetail(
       id: 'GEN5_TUAN',
-      name: 'Hồ Sơ: Lê Hữu Tuấn',
-      badge: 'Đời 5 • Tài Khoản Của Bạn',
+      name: isCurrentUser ? 'Hồ Sơ: Lê Hữu Tuấn' : 'Hồ Sơ Thành Viên: Lê Hữu Tuấn',
+      badge: isCurrentUser ? 'Đời 5 • Tài Khoản Của Bạn' : 'Đời 5 • Chi 2',
       code: 'LE-CHI2-DOI5-9821',
       representative: 'Lê Hữu Tuấn',
-      representativeSubtext: 'Sinh 1998 • Vị trí đăng nhập hiện tại',
+      representativeSubtext: isCurrentUser ? 'Sinh 1998 • Vị trí đăng nhập hiện tại' : 'Sinh 1998 • Con cháu Đời 5',
       memberCount: 1,
       activatedMemberCount: 1,
       fundAmount: '5.000.000 đ',
-      description: 'Lê Hữu Tuấn sinh năm 1998, vị trí tài khoản đăng nhập hiện tại trong dòng họ. Thuộc nhánh Chi 2 của Cụ Lê Văn Bình.',
+      description: isCurrentUser
+          ? 'Lê Hữu Tuấn sinh năm 1998, vị trí tài khoản đăng nhập hiện tại trong dòng họ. Thuộc nhánh Chi 2 của Cụ Lê Văn Bình.'
+          : 'Lê Hữu Tuấn sinh năm 1998, con cháu thế hệ thứ 5 thuộc Chi 2 của Cụ Lê Văn Bình.',
       successionChain: [
         'Cụ Lê Phúc Khang (Khởi tổ 1890)',
         'Cụ Lê Văn Bình (Đời 2)',
         'Bác Lê Văn Hùng (Đời 3)',
         'Chú Lê Hữu Nam (Đời 4)',
-        'Lê Hữu Tuấn (Đời 5 - Tài khoản của bạn)',
+        isCurrentUser ? 'Lê Hữu Tuấn (Đời 5 - Tài khoản của bạn)' : 'Lê Hữu Tuấn (Đời 5)',
       ],
       members: [
-        BranchMemberItem(memberId: 'MEM-208', fullName: 'Lê Hữu Tuấn', generation: 5, birthDeathInfo: 'Sinh 1998 (28 tuổi)', roleInBranch: 'Tài khoản chính • Đã xác thực', isActivated: true),
+        BranchMemberItem(
+          memberId: 'MEM-208',
+          fullName: 'Lê Hữu Tuấn',
+          generation: 5,
+          birthDeathInfo: 'Sinh 1998 (28 tuổi)',
+          roleInBranch: isCurrentUser ? 'Tài khoản chính • Đã xác thực' : 'Thành viên Đời 5',
+          isActivated: true,
+        ),
       ],
     );
+  }
+
+  // --- DỮ LIỆU CÂY PHẢ HỆ CHO DÒNG HỌ NGUYỄN (TÀI KHOẢN MẪU TỪ BACKEND DATABASE) ---
+  BranchUiDetail _getNguyenRootDetail({required bool isClanHead}) {
+    return BranchUiDetail(
+      id: 'BR_ROOT',
+      name: 'Chi Gốc (Đại Tôn) • Nam Trung, Thái Bình',
+      badge: isClanHead ? '★ VỊ TRÍ CỦA BẠN • TRƯỞNG TỘC' : 'CỤ KHỞI TỔ • TRƯỞNG TỘC',
+      code: 'BR_ROOT_TB',
+      representative: 'Nguyễn Trọng Hoàng',
+      representativeSubtext: 'Trưởng Tộc Đương Nhiệm • Chi Gốc',
+      memberCount: 36,
+      activatedMemberCount: 32,
+      fundAmount: '115.000.000 đ',
+      description: 'Nhánh Thủy tổ khởi lập từ cụ Nguyễn Tiên Tổ tại làng Nam Trung. Toàn quyền quản trị sổ cái, bảo vật và kết nối các chi nhánh dòng họ.',
+      successionChain: const [
+        'Nguyễn Tiên Tổ (Thủy tổ)',
+        'Chi 1: Nguyễn Văn An (1978)',
+        'Chi 2: Nguyễn Văn Hùng (1982)',
+      ],
+      isRoot: true,
+      members: _generateNguyenRootMembers(),
+    );
+  }
+
+  BranchUiDetail _getNguyenChi1Detail({bool isCurrentUser = false}) {
+    return BranchUiDetail(
+      id: 'CHI_01',
+      name: 'Chi 1 - Trưởng Chi An',
+      badge: isCurrentUser ? '★ VỊ TRÍ CỦA BẠN • TRƯỞNG CHI' : 'Chi 1 (Trưởng Phái) • Đời 2',
+      code: 'CHI-01',
+      representative: 'Nguyễn Văn An (Sinh 1978)',
+      representativeSubtext: 'Trưởng Chi 1 • Nhánh Giáp',
+      memberCount: 16,
+      activatedMemberCount: 14,
+      fundAmount: '45.000.000 đ',
+      description: 'Nhánh Trưởng Nam tiếp quản nhà thờ tổ làng Nam Trung, phụ trách các nghi thức đại lễ giỗ tổ hàng năm của dòng họ.',
+      successionChain: const [
+        'Nguyễn Tiên Tổ (Khởi tổ)',
+        'Nguyễn Văn An (Đời 2)',
+        'Nguyễn Thị Mai Anh (Đời 3)',
+        'Nguyễn Hoàng Long (Đời 4)',
+      ],
+      members: _generateNguyenChi1Members(),
+    );
+  }
+
+  BranchUiDetail _getNguyenChi2Detail({bool isCurrentUser = false}) {
+    return BranchUiDetail(
+      id: 'CHI_02',
+      name: 'Chi 2 - Nhánh Thứ',
+      badge: isCurrentUser ? '★ VỊ TRÍ CỦA BẠN • TRƯỞNG CHI' : 'Chi 2 (Thứ Phái) • Đời 2',
+      code: 'CHI-02-ROOT',
+      representative: 'Nguyễn Văn Hùng (Sinh 1982)',
+      representativeSubtext: 'Trưởng Chi 2 • Nhánh Ất',
+      memberCount: 20,
+      activatedMemberCount: 18,
+      fundAmount: '70.000.000 đ',
+      description: 'Nhánh Thứ Phái phát triển mạnh mẽ về kinh tế và giáo dục, phụ trách quỹ khuyến học và các hoạt động thiện nguyện dòng họ.',
+      successionChain: const [
+        'Nguyễn Tiên Tổ (Khởi tổ)',
+        'Nguyễn Văn Hùng (Đời 2)',
+        'Nguyễn Hữu Nam (Đời 3)',
+        'Nguyễn Hữu Đạt (Đời 4)',
+        'Nguyễn Hữu Tuấn (Đời 5)',
+      ],
+      members: _generateNguyenChi2Members(),
+    );
+  }
+
+  BranchUiDetail _getNguyenGen3MaiAnhDetail({bool isCurrentUser = false}) {
+    return BranchUiDetail(
+      id: 'GEN3_MAI_ANH',
+      name: 'Hồ Sơ: Nguyễn Thị Mai Anh',
+      badge: isCurrentUser ? '★ VỊ TRÍ CỦA BẠN • ĐỜI 3' : 'Đời 3 • Chi 1',
+      code: 'NG-CHI1-DOI3-MAI',
+      representative: 'Nguyễn Thị Mai Anh',
+      representativeSubtext: isCurrentUser ? 'Sinh 1992 • Vị trí đăng nhập hiện tại' : 'Sinh 1992 • Ban Kiểm Soát',
+      memberCount: 1,
+      activatedMemberCount: 1,
+      fundAmount: '12.000.000 đ',
+      description: 'Nguyễn Thị Mai Anh sinh năm 1992, thuộc Chi 1 Dòng Họ Nguyễn. Phụ trách công tác kiểm toán nội bộ và quản lý biên lai đóng góp.',
+      successionChain: const [
+        'Nguyễn Tiên Tổ (Khởi tổ)',
+        'Nguyễn Văn An (Đời 2)',
+        'Nguyễn Thị Mai Anh (Đời 3)',
+      ],
+      members: const [
+        BranchMemberItem(memberId: 'MEM_MAI_ANH', fullName: 'Nguyễn Thị Mai Anh', generation: 3, birthDeathInfo: 'Sinh 1992 (34 tuổi)', roleInBranch: 'Ban Kiểm Soát • Đã kích hoạt', gender: 'female', isActivated: true),
+      ],
+    );
+  }
+
+  BranchUiDetail _getNguyenGen4LongDetail() {
+    return const BranchUiDetail(
+      id: 'GEN4_NG_LONG',
+      name: 'Gia Đình Nguyễn Hoàng Long',
+      badge: 'Đời 4 • Kế Thừa Chi Trưởng',
+      code: 'NG-CHI1-DOI4-LONG',
+      representative: 'Nguyễn Hoàng Long',
+      representativeSubtext: 'Sinh 2015 • Hậu Duệ Đời 4',
+      memberCount: 3,
+      activatedMemberCount: 2,
+      fundAmount: '5.000.000 đ',
+      description: 'Nguyễn Hoàng Long sinh năm 2015, con cháu thế hệ thứ 4 thuộc Chi Trưởng Dòng Họ Nguyễn.',
+      successionChain: [
+        'Nguyễn Tiên Tổ',
+        'Nguyễn Văn An (Đời 2)',
+        'Nguyễn Thị Mai Anh (Đời 3)',
+        'Nguyễn Hoàng Long (Đời 4)',
+      ],
+      members: [
+        BranchMemberItem(memberId: 'MEM-N06', fullName: 'Nguyễn Hoàng Long', generation: 4, birthDeathInfo: 'Sinh 2015', roleInBranch: 'Con cháu Đời 4', isActivated: true),
+      ],
+    );
+  }
+
+  BranchUiDetail _getNguyenGen5Detail() {
+    return const BranchUiDetail(
+      id: 'GEN5_NG_TRIET',
+      name: 'Hồ Sơ: Nguyễn Minh Triết',
+      badge: 'Đời 5 • Chi Trưởng',
+      code: 'NG-CHI1-DOI5-TRIET',
+      representative: 'Nguyễn Minh Triết',
+      representativeSubtext: 'Sinh 2022 • Hậu Duệ Đời 5',
+      memberCount: 1,
+      activatedMemberCount: 1,
+      fundAmount: '1.000.000 đ',
+      description: 'Nguyễn Minh Triết sinh năm 2022, thế hệ mầm non kế thừa Chi Trưởng.',
+      successionChain: [
+        'Nguyễn Tiên Tổ',
+        'Nguyễn Văn An (Đời 2)',
+        'Nguyễn Thị Mai Anh (Đời 3)',
+        'Nguyễn Hoàng Long (Đời 4)',
+        'Nguyễn Minh Triết (Đời 5)',
+      ],
+      members: [
+        BranchMemberItem(memberId: 'MEM-N09', fullName: 'Nguyễn Minh Triết', generation: 5, birthDeathInfo: 'Sinh 2022', roleInBranch: 'Con cháu Đời 5', isActivated: true),
+      ],
+    );
+  }
+
+  BranchUiDetail _getNguyenGen3NamDetail() {
+    return const BranchUiDetail(
+      id: 'GEN3_NG_NAM',
+      name: 'Nhánh Bác Nguyễn Hữu Nam',
+      badge: 'Đời 3 • Trưởng Nam Chi 2',
+      code: 'NG-CHI2-DOI3-NAM',
+      representative: 'Bác Nguyễn Hữu Nam',
+      representativeSubtext: 'Sinh 1980 • Trưởng Nam Chi 2',
+      memberCount: 8,
+      activatedMemberCount: 7,
+      fundAmount: '38.000.000 đ',
+      description: 'Bác Nguyễn Hữu Nam sinh năm 1980, phụ trách Ban Liên Lạc Dòng Họ Chi 2.',
+      successionChain: [
+        'Nguyễn Tiên Tổ',
+        'Nguyễn Văn Hùng (Đời 2)',
+        'Nguyễn Hữu Nam (Đời 3)',
+        'Nguyễn Hữu Đạt (Đời 4)',
+        'Nguyễn Hữu Tuấn (Đời 5)',
+      ],
+      members: [
+        BranchMemberItem(memberId: 'MEM-N05', fullName: 'Nguyễn Hữu Nam', generation: 3, birthDeathInfo: 'Sinh 1980', roleInBranch: 'Trưởng Nam Chi 2', isActivated: true),
+      ],
+    );
+  }
+
+  BranchUiDetail _getNguyenGen4DatDetail() {
+    return const BranchUiDetail(
+      id: 'GEN4_NG_DAT',
+      name: 'Gia Đình Chú Nguyễn Hữu Đạt',
+      badge: 'Đời 4 • Ban Liên Lạc',
+      code: 'NG-CHI2-DOI4-DAT',
+      representative: 'Chú Nguyễn Hữu Đạt',
+      representativeSubtext: 'Sinh 2005 • Đại diện Ban Liên Lạc',
+      memberCount: 4,
+      activatedMemberCount: 3,
+      fundAmount: '15.000.000 đ',
+      description: 'Chú Nguyễn Hữu Đạt sinh năm 2005, đại diện kết nối thanh niên dòng họ Chi 2.',
+      successionChain: [
+        'Nguyễn Tiên Tổ',
+        'Nguyễn Văn Hùng (Đời 2)',
+        'Nguyễn Hữu Nam (Đời 3)',
+        'Nguyễn Hữu Đạt (Đời 4)',
+        'Nguyễn Hữu Tuấn (Đời 5)',
+      ],
+      members: [
+        BranchMemberItem(memberId: 'MEM-N07', fullName: 'Nguyễn Hữu Đạt', generation: 4, birthDeathInfo: 'Sinh 2005', roleInBranch: 'Cháu đích tôn Đời 4', isActivated: true),
+      ],
+    );
+  }
+
+  BranchUiDetail _getNguyenGen5TuanDetail() {
+    return const BranchUiDetail(
+      id: 'GEN5_NG_TUAN',
+      name: 'Hồ Sơ: Nguyễn Hữu Tuấn',
+      badge: 'Đời 5 • Chi 2',
+      code: 'NG-CHI2-DOI5-TUAN',
+      representative: 'Nguyễn Hữu Tuấn',
+      representativeSubtext: 'Sinh 2020 • Con cháu Đời 5',
+      memberCount: 1,
+      activatedMemberCount: 1,
+      fundAmount: '2.000.000 đ',
+      description: 'Nguyễn Hữu Tuấn sinh năm 2020, con cháu thế hệ thứ 5 thuộc Chi 2 Dòng Họ Nguyễn.',
+      successionChain: [
+        'Nguyễn Tiên Tổ',
+        'Nguyễn Văn Hùng (Đời 2)',
+        'Nguyễn Hữu Nam (Đời 3)',
+        'Nguyễn Hữu Đạt (Đời 4)',
+        'Nguyễn Hữu Tuấn (Đời 5)',
+      ],
+      members: [
+        BranchMemberItem(memberId: 'MEM-N08', fullName: 'Nguyễn Hữu Tuấn', generation: 5, birthDeathInfo: 'Sinh 2020', roleInBranch: 'Hậu duệ Đời 5', isActivated: true),
+      ],
+    );
+  }
+
+  static List<BranchMemberItem> _generateNguyenRootMembers() {
+    return const [
+      BranchMemberItem(memberId: 'MEM_TRUONG_TOC', fullName: 'Nguyễn Trọng Hoàng', generation: 1, birthDeathInfo: 'Sinh 1965', roleInBranch: 'Trưởng Tộc • Chi Gốc', isActivated: true),
+      BranchMemberItem(memberId: 'MEM_TRUONG_CHI', fullName: 'Nguyễn Văn An', generation: 2, birthDeathInfo: 'Sinh 1978', roleInBranch: 'Trưởng Chi 1', isActivated: true),
+      BranchMemberItem(memberId: 'MEM-N03', fullName: 'Nguyễn Văn Hùng', generation: 2, birthDeathInfo: 'Sinh 1982', roleInBranch: 'Trưởng Chi 2', isActivated: true),
+      BranchMemberItem(memberId: 'MEM_MAI_ANH', fullName: 'Nguyễn Thị Mai Anh', generation: 3, birthDeathInfo: 'Sinh 1992', roleInBranch: 'Ban Kiểm Soát', gender: 'female', isActivated: true),
+      BranchMemberItem(memberId: 'MEM-N05', fullName: 'Nguyễn Hữu Nam', generation: 3, birthDeathInfo: 'Sinh 1980', roleInBranch: 'Ban Liên Lạc', isActivated: true),
+      BranchMemberItem(memberId: 'MEM-N06', fullName: 'Nguyễn Hoàng Long', generation: 4, birthDeathInfo: 'Sinh 2015', roleInBranch: 'Hậu duệ Đời 4', isActivated: true),
+      BranchMemberItem(memberId: 'MEM-N07', fullName: 'Nguyễn Hữu Đạt', generation: 4, birthDeathInfo: 'Sinh 2005', roleInBranch: 'Hậu duệ Đời 4', isActivated: true),
+      BranchMemberItem(memberId: 'MEM-N08', fullName: 'Nguyễn Hữu Tuấn', generation: 5, birthDeathInfo: 'Sinh 2020', roleInBranch: 'Hậu duệ Đời 5', isActivated: true),
+    ];
+  }
+
+  static List<BranchMemberItem> _generateNguyenChi1Members() {
+    return const [
+      BranchMemberItem(memberId: 'MEM_TRUONG_CHI', fullName: 'Nguyễn Văn An', generation: 2, birthDeathInfo: 'Sinh 1978', roleInBranch: 'Trưởng Chi 1', isActivated: true),
+      BranchMemberItem(memberId: 'MEM_MAI_ANH', fullName: 'Nguyễn Thị Mai Anh', generation: 3, birthDeathInfo: 'Sinh 1992', roleInBranch: 'Thành viên Đời 3', gender: 'female', isActivated: true),
+      BranchMemberItem(memberId: 'MEM-N06', fullName: 'Nguyễn Hoàng Long', generation: 4, birthDeathInfo: 'Sinh 2015', roleInBranch: 'Con cháu Đời 4', isActivated: true),
+      BranchMemberItem(memberId: 'MEM-N10', fullName: 'Nguyễn Thảo My', generation: 4, birthDeathInfo: 'Sinh 2018', roleInBranch: 'Con gái Đời 4', gender: 'female', isActivated: true),
+    ];
+  }
+
+  static List<BranchMemberItem> _generateNguyenChi2Members() {
+    return const [
+      BranchMemberItem(memberId: 'MEM-N03', fullName: 'Nguyễn Văn Hùng', generation: 2, birthDeathInfo: 'Sinh 1982', roleInBranch: 'Trưởng Chi 2', isActivated: true),
+      BranchMemberItem(memberId: 'MEM-N05', fullName: 'Nguyễn Hữu Nam', generation: 3, birthDeathInfo: 'Sinh 1980', roleInBranch: 'Thứ nam Đời 3', isActivated: true),
+      BranchMemberItem(memberId: 'MEM-N07', fullName: 'Nguyễn Hữu Đạt', generation: 4, birthDeathInfo: 'Sinh 2005', roleInBranch: 'Cháu đích tôn Đời 4', isActivated: true),
+      BranchMemberItem(memberId: 'MEM-N08', fullName: 'Nguyễn Hữu Tuấn', generation: 5, birthDeathInfo: 'Sinh 2020', roleInBranch: 'Con cháu Đời 5', isActivated: true),
+    ];
   }
 
   // --- SINH DANH SÁCH 24 THÀNH VIÊN ĐẦY ĐỦ CHO CHI 2 ---

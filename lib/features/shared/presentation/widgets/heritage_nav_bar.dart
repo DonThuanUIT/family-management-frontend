@@ -166,9 +166,13 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                                 border: Border.all(
                                     color: const Color(0xFFDAC1BA), width: 0.8),
                               ),
-                              child: const Text(
-                                'DÒNG HỌ LÊ VIỆT NAM',
-                                style: TextStyle(
+                              child: Text(
+                                fullName.startsWith('Nguyễn')
+                                    ? 'DÒNG HỌ NGUYỄN VIỆT NAM'
+                                    : (fullName.startsWith('Lê')
+                                        ? 'DÒNG HỌ LÊ VIỆT NAM'
+                                        : 'GIA TỘC VIỆT NAM'),
+                                style: const TextStyle(
                                   fontFamily: 'monospace',
                                   fontSize: 9.5,
                                   fontWeight: FontWeight.bold,
