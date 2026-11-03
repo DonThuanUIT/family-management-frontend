@@ -92,7 +92,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           child: Image.asset(
                             'assets/images/logo_gtvn.png',
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Container(
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
                               color: const Color(0xFF7A1518),
                               child: const Icon(
                                 Icons.account_balance,
@@ -126,31 +127,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                     // Error Message Banner
                     if (authState.errorMessage != null) ...[
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFDE8E8),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFF8B4B4)),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.error_outline,
-                                color: Color(0xFF9B1C1C), size: 20),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                authState.errorMessage!,
-                                style: const TextStyle(
-                                  color: Color(0xFF9B1C1C),
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      _buildErrorBanner(context, authState.errorMessage!),
                       const SizedBox(height: 16),
                     ],
 
@@ -359,6 +336,98 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildErrorBanner(BuildContext context, String rawError) {
+    final isPending = rawError.contains('PendingApproval');
+    final isDeactivated = rawError.contains('Deactivated');
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isPending
+            ? const Color(0xFFFFF8E7)
+            : isDeactivated
+                ? const Color(0xFFFFF1F1)
+                : const Color(0xFFFDE8E8),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isPending
+              ? const Color(0xFFE2AA36)
+              : const Color(0xFFF8B4B4),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isPending
+                    ? Icons.hourglass_top_rounded
+                    : Icons.error_outline,
+                color: isPending
+                    ? const Color(0xFF8B6B23)
+                    : const Color(0xFF9B1C1C),
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  isPending
+                      ? 'Tài khoản đang chờ duyệt'
+                      : isDeactivated
+                          ? 'Tài khoản chưa được kích hoạt'
+                          : 'Đăng nhập không thành công',
+                  style: TextStyle(
+                    color: isPending
+                        ? const Color(0xFF8B6B23)
+                        : const Color(0xFF9B1C1C),
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            isPending
+                ? 'Hồ sơ đề xuất gia nhập dòng họ của bạn đang được Trưởng tộc / Trưởng chi xem xét đối soát.'
+                : isDeactivated
+                    ? 'Tài khoản đã bị từ chối hoặc tạm khóa. Vui lòng liên hệ Ban quản trị dòng họ để được hỗ trợ.'
+                    : rawError,
+            style: TextStyle(
+              color: isPending
+                  ? const Color(0xFF6B584E)
+                  : const Color(0xFF9B1C1C),
+              fontSize: 12.5,
+            ),
+          ),
+          if (isPending) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => context.push('/pending-approval'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF7A1518),
+                  side: const BorderSide(color: Color(0xFF7A1518)),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'Xem quy trình & trạng thái phê duyệt',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
