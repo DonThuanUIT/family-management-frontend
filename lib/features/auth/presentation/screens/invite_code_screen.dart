@@ -40,23 +40,19 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
     try {
       final dataSource = ref.read(authRemoteDataSourceProvider);
       final preview = await dataSource.previewInvite(code);
-      setState(() {
-        _previewData = preview;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _previewData = preview;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      // In development or if server is not seeded with this specific code,
-      // create a mock preview for a smooth UX test
-      setState(() {
-        _isLoading = false;
-        _previewData = InviteCodePreviewDto(
-          inviteCode: code,
-          clanId: 'Dòng họ Nguyễn Tộc (Đại Tôn)',
-          targetBranchId: 'Chi 2 - Nhánh Giáp',
-          inviteType: 'GeneralClanInvite',
-          isActive: true,
-        );
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        });
+      }
     }
   }
 
@@ -181,7 +177,7 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                                   textCapitalization:
                                       TextCapitalization.characters,
                                   decoration: InputDecoration(
-                                    hintText: 'VD: DK-CHI2-NHA-A-05',
+                                    hintText: 'VD: NGUYEN-DAITON-2025',
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
@@ -190,6 +186,7 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                                       vertical: 14,
                                     ),
                                   ),
+                                  onSubmitted: (_) => _checkInviteCode(),
                                 ),
                               ),
                               const SizedBox(width: 10),
@@ -220,18 +217,41 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                             ],
                           ),
                           if (_errorMessage != null) ...[
-                            const SizedBox(height: 8),
-                            Text(
-                              _errorMessage!,
-                              style: const TextStyle(
-                                color: Color(0xFF9B1C1C),
-                                fontSize: 12.5,
+                            const SizedBox(height: 10),
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFDF2F2),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: const Color(0xFFF8B4B4),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.error_outline,
+                                    color: Color(0xFF9B1C1C),
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      _errorMessage!,
+                                      style: const TextStyle(
+                                        color: Color(0xFF9B1C1C),
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                           const SizedBox(height: 16),
 
-                          // QR Scanner Trigger Button (Image 3 design)
+                          // QR Scanner Trigger Button
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton.icon(
@@ -240,12 +260,6 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                                   _codeController.text = 'DK-CHI2-NHA-A-05';
                                 });
                                 _checkInviteCode();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                        'Đã quét mã QR mẫu: DK-CHI2-NHA-A-05'),
-                                  ),
-                                );
                               },
                               icon: const Icon(Icons.qr_code_scanner,
                                   color: Color(0xFF4A3800)),
@@ -317,22 +331,38 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                           ),
                           _infoRow(
                             'Dòng họ tiếp nhận:',
-                            _previewData!.clanId ?? 'Gia tộc Việt Nam',
+                            _previewData!.clanName ??
+                                _previewData!.clanId ??
+                                'Gia tộc',
                           ),
-                          if (_previewData!.targetBranchId != null)
+                          if (_previewData!.targetBranchName != null ||
+                              _previewData!.targetBranchId != null)
                             _infoRow(
-                              'Chi tộc / Nhánh:',
-                              _previewData!.targetBranchId!,
+                              'Chi tộc chỉ định:',
+                              _previewData!.targetBranchName ??
+                                  _previewData!.targetBranchId!,
                             ),
                           _infoRow(
                             'Hình thức:',
-                            'Mã mời chung ghi danh vào phả hệ',
+                            _previewData!.inviteType == 'PositionLinkCode'
+                                ? 'Mã liên kết vị trí cá nhân (US-19)'
+                                : 'Mã mời chung ghi danh vào phả hệ',
                           ),
                           const SizedBox(height: 16),
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
                               onPressed: () {
+                                if (_previewData!.inviteType ==
+                                    'PositionLinkCode') {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                          'Mã liên kết vị trí cá nhân: Vui lòng chuyển sang tính năng liên kết thành viên.'),
+                                    ),
+                                  );
+                                  return;
+                                }
                                 context.push(
                                   '/register-member?inviteCode=${_previewData!.inviteCode}',
                                 );

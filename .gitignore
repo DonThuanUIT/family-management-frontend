@@ -123,3 +123,12 @@ docs/stitch/
 docs/figma_previews/
 
 agent-skills/
+
+# AI agent local
+.agents/rules/
+.agents/workflows/
+agent/
+.antigravityrules
+.antigravity*
+GEMINI.md
+AGENTS.md

@@ -68,32 +68,55 @@ class AuthRemoteDataSource {
       if (apiResponse.data != null) {
         return apiResponse.data!;
       }
-      throw Exception('Không tìm thấy thông tin mã mời');
+      throw Exception(apiResponse.message.isNotEmpty
+          ? apiResponse.message
+          : 'Không tìm thấy thông tin mã mời');
     } on DioException catch (e) {
       throw Exception(_extractErrorMessage(e));
     }
   }
 
-  Future<void> registerMember(RegisterMemberRequestDto request) async {
+  Future<OnboardingBranchTreeNodeDto> getOnboardingBranchTree(String inviteCode) async {
+    try {
+      final response = await _dio.get(
+        'invitations/${inviteCode.trim()}/tree',
+      );
+
+      final apiResponse = ApiResponse.fromJson(
+        response.data as Map<String, dynamic>,
+        (json) => OnboardingBranchTreeNodeDto.fromJson(json as Map<String, dynamic>),
+      );
+
+      if (apiResponse.data != null) {
+        return apiResponse.data!;
+      }
+      throw Exception(apiResponse.message.isNotEmpty
+          ? apiResponse.message
+          : 'Không tìm thấy thông tin cây gia phả thu gọn');
+    } on DioException catch (e) {
+      throw Exception(_extractErrorMessage(e));
+    }
+  }
+
+  Future<JoinRequestResponseDto> registerMember(RegisterMemberRequestDto request) async {
     try {
       final response = await _dio.post(
-        'auth/register-member',
+        'invitations/${request.inviteCode.trim()}/join',
         data: request.toJson(),
       );
 
       final apiResponse = ApiResponse.fromJson(
         response.data as Map<String, dynamic>,
-        (json) => json,
+        (json) => JoinRequestResponseDto.fromJson(json as Map<String, dynamic>),
       );
 
-      if (!apiResponse.isSuccess) {
-        throw Exception(apiResponse.message);
+      if (apiResponse.data != null) {
+        return apiResponse.data!;
       }
+      throw Exception(apiResponse.message.isNotEmpty
+          ? apiResponse.message
+          : 'Gửi đề xuất gia nhập dòng họ không thành công');
     } on DioException catch (e) {
-      // If endpoint is not yet mounted on backend, handle gracefully
-      if (e.response?.statusCode == 404) {
-        return; // Fallback mock success for UI presentation
-      }
       throw Exception(_extractErrorMessage(e));
     }
   }
@@ -101,7 +124,13 @@ class AuthRemoteDataSource {
   String _extractErrorMessage(DioException e) {
     if (e.response?.data != null && e.response?.data is Map) {
       final map = e.response!.data as Map;
-      if (map['message'] != null) {
+      if (map['errors'] != null && map['errors'] is Map) {
+        final errors = map['errors'] as Map;
+        if (errors.isNotEmpty) {
+          return errors.values.first.toString();
+        }
+      }
+      if (map['message'] != null && map['message'].toString().isNotEmpty) {
         return map['message'].toString();
       }
       if (map['error'] != null) {

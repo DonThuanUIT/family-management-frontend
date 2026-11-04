@@ -36,24 +36,24 @@ Hệ thống được thiết kế để **cả Mobile App (Android/iOS) và Web
 
 ```text
 lib/
-├── main.dart                                 # Điểm khởi chạy ứng dụng + ProviderScope
-├── core/                                     # Tầng hạ tầng & tiện ích dùng chung toàn cục
+├── main.dart                      # Điểm khởi chạy ứng dụng + ProviderScope
+├── core/                          # Tầng hạ tầng & tiện ích dùng chung toàn cục
 │   ├── config/
-│   │   └── env_config.dart                   # Tự động phân giải API URL (Web/iOS vs Android Emulator)
-│   ├── constants/                            # Hằng số toàn cục
+│   │   └── env_config.dart        # Tự động phân giải API URL (Web/iOS vs Android Emulator)
+│   ├── constants/                 # Hằng số toàn cục
 │   ├── error/
-│   │   └── failures.dart                     # Các lớp Failure (BusinessInvariantFailure, ForbiddenFailure...)
+│   │   └── failures.dart          # Các lớp Failure (BusinessInvariantFailure, ForbiddenFailure...)
 │   ├── network/
-│   │   ├── api_response.dart                 # Wrapper chuẩn ApiResponse<T> (code, message, data, timestamp)
-│   │   └── dio_client.dart                   # Dio instance + AuthInterceptor (JWT & X-Clan-Id)
+│   │   ├── api_response.dart      # Wrapper chuẩn ApiResponse<T> (code, message, data, timestamp)
+│   │   └── dio_client.dart        # Dio instance + AuthInterceptor (JWT & X-Clan-Id)
 │   ├── router/
-│   │   └── app_router.dart                   # Cấu hình GoRouter + StatefulShellRoute cho 6 phân hệ chính
+│   │   └── app_router.dart        # Cấu hình GoRouter + StatefulShellRoute cho 6 phân hệ chính
 │   ├── security/
-│   │   └── rbac_models.dart                  # Mô hình Dual-RBAC (SystemRole + EventContextualRole + Read-Only)
+│   │   └── rbac_models.dart     # Mô hình Dual-RBAC (SystemRole + EventContextualRole + Read-Only)
 │   ├── storage/
 │   │   └── secure_token_storage.dart         # Lưu trữ JWT Token đa nền tảng
 │   ├── theme/
-│   │   └── app_theme.dart                    # Thiết kế Material 3 (Tông Đỏ son gia phả & Vàng đồng)
+│   │   └── app_theme.dart        # Thiết kế Material 3 (Tông Đỏ son gia phả & Vàng đồng)
 │   ├── utils/
 │   │   └── formatters.dart                   # Định dạng tiền tệ VNĐ & Ngày giờ
 │   └── widgets/
@@ -64,27 +64,27 @@ lib/
     │   ├── data/ (datasources, models, repositories)
     │   ├── domain/ (entities, repositories, usecases)
     │   └── presentation/ (providers, screens, widgets)
-    ├── genealogy/                            # Phân hệ 1: Cây gia phả (FAMILY_BRANCH), Thành viên (MEMBER), Lời mời
+    ├── genealogy/           # Phân hệ 1: Cây gia phả (FAMILY_BRANCH), Thành viên (MEMBER), Lời mời
     │   ├── data/ (datasources, models, repositories)
     │   ├── domain/ (entities, repositories, usecases)
     │   └── presentation/ (providers, screens, widgets)
-    ├── event/                                # Phân hệ 2: Sự kiện (EVENT), Nhân sự BTC (EVENT_PERSONNEL), Đăng ký hộ
+    ├── event/         # Phân hệ 2: Sự kiện (EVENT), Nhân sự BTC (EVENT_PERSONNEL), Đăng ký hộ
     │   ├── data/ (datasources, models, repositories)
     │   ├── domain/ (entities, repositories, usecases)
     │   └── presentation/ (providers, screens, widgets)
-    ├── task/                                 # Phân hệ 3: Công việc (EVENT_TASK) & Cảnh báo 24h/12h (TASK_PROGRESS_ALERT)
+    ├── task/      # Phân hệ 3: Công việc (EVENT_TASK) & Cảnh báo 24h/12h (TASK_PROGRESS_ALERT)
     │   ├── data/ (datasources, models, repositories)
     │   ├── domain/ (entities, repositories, usecases)
     │   └── presentation/ (providers, screens, widgets)
-    ├── contribution/                         # Phân hệ 4: Đóng góp Tiền mặt/Hiện vật & Tài sản dòng họ (CLAN_ASSET)
+    ├── contribution/       # Phân hệ 4: Đóng góp Tiền mặt/Hiện vật & Tài sản dòng họ (CLAN_ASSET)
     │   ├── data/ (datasources, models, repositories)
     │   ├── domain/ (entities, repositories, usecases)
     │   └── presentation/ (providers, screens, widgets)
-    ├── finance/                              # Phân hệ 5: Tạm ứng, Quyết toán & Sổ cái bất biến (IMMUTABLE_LEDGER)
+    ├── finance/      # Phân hệ 5: Tạm ứng, Quyết toán & Sổ cái bất biến (IMMUTABLE_LEDGER)
     │   ├── data/ (datasources, models, repositories)
     │   ├── domain/ (entities, repositories, usecases)
     │   └── presentation/ (providers, screens, widgets)
-    └── report/                               # Phân hệ 6: Báo cáo thu chi & Cộng dồn công đức đệ quy (TinhTongDongGopDeQuy)
+    └── report/      # Phân hệ 6: Báo cáo thu chi & Cộng dồn công đức đệ quy (TinhTongDongGopDeQuy)
         ├── data/ (datasources, models, repositories)
         ├── domain/ (entities, repositories, usecases)
         └── presentation/ (providers, screens, widgets)

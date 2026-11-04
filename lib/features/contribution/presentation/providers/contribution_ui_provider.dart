@@ -66,7 +66,9 @@ class ContributionUiState {
       .length;
 
   int get processedInKindCount => inKindReceipts
-      .where((item) => item.processingStatus != InKindProcessingStatus.Pending)
+      .where((item) =>
+          item.processingStatus == InKindProcessingStatus.Consumed ||
+          item.processingStatus == InKindProcessingStatus.Returned)
       .length;
 
   double get totalAssetValue =>

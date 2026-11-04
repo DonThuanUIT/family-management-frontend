@@ -172,9 +172,12 @@ class _ClanAssetInventoryScreenState
           payer.contains(q);
     }).toList();
 
-    // Danh sách lịch sử gốc khớp với phân loại và tìm kiếm
+    // Danh sách lịch sử gốc khớp với phân loại và tìm kiếm (chỉ gồm Tiêu hao & Hoàn trả)
     final processedBase = uiState.inKindReceipts.where((item) {
       if (item.processingStatus == InKindProcessingStatus.Pending) return false;
+      if (item.processingStatus == InKindProcessingStatus.AddedToCommonAssets) {
+        return false;
+      }
       if (!_matchesItemCategory(item.itemName, _selectedCategory)) return false;
       if (uiState.searchQuery.isEmpty) return true;
       final q = uiState.searchQuery.toLowerCase();
@@ -191,10 +194,6 @@ class _ClanAssetInventoryScreenState
       }
       if (_selectedProcessedFilter == 'returned' &&
           item.processingStatus != InKindProcessingStatus.Returned) {
-        return false;
-      }
-      if (_selectedProcessedFilter == 'assets' &&
-          item.processingStatus != InKindProcessingStatus.AddedToCommonAssets) {
         return false;
       }
       return true;
@@ -711,6 +710,20 @@ class _ClanAssetInventoryScreenState
   }
 
   Widget _buildAssetCard(ClanAssetDto asset) {
+    final uiState = ref.watch(contributionUiProvider);
+    final originReceipt = asset.originContributionId != null
+        ? uiState.inKindReceipts
+            .cast<InKindElectronicReceiptDto?>()
+            .firstWhere(
+              (r) => r?.contributionId == asset.originContributionId,
+              orElse: () => null,
+            )
+        : null;
+    final donorDisplay = asset.originDonorName ??
+        (originReceipt != null
+            ? '${originReceipt.payerMemberName ?? originReceipt.payerMemberId} (Cúng tiến ${originReceipt.eventName})'
+            : null);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -851,7 +864,7 @@ class _ClanAssetInventoryScreenState
               ),
             ],
           ),
-          if (asset.originDonorName != null) ...[
+          if (donorDisplay != null) ...[
             const SizedBox(height: 6),
             Row(
               children: [
@@ -860,7 +873,7 @@ class _ClanAssetInventoryScreenState
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    'Cúng tiến: ${asset.originDonorName}',
+                    'Cúng tiến: $donorDisplay',
                     style: const TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w500,
@@ -1272,17 +1285,6 @@ class _ClanAssetInventoryScreenState
                               InKindProcessingStatus.Returned)
                           .length,
                       color: const Color(0xFF0284C7),
-                    ),
-                    const SizedBox(width: 8),
-                    _buildProcessedFilterChip(
-                      'Đã nhập kho từ đường',
-                      'assets',
-                      processedBase
-                          .where((i) =>
-                              i.processingStatus ==
-                              InKindProcessingStatus.AddedToCommonAssets)
-                          .length,
-                      color: const Color(0xFF8B1E1E),
                     ),
                   ],
                 ),
@@ -1976,25 +1978,35 @@ class _ClanAssetInventoryScreenState
   }
 
   void _showOriginReceiptDialog(ClanAssetDto asset) {
-    final receipt = InKindElectronicReceiptDto(
-      receiptNumber:
-          'PT-ASSET-${asset.assetId.replaceAll(RegExp(r'[^0-9]'), '')}',
-      contributionId: asset.originContributionId ?? 'CTRIB-DEMO',
-      eventId: 'EVT-GIO-TO-2026',
-      eventName: 'Đại Lễ Giỗ Tổ Thủy Tộc Xuân Bính Ngọ 2026',
-      payerMemberId: 'MEM-DONOR',
-      payerMemberName: asset.originDonorName ?? 'Hội Đồng Tộc Biểu',
-      receiverAccountId: 'ACC-TREASURER-01',
-      itemName: asset.assetName,
-      quantity: asset.quantity.toDouble(),
-      unit: asset.unit,
-      conversionMethod: ConversionMethod.Agreement,
-      convertedMonetaryValue: asset.assessedValue,
-      convertedMonetaryValueInWords: 'Đã thẩm định giá trị',
-      processingStatus: InKindProcessingStatus.AddedToCommonAssets,
-      storageLocation: asset.storageLocation,
-      contributionDate: asset.createdAt,
-    );
+    InKindElectronicReceiptDto? found;
+    if (asset.originContributionId != null) {
+      final inKindList = ref.read(contributionUiProvider).inKindReceipts;
+      found = inKindList.cast<InKindElectronicReceiptDto?>().firstWhere(
+            (r) => r?.contributionId == asset.originContributionId,
+            orElse: () => null,
+          );
+    }
+
+    final receipt = found ??
+        InKindElectronicReceiptDto(
+          receiptNumber:
+              'PT-ASSET-${asset.assetId.replaceAll(RegExp(r'[^0-9]'), '')}',
+          contributionId: asset.originContributionId ?? 'CTRIB-DEMO',
+          eventId: 'EVT-GIO-TO-2026',
+          eventName: 'Đại Lễ Giỗ Tổ Thủy Tộc Xuân Bính Ngọ 2026',
+          payerMemberId: 'MEM-DONOR',
+          payerMemberName: asset.originDonorName ?? 'Hội Đồng Tộc Biểu',
+          receiverAccountId: 'ACC-TREASURER-01',
+          itemName: asset.assetName,
+          quantity: asset.quantity.toDouble(),
+          unit: asset.unit,
+          conversionMethod: ConversionMethod.Agreement,
+          convertedMonetaryValue: asset.assessedValue,
+          convertedMonetaryValueInWords: 'Đã thẩm định giá trị',
+          processingStatus: InKindProcessingStatus.AddedToCommonAssets,
+          storageLocation: asset.storageLocation,
+          contributionDate: asset.createdAt,
+        );
 
     showDialog(
       context: context,

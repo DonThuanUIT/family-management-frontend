@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mockup Mobile (~390px) - US-07: Phân Công Nhiệm Vụ Sự Kiện</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Merriweather:wght@700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              crimson: '#8B1E1E',
+              crimsonDark: '#701616',
+              gold: '#B8860B',
+              teal: '#0F766E',
+              amber: '#D97706',
+              bg: '#F9F8F6',
+              surface: '#FFFFFF',
+              border: '#E8E4DF',
+              textPrimary: '#1F1610',
+              textSecondary: '#6B5E55',
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            serif: ['Merriweather', 'serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      vertical-align: middle;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 min-h-screen py-8 flex flex-col items-center justify-center font-sans antialiased text-brand-textPrimary">
+
+  <!-- Mobile Simulator Frame Controls -->
+  <div class="mb-4 text-center">
+    <div class="text-white/60 text-xs font-mono uppercase tracking-wider mb-2">Mô Phỏng Màn Hình Di Động (~390px)</div>
+    <div class="flex items-center gap-1.5 bg-white/10 p-1.5 rounded-xl backdrop-blur-sm">
+      <button onclick="setMobileState('normal')" id="m-btn-normal" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-brand-crimson text-white">BTC (Bình thường)</button>
+      <button onclick="setMobileState('member')" id="m-btn-member" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-white/70 hover:bg-white/10">Thành viên</button>
+      <button onclick="setMobileState('closed')" id="m-btn-closed" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-white/70 hover:bg-white/10">Khóa sổ (Closed)</button>
+      <button onclick="setMobileState('empty')" id="m-btn-empty" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-white/70 hover:bg-white/10">Rỗng</button>
+      <button onclick="setMobileState('error')" id="m-btn-error" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-white/70 hover:bg-white/10">Lỗi</button>
+    </div>
+  </div>
+
+  <!-- Mobile Screen Container (~390px x 844px) -->
+  <div class="w-[390px] h-[844px] bg-brand-bg rounded-[44px] border-[8px] border-slate-700 shadow-2xl overflow-hidden flex flex-col relative">
+
+    <!-- Top Status Bar Indicator -->
+    <div class="h-10 bg-brand-crimson flex items-center justify-between px-6 text-white text-[11px] font-mono shrink-0">
+      <span>09:41</span>
+      <div class="w-20 h-4 bg-black/40 rounded-full mx-auto"></div>
+      <div class="flex items-center gap-1">
+        <span class="material-symbols-outlined text-[14px]">signal_cellular_alt</span>
+        <span class="material-symbols-outlined text-[14px]">wifi</span>
+        <span class="material-symbols-outlined text-[14px]">battery_full</span>
+      </div>
+    </div>
+
+    <!-- Mobile AppBar -->
+    <div class="bg-brand-crimson text-white px-4 py-3 flex items-center justify-between shadow shrink-0">
+      <div class="flex items-center gap-2">
+        <button class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 transition">
+          <span class="material-symbols-outlined text-xl">arrow_back</span>
+        </button>
+        <div>
+          <h2 class="font-serif font-bold text-sm leading-tight">Hạng Mục Chuẩn Bị</h2>
+          <p class="text-[10px] text-white/80">Lễ Giỗ Tổ 2026 (15/12 ÂL)</p>
+        </div>
+      </div>
+      <div class="w-7 h-7 rounded-full bg-brand-gold/30 text-brand-gold flex items-center justify-center text-[10px] font-bold">
+        BTC
+      </div>
+    </div>
+
+    <!-- State Banners (Closed / Member) -->
+    <div id="m-banner-closed" class="hidden p-3 bg-amber-100 border-b border-brand-amber/30 text-brand-amber text-xs flex items-center gap-2 shrink-0">
+      <span class="material-symbols-outlined text-sm shrink-0">lock</span>
+      <span class="text-[11px] font-medium leading-tight">Sự kiện đã khóa sổ (Closed). Chế độ Chỉ đọc.</span>
+    </div>
+
+    <div id="m-banner-member" class="hidden p-3 bg-slate-200 border-b border-slate-300 text-slate-700 text-xs flex items-center gap-2 shrink-0">
+      <span class="material-symbols-outlined text-sm shrink-0">visibility</span>
+      <span class="text-[11px] font-medium leading-tight">Chế độ xem dành cho Thành viên gia phả.</span>
+    </div>
+
+    <!-- Horizontal Status Filter Tabs -->
+    <div class="bg-white border-b border-brand-border px-4 py-2.5 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+      <button class="px-3 py-1 rounded-full text-xs font-semibold bg-brand-crimson text-white shrink-0">Tất cả (4)</button>
+      <button class="px-3 py-1 rounded-full text-xs font-semibold bg-brand-bg text-brand-textSecondary shrink-0">Chưa giao (1)</button>
+      <button class="px-3 py-1 rounded-full text-xs font-semibold bg-brand-bg text-brand-textSecondary shrink-0">Đang làm (2)</button>
+      <button class="px-3 py-1 rounded-full text-xs font-semibold bg-brand-bg text-brand-textSecondary shrink-0">Đã xong (1)</button>
+    </div>
+
+    <!-- Scrollable Content Area -->
+    <div class="flex-1 overflow-y-auto p-4 space-y-3.5 no-scrollbar">
+
+      <!-- View State: Error -->
+      <div id="m-view-error" class="hidden bg-white rounded-2xl border border-red-200 p-8 text-center my-10">
+        <span class="material-symbols-outlined text-3xl text-red-500 mb-2">wifi_off</span>
+        <h4 class="font-bold text-sm text-brand-textPrimary">Lỗi kết nối máy chủ</h4>
+        <p class="text-xs text-brand-textSecondary mt-1 mb-4">Không thể nạp danh sách công việc. Vui lòng thử lại.</p>
+        <button onclick="setMobileState('normal')" class="px-4 py-1.5 rounded-lg bg-brand-crimson text-white text-xs font-semibold">Tải lại</button>
+      </div>
+
+      <!-- View State: Empty -->
+      <div id="m-view-empty" class="hidden bg-white rounded-2xl border border-brand-border p-8 text-center my-10">
+        <span class="material-symbols-outlined text-3xl text-brand-textSecondary mb-2">assignment_late</span>
+        <h4 class="font-bold text-sm text-brand-textPrimary">Chưa có công việc nào</h4>
+        <p class="text-xs text-brand-textSecondary mt-1 mb-4">Ban tổ chức có thể bấm nút bên dưới để tạo hạng mục đầu tiên.</p>
+      </div>
+
+      <!-- View State: Normal Cards -->
+      <div id="m-view-normal" class="space-y-3.5">
+
+        <!-- Mobile Card 1: Unassigned -->
+        <div class="bg-white rounded-2xl p-4 border border-brand-border shadow-sm">
+          <div class="flex items-start justify-between gap-2 mb-1.5">
+            <h3 class="font-bold text-brand-textPrimary text-xs leading-snug">Dọn dẹp khuôn viên & lau dọn bài vị</h3>
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-gray-100 text-gray-700 shrink-0">Chưa giao</span>
+          </div>
+          <p class="text-[11px] text-brand-textSecondary line-clamp-2 mb-3">Tẩy trần toàn bộ ban thờ tiền tổ, lư đồng, vệ sinh sân tế ngoại tự.</p>
+
+          <div class="p-2.5 rounded-xl bg-brand-bg text-[11px] space-y-1 mb-3">
+            <div class="flex items-center justify-between">
+              <span class="text-brand-textSecondary">Hạn chót:</span>
+              <span class="font-mono font-semibold text-brand-textPrimary">20/04/2026</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-brand-textSecondary">Tạm ứng:</span>
+              <span class="font-mono font-bold text-brand-crimson">1.000.000 ₫</span>
+            </div>
+            <div class="flex items-center justify-between pt-1 border-t border-brand-border/60">
+              <span class="text-brand-textSecondary">Phụ trách:</span>
+              <span class="italic text-gray-400">Chưa gán</span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-1 border-t border-brand-border/60">
+            <span class="text-[10px] font-mono text-brand-textSecondary">TSK7A2B9C01</span>
+            <button onclick="openMobileSheet()" class="m-btn-assign px-3 py-1 rounded-lg bg-brand-crimson/10 text-brand-crimson text-xs font-semibold">Gán việc</button>
+          </div>
+        </div>
+
+        <!-- Mobile Card 2: InProgress (Member) -->
+        <div class="bg-white rounded-2xl p-4 border border-brand-border shadow-sm">
+          <div class="flex items-start justify-between gap-2 mb-1.5">
+            <h3 class="font-bold text-brand-textPrimary text-xs leading-snug">Mua sắm hoa quả & hương lễ tam sinh</h3>
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-blue-50 text-blue-700 shrink-0">Đang thực hiện</span>
+          </div>
+          <p class="text-[11px] text-brand-textSecondary line-clamp-2 mb-3">Trực tiếp thu xếp tráp quả ngũ quả cửu phẩm, hương bài thủ công.</p>
+
+          <div class="p-2.5 rounded-xl bg-brand-bg text-[11px] space-y-1 mb-3">
+            <div class="flex items-center justify-between">
+              <span class="text-brand-textSecondary">Hạn chót:</span>
+              <span class="font-mono font-semibold text-brand-textPrimary">22/04/2026</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-brand-textSecondary">Tạm ứng:</span>
+              <span class="font-mono font-bold text-brand-crimson">2.000.000 ₫</span>
+            </div>
+            <div class="flex items-center justify-between pt-1 border-t border-brand-border/60">
+              <span class="text-brand-textSecondary">Phụ trách:</span>
+              <span class="font-semibold text-brand-textPrimary">Lê Hữu Tuấn (Chi 2)</span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-1 border-t border-brand-border/60">
+            <span class="text-[10px] font-mono text-brand-textSecondary">TSK8F3D1104</span>
+            <button onclick="openMobileSheet()" class="m-btn-assign px-3 py-1 rounded-lg border border-brand-border text-xs font-semibold text-brand-textPrimary">Phân công lại</button>
+          </div>
+        </div>
+
+        <!-- Mobile Card 3: InProgress (Branch) -->
+        <div class="bg-white rounded-2xl p-4 border border-brand-border shadow-sm">
+          <div class="flex items-start justify-between gap-2 mb-1.5">
+            <h3 class="font-bold text-brand-textPrimary text-xs leading-snug">Chuẩn bị bài tế văn & trang phục</h3>
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-blue-50 text-blue-700 shrink-0">Đang thực hiện</span>
+          </div>
+          <p class="text-[11px] text-brand-textSecondary line-clamp-2 mb-3">Hoàn thiện bản thảo văn tế & là ủi 6 bộ áo thụng tế.</p>
+
+          <div class="p-2.5 rounded-xl bg-brand-bg text-[11px] space-y-1 mb-3">
+            <div class="flex items-center justify-between">
+              <span class="text-brand-textSecondary">Hạn chót:</span>
+              <span class="font-mono font-semibold text-brand-textPrimary">24/04/2026</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-brand-textSecondary">Tạm ứng:</span>
+              <span class="font-mono font-bold text-brand-crimson">500.000 ₫</span>
+            </div>
+            <div class="flex items-center justify-between pt-1 border-t border-brand-border/60">
+              <span class="text-brand-textSecondary">Phụ trách:</span>
+              <span class="font-semibold text-brand-textPrimary">Chi Trưởng - Phái Giáp</span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-1 border-t border-brand-border/60">
+            <span class="text-[10px] font-mono text-brand-textSecondary">TSK9A11C283</span>
+            <button onclick="openMobileSheet()" class="m-btn-assign px-3 py-1 rounded-lg border border-brand-border text-xs font-semibold text-brand-textPrimary">Phân công lại</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Floating Action Button for Mobile -->
+    <div id="m-fab-container" class="absolute bottom-6 right-6">
+      <button id="m-btn-create" onclick="openMobileCreateSheet()" class="h-12 px-4 rounded-full bg-brand-crimson text-white shadow-lg flex items-center gap-2 hover:bg-brand-crimsonDark transition">
+        <span class="material-symbols-outlined text-xl">add_task</span>
+        <span class="text-xs font-bold">+ Tạo việc</span>
+      </button>
+    </div>
+
+    <!-- Mobile Modal Bottom Sheet: Tạo Việc Mới -->
+    <div id="m-sheet-create" class="absolute inset-0 bg-black/50 backdrop-blur-xs flex flex-col justify-end hidden z-40">
+      <div class="bg-white rounded-t-3xl p-5 shadow-2xl max-h-[85%] flex flex-col animate-slideUp">
+        <div class="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-3 shrink-0"></div>
+        <div class="flex items-center justify-between pb-3 border-b border-brand-border mb-3 shrink-0">
+          <h3 class="font-serif font-bold text-sm text-brand-textPrimary">Tạo Hạng Mục Phân Việc</h3>
+          <button onclick="closeMobileCreateSheet()" class="text-brand-textSecondary p-1">
+            <span class="material-symbols-outlined text-lg">close</span>
+          </button>
+        </div>
+
+        <div class="overflow-y-auto space-y-3.5 pr-1 no-scrollbar flex-1">
+          <div>
+            <label class="text-[11px] font-semibold text-brand-textPrimary block mb-1">Tên công việc <span class="text-red-500">*</span></label>
+            <input type="text" placeholder="Tối đa 100 ký tự..." class="w-full px-3 py-2 text-xs rounded-xl border border-brand-border focus:outline-none"/>
+          </div>
+
+          <div>
+            <label class="text-[11px] font-semibold text-brand-textPrimary block mb-1">Chi tiết công việc</label>
+            <textarea rows="2" placeholder="Nội dung, địa điểm giao nhận..." class="w-full px-3 py-2 text-xs rounded-xl border border-brand-border focus:outline-none"></textarea>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="text-[11px] font-semibold text-brand-textPrimary block mb-1">Tạm ứng (VNĐ)</label>
+              <input type="text" value="0 ₫" class="w-full px-3 py-2 text-xs font-mono font-bold rounded-xl border border-brand-border focus:outline-none"/>
+            </div>
+            <div>
+              <label class="text-[11px] font-semibold text-brand-textPrimary block mb-1">Hạn chót</label>
+              <input type="datetime-local" value="2026-04-24T17:00" class="w-full px-2 py-2 text-[10px] font-mono rounded-xl border border-brand-border focus:outline-none"/>
+            </div>
+          </div>
+
+          <div>
+            <label class="text-[11px] font-semibold text-brand-textPrimary block mb-1">Người / Nhánh nhận việc</label>
+            <div class="p-2.5 rounded-xl bg-brand-bg border border-brand-border flex items-center justify-between">
+              <span class="text-xs text-brand-textSecondary italic" id="m-assignee-label">Chưa chọn</span>
+              <button type="button" onclick="openMobileAssigneePicker()" class="px-2.5 py-1 rounded bg-white border border-brand-border text-[11px] font-semibold text-brand-crimson">Chọn</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-brand-border mt-3 flex items-center justify-end gap-2 shrink-0">
+          <button type="button" onclick="closeMobileCreateSheet()" class="px-3.5 py-2 rounded-xl text-xs font-medium text-brand-textSecondary">Đóng</button>
+          <button type="button" onclick="simulateMobileSubmit()" class="px-5 py-2 rounded-xl bg-brand-crimson text-white text-xs font-bold">Lưu Công Việc</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Assignee Selection Modal -->
+    <div id="m-sheet-picker" class="absolute inset-0 bg-black/60 flex flex-col justify-end hidden z-50">
+      <div class="bg-white rounded-t-3xl p-5 shadow-2xl max-h-[80%] flex flex-col animate-slideUp">
+        <div class="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-2 shrink-0"></div>
+        <div class="flex items-center justify-between pb-2 border-b border-brand-border mb-3 shrink-0">
+          <h4 class="font-serif font-bold text-xs text-brand-textPrimary">Chọn Đối Tượng Nhận Việc (US-25)</h4>
+          <button onclick="closeMobileAssigneePicker()" class="text-brand-textSecondary p-1">
+            <span class="material-symbols-outlined text-base">close</span>
+          </button>
+        </div>
+
+        <div class="overflow-y-auto space-y-2 pr-1 no-scrollbar flex-1 text-xs">
+          <div class="font-bold text-[11px] text-brand-crimson uppercase tracking-wider">Cá nhân</div>
+          <div onclick="pickAssigneeMobile('Lê Hữu Tuấn (Chi 2)')" class="p-2 rounded-xl border border-brand-border flex items-center justify-between active:bg-brand-bg">
+            <span>Lê Hữu Tuấn (Chi 2 • Đời V)</span>
+            <span class="text-brand-crimson font-bold text-xs">Chọn</span>
+          </div>
+          <div onclick="pickAssigneeMobile('Lê Đức Thắng (Chi 1)')" class="p-2 rounded-xl border border-brand-border flex items-center justify-between active:bg-brand-bg">
+            <span>Lê Đức Thắng (Chi 1 • Đời IV)</span>
+            <span class="text-brand-crimson font-bold text-xs">Chọn</span>
+          </div>
+
+          <div class="font-bold text-[11px] text-brand-teal uppercase tracking-wider pt-2">Chi nhánh</div>
+          <div onclick="pickAssigneeMobile('Chi Trưởng - Phái Giáp')" class="p-2 rounded-xl border border-brand-border flex items-center justify-between active:bg-brand-bg">
+            <span>Chi Trưởng - Phái Giáp (Đời II)</span>
+            <span class="text-brand-crimson font-bold text-xs">Chọn</span>
+          </div>
+          <div onclick="pickAssigneeMobile('Chi Hai - Phái Ất')" class="p-2 ml-3 rounded-xl border border-brand-border flex items-center justify-between active:bg-brand-bg">
+            <span>Chi Hai - Phái Ất (Đời III)</span>
+            <span class="text-brand-crimson font-bold text-xs">Chọn</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function setMobileState(state) {
+      document.querySelectorAll('#m-btn-normal, #m-btn-member, #m-btn-closed, #m-btn-empty, #m-btn-error')
+        .forEach(b => {
+          b.className = 'px-2.5 py-1 rounded-lg text-[11px] font-semibold text-white/70 hover:bg-white/10';
+        });
+      document.getElementById('m-btn-' + state).className = 'px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-brand-crimson text-white';
+
+      const bannerClosed = document.getElementById('m-banner-closed');
+      const bannerMember = document.getElementById('m-banner-member');
+      const viewNormal = document.getElementById('m-view-normal');
+      const viewEmpty = document.getElementById('m-view-empty');
+      const viewError = document.getElementById('m-view-error');
+      const fab = document.getElementById('m-fab-container');
+      const assignBtns = document.querySelectorAll('.m-btn-assign');
+
+      bannerClosed.classList.add('hidden');
+      bannerMember.classList.add('hidden');
+      viewNormal.classList.add('hidden');
+      viewEmpty.classList.add('hidden');
+      viewError.classList.add('hidden');
+      fab.classList.remove('hidden');
+      assignBtns.forEach(b => { b.classList.remove('opacity-40', 'pointer-events-none'); });
+
+      if (state === 'normal') {
+        viewNormal.classList.remove('hidden');
+      } else if (state === 'member') {
+        bannerMember.classList.remove('hidden');
+        viewNormal.classList.remove('hidden');
+        fab.classList.add('hidden');
+        assignBtns.forEach(b => { b.classList.add('opacity-40', 'pointer-events-none'); });
+      } else if (state === 'closed') {
+        bannerClosed.classList.remove('hidden');
+        viewNormal.classList.remove('hidden');
+        fab.classList.add('hidden');
+        assignBtns.forEach(b => { b.classList.add('opacity-40', 'pointer-events-none'); });
+      } else if (state === 'empty') {
+        viewEmpty.classList.remove('hidden');
+      } else if (state === 'error') {
+        viewError.classList.remove('hidden');
+        fab.classList.add('hidden');
+      }
+    }
+
+    function openMobileCreateSheet() {
+      document.getElementById('m-sheet-create').classList.remove('hidden');
+    }
+
+    function closeMobileCreateSheet() {
+      document.getElementById('m-sheet-create').classList.add('hidden');
+    }
+
+    function openMobileAssigneePicker() {
+      document.getElementById('m-sheet-picker').classList.remove('hidden');
+    }
+
+    function closeMobileAssigneePicker() {
+      document.getElementById('m-sheet-picker').classList.add('hidden');
+    }
+
+    function pickAssigneeMobile(name) {
+      document.getElementById('m-assignee-label').innerText = name;
+      document.getElementById('m-assignee-label').className = 'text-xs text-brand-crimson font-bold';
+      closeMobileAssigneePicker();
+    }
+
+    function simulateMobileSubmit() {
+      alert('Đã lưu công việc thành công! Hệ thống chuyển sang InProgress.');
+      closeMobileCreateSheet();
+      setMobileState('normal');
+    }
+
+    function openMobileSheet() {
+      openMobileAssigneePicker();
+    }
+  </script>
+</body>
+</html>
+

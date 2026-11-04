@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mockup Desktop (~1280px) - US-07: Quản Lý & Phân Công Nhiệm Vụ Sự Kiện</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Merriweather:wght@700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              crimson: '#8B1E1E',
+              crimsonDark: '#701616',
+              gold: '#B8860B',
+              teal: '#0F766E',
+              amber: '#D97706',
+              bg: '#F9F8F6',
+              surface: '#FFFFFF',
+              border: '#E8E4DF',
+              textPrimary: '#1F1610',
+              textSecondary: '#6B5E55',
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            serif: ['Merriweather', 'serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      vertical-align: middle;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background-color: #D4C8BE;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-brand-bg text-brand-textPrimary font-sans antialiased min-h-screen">
+
+  <!-- Interactive Controls Bar for Prototype Demonstration -->
+  <div class="bg-brand-textPrimary text-white text-xs px-6 py-2.5 flex items-center justify-between border-b border-white/10 sticky top-0 z-50">
+    <div class="flex items-center gap-2">
+      <span class="font-bold text-brand-gold uppercase tracking-wider font-mono">Mockup Trình Diễn US-07 (Desktop 1280px)</span>
+      <span class="text-white/40">|</span>
+      <span>Xem nhanh 5 trạng thái giao diện:</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <button onclick="setState('normal')" id="btn-state-normal" class="px-2.5 py-1 rounded bg-brand-crimson text-white font-medium hover:opacity-90 transition">Bình thường (BTC)</button>
+      <button onclick="setState('member')" id="btn-state-member" class="px-2.5 py-1 rounded bg-white/10 text-white/80 hover:bg-white/20 transition">Thành viên (Không đủ quyền)</button>
+      <button onclick="setState('closed')" id="btn-state-closed" class="px-2.5 py-1 rounded bg-white/10 text-white/80 hover:bg-white/20 transition">Chỉ đọc (Sự kiện Closed)</button>
+      <button onclick="setState('empty')" id="btn-state-empty" class="px-2.5 py-1 rounded bg-white/10 text-white/80 hover:bg-white/20 transition">Rỗng (Empty)</button>
+      <button onclick="setState('error')" id="btn-state-error" class="px-2.5 py-1 rounded bg-white/10 text-white/80 hover:bg-white/20 transition">Lỗi (Error)</button>
+    </div>
+  </div>
+
+  <!-- Header / Navigation Bar -->
+  <header class="bg-white border-b border-brand-border">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-full bg-brand-crimson flex items-center justify-center text-white font-bold font-serif text-lg">
+          L
+        </div>
+        <div>
+          <span class="font-serif font-bold text-lg text-brand-crimson">FamilyFund</span>
+          <span class="ml-2 text-xs font-mono px-2 py-0.5 rounded bg-brand-bg text-brand-textSecondary border border-brand-border">Dòng Họ Lê Việt Nam</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="text-sm font-medium text-brand-textSecondary">Ban Tổ Chức: <strong class="text-brand-textPrimary">Lê Hữu Tuấn (Chi 2)</strong></span>
+        <div class="w-8 h-8 rounded-full bg-brand-gold/20 text-brand-gold flex items-center justify-center font-bold text-xs">
+          BTC
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="max-w-7xl mx-auto px-6 py-8">
+
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-xs text-brand-textSecondary mb-4">
+      <a href="#" class="hover:underline">Quản lý dòng họ</a>
+      <span>/</span>
+      <a href="#" class="hover:underline">Sự kiện</a>
+      <span>/</span>
+      <span class="text-brand-textPrimary font-semibold">Lễ Giỗ Tổ Dòng Họ Lê 2026</span>
+      <span>/</span>
+      <span class="text-brand-crimson font-semibold">Hạng mục công việc</span>
+    </nav>
+
+    <!-- State Banners -->
+    <div id="banner-closed" class="hidden mb-6 p-4 rounded-xl bg-amber-50 border border-brand-amber/30 text-brand-amber flex items-start gap-3">
+      <span class="material-symbols-outlined text-brand-amber shrink-0 mt-0.5">lock</span>
+      <div>
+        <h4 class="font-bold text-sm">Sự kiện đã kết thúc và khóa sổ (Closed)</h4>
+        <p class="text-xs text-brand-amber/90 mt-0.5">Toàn bộ quyền hạn thao tác chuẩn bị sự kiện đã tự động chuyển sang Chế độ Chỉ đọc (Read-only). Nút tạo và gán công việc đã bị vô hiệu hóa.</p>
+      </div>
+    </div>
+
+    <div id="banner-member" class="hidden mb-6 p-4 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 flex items-start gap-3">
+      <span class="material-symbols-outlined text-slate-600 shrink-0 mt-0.5">visibility</span>
+      <div>
+        <h4 class="font-bold text-sm">Chế độ xem dành cho Thành viên gia phả</h4>
+        <p class="text-xs text-slate-600 mt-0.5">Bạn đang xem danh sách phân công với vai trò Thành viên. Chỉ Ban tổ chức sự kiện, Trưởng tộc hoặc Quản trị viên mới có quyền tạo và điều chuyển công việc.</p>
+      </div>
+    </div>
+
+    <!-- Event Header Card -->
+    <section class="bg-white rounded-2xl p-6 border border-brand-border shadow-sm mb-6 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      <div class="space-y-2">
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            ● Đang Chuẩn Bị (RegistrationOpen)
+          </span>
+          <span class="text-xs text-brand-textSecondary font-mono">Mã sự kiện: EVT20260426001</span>
+        </div>
+        <h1 class="font-serif text-2xl font-bold text-brand-textPrimary">Lễ Giỗ Tổ Dòng Họ Lê 2026</h1>
+        <div class="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-brand-textSecondary">
+          <span class="flex items-center gap-1">
+            <span class="material-symbols-outlined text-brand-crimson text-sm">calendar_month</span>
+            Rằm tháng Chạp (15/12 ÂL) • 26/04/2026
+          </span>
+          <span>•</span>
+          <span class="flex items-center gap-1">
+            <span class="material-symbols-outlined text-brand-crimson text-sm">location_on</span>
+            Từ Đường Dòng Họ, Nam Trung, Thái Bình
+          </span>
+          <span>•</span>
+          <span class="flex items-center gap-1">
+            <span class="material-symbols-outlined text-brand-teal text-sm">account_balance_wallet</span>
+            Dự toán sự kiện: <strong class="text-brand-textPrimary font-mono">25.000.000 ₫</strong>
+          </span>
+        </div>
+      </div>
+
+      <!-- Quick Action on Top -->
+      <div class="flex items-center gap-3 shrink-0">
+        <button id="btn-create-task" onclick="openCreateModal()" class="px-4 py-2.5 rounded-xl bg-brand-crimson text-white hover:bg-brand-crimsonDark font-semibold text-sm transition shadow flex items-center gap-2">
+          <span class="material-symbols-outlined text-base">add_task</span>
+          <span>+ Tạo Hạng Mục Phân Việc</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Filter & Search Toolbar -->
+    <div class="bg-white rounded-xl p-4 border border-brand-border mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <!-- Status Pills Filter -->
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+        <button onclick="filterStatus('all')" class="status-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-crimson text-white">Tất cả (4)</button>
+        <button onclick="filterStatus('Unassigned')" class="status-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-bg text-brand-textSecondary hover:bg-slate-100">Chưa giao (1)</button>
+        <button onclick="filterStatus('InProgress')" class="status-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-bg text-brand-textSecondary hover:bg-slate-100">Đang thực hiện (2)</button>
+        <button onclick="filterStatus('Completed')" class="status-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-bg text-brand-textSecondary hover:bg-slate-100">Đã hoàn thành (1)</button>
+        <button onclick="filterStatus('Overdue')" class="status-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-bg text-brand-textSecondary hover:bg-slate-100">Quá hạn (0)</button>
+      </div>
+
+      <!-- Search Input -->
+      <div class="relative w-full md:w-72">
+        <span class="material-symbols-outlined absolute left-3 top-2.5 text-brand-textSecondary text-sm">search</span>
+        <input type="text" placeholder="Tìm tên việc hoặc người nhận..." class="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-brand-border bg-brand-bg focus:bg-white focus:outline-none focus:border-brand-crimson transition"/>
+      </div>
+    </div>
+
+    <!-- Error View State -->
+    <div id="view-error" class="hidden bg-white rounded-2xl border border-red-200 p-12 text-center my-6">
+      <div class="w-14 h-14 mx-auto rounded-full bg-red-50 text-red-600 flex items-center justify-center mb-4">
+        <span class="material-symbols-outlined text-3xl">error_outline</span>
+      </div>
+      <h3 class="font-serif font-bold text-lg text-brand-textPrimary mb-1">Không thể tải danh sách công việc</h3>
+      <p class="text-xs text-brand-textSecondary max-w-md mx-auto mb-6">Đã xảy ra lỗi khi kết nối tới máy chủ. Vui lòng kiểm tra lại kết nối mạng hoặc phiên đăng nhập của bạn.</p>
+      <button onclick="setState('normal')" class="px-5 py-2 rounded-xl bg-brand-crimson text-white text-xs font-semibold hover:bg-brand-crimsonDark transition">Thử lại ngay</button>
+    </div>
+
+    <!-- Empty View State -->
+    <div id="view-empty" class="hidden bg-white rounded-2xl border border-brand-border p-12 text-center my-6">
+      <div class="w-14 h-14 mx-auto rounded-full bg-brand-bg text-brand-textSecondary flex items-center justify-center mb-4">
+        <span class="material-symbols-outlined text-3xl">assignment_late</span>
+      </div>
+      <h3 class="font-serif font-bold text-lg text-brand-textPrimary mb-1">Chưa có hạng mục công việc nào</h3>
+      <p class="text-xs text-brand-textSecondary max-w-md mx-auto mb-6">Sự kiện này chưa có công việc chuẩn bị nào được tạo. Ban tổ chức có thể bấm nút bên dưới để tạo hạng mục đầu tiên.</p>
+      <button onclick="openCreateModal()" class="px-5 py-2.5 rounded-xl bg-brand-crimson text-white text-xs font-semibold hover:bg-brand-crimsonDark transition inline-flex items-center gap-1.5">
+        <span class="material-symbols-outlined text-base">add</span>
+        <span>Tạo Công Việc Đầu Tiên</span>
+      </button>
+    </div>
+
+    <!-- Normal Task Grid View -->
+    <div id="view-normal" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <!-- Card 1: Unassigned Task -->
+      <div class="bg-white rounded-2xl p-5 border border-brand-border shadow-sm hover:shadow-md transition flex flex-col justify-between">
+        <div>
+          <div class="flex items-start justify-between gap-2 mb-2">
+            <h3 class="font-bold text-brand-textPrimary text-sm leading-snug">Dọn dẹp khuôn viên & lau dọn bài vị</h3>
+            <span class="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-gray-100 text-gray-700 shrink-0">
+              Chưa giao
+            </span>
+          </div>
+          <p class="text-xs text-brand-textSecondary mb-4 line-clamp-2">
+            Tẩy trần toàn bộ ban thờ tiền tổ, lư đồng, vệ sinh sân tế ngoại tự và chỉnh trang hàng ngũ câu đối.
+          </p>
+
+          <!-- Task Specs Box -->
+          <div class="space-y-2 p-3 rounded-xl bg-brand-bg text-xs mb-4">
+            <div class="flex items-center justify-between">
+              <span class="text-brand-textSecondary flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">schedule</span> Hạn chót:
+              </span>
+              <span class="font-mono font-semibold text-brand-textPrimary">20/04/2026 - 17:00</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-brand-textSecondary flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">request_quote</span> Tạm ứng dự kiến:
+              </span>
+              <span class="font-mono font-bold text-brand-crimson">1.000.000 ₫</span>
+            </div>
+            <div class="flex items-center justify-between pt-1 border-t border-brand-border/60">
+              <span class="text-brand-textSecondary flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">person</span> Phụ trách:
+              </span>
+              <span class="font-mono text-gray-400 italic">Chưa chỉ định</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer Action -->
+        <div class="pt-2 border-t border-brand-border/60 flex items-center justify-between">
+          <span class="text-[11px] font-mono text-brand-textSecondary">Mã: TSK7A2B9C01</span>
+          <button onclick="openAssignModal('Dọn dẹp khuôn viên & lau dọn bài vị', null, null)" class="btn-assign px-3 py-1.5 rounded-lg bg-brand-crimson/10 text-brand-crimson hover:bg-brand-crimson hover:text-white text-xs font-semibold transition flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm">person_add</span>
+            <span>Gán việc</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Card 2: InProgress Task (Assigned to Individual) -->
+      <div class="bg-white rounded-2xl p-5 border border-brand-border shadow-sm hover:shadow-md transition flex flex-col justify-between">
+        <div>
+          <div class="flex items-start justify-between gap-2 mb-2">
+            <h3 class="font-bold text-brand-textPrimary text-sm leading-snug">Mua sắm hoa quả & hương lễ tam sinh</h3>
+            <span class="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-blue-50 text-blue-700 shrink-0">
+              Đang thực hiện
+            </span>
+          </div>
+          <p class="text-xs text-brand-textSecondary mb-4 line-clamp-2">
+            Trực tiếp thu xếp tráp quả ngũ quả cửu phẩm, hương bài thủ công và phẩm vật cúng dâng sáng 15/12 ÂL.
+          </p>
+
+          <!-- Task Specs Box -->
+          <div class="space-y-2 p-3 rounded-xl bg-brand-bg text-xs mb-4">
+            <div class="flex items-center justify-between">
+              <span class="text-brand-textSecondary flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">schedule</span> Hạn chót:
+              </span>
+              <span class="font-mono font-semibold text-brand-textPrimary">22/04/2026 - 11:30</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-brand-textSecondary flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">request_quote</span> Tạm ứng dự kiến:
+              </span>
+              <span class="font-mono font-bold text-brand-crimson">2.000.000 ₫</span>
+            </div>
+            <div class="flex items-center justify-between pt-1 border-t border-brand-border/60">
+              <span class="text-brand-textSecondary flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">person</span> Phụ trách:
+              </span>
+              <span class="font-semibold text-brand-textPrimary flex items-center gap-1.5">
+                <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-bold flex items-center justify-center">T</span>
+                Lê Hữu Tuấn (Chi 2)
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer Action -->
+        <div class="pt-2 border-t border-brand-border/60 flex items-center justify-between">
+          <span class="text-[11px] font-mono text-brand-textSecondary">Mã: TSK8F3D1104</span>
+          <button onclick="openAssignModal('Mua sắm hoa quả & hương lễ tam sinh', 'MEM10000002', 'Lê Hữu Tuấn')" class="btn-assign px-3 py-1.5 rounded-lg border border-brand-border hover:bg-slate-50 text-xs font-semibold text-brand-textPrimary transition flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm">sync_alt</span>
+            <span>Phân công lại</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Card 3: InProgress Task (Assigned to Branch) -->
+      <div class="bg-white rounded-2xl p-5 border border-brand-border shadow-sm hover:shadow-md transition flex flex-col justify-between">
+        <div>
+          <div class="flex items-start justify-between gap-2 mb-2">
+            <h3 class="font-bold text-brand-textPrimary text-sm leading-snug">Chuẩn bị bài tế văn & trang phục khánh tiết</h3>
+            <span class="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-blue-50 text-blue-700 shrink-0">
+              Đang thực hiện
+            </span>
+          </div>
+          <p class="text-xs text-brand-textSecondary mb-4 line-clamp-2">
+            Hoàn thiện bản thảo văn tế chữ Hán - Quốc ngữ & là ủi 6 bộ áo thụng tế của ban chủ lễ.
+          </p>
+
+          <!-- Task Specs Box -->
+          <div class="space-y-2 p-3 rounded-xl bg-brand-bg text-xs mb-4">
+            <div class="flex items-center justify-between">
+              <span class="text-brand-textSecondary flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">schedule</span> Hạn chót:
+              </span>
+              <span class="font-mono font-semibold text-brand-textPrimary">24/04/2026 - 15:00</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-brand-textSecondary flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">request_quote</span> Tạm ứng dự kiến:
+              </span>
+              <span class="font-mono font-bold text-brand-crimson">500.000 ₫</span>
+            </div>
+            <div class="flex items-center justify-between pt-1 border-t border-brand-border/60">
+              <span class="text-brand-textSecondary flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">account_tree</span> Phụ trách:
+              </span>
+              <span class="font-semibold text-brand-textPrimary flex items-center gap-1.5">
+                <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold flex items-center justify-center">C1</span>
+                Chi Trưởng - Phái Giáp
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer Action -->
+        <div class="pt-2 border-t border-brand-border/60 flex items-center justify-between">
+          <span class="text-[11px] font-mono text-brand-textSecondary">Mã: TSK9A11C283</span>
+          <button onclick="openAssignModal('Chuẩn bị bài tế văn & trang phục khánh tiết', null, 'Chi Trưởng - Phái Giáp')" class="btn-assign px-3 py-1.5 rounded-lg border border-brand-border hover:bg-slate-50 text-xs font-semibold text-brand-textPrimary transition flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm">sync_alt</span>
+            <span>Phân công lại</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Card 4: Completed Task -->
+      <div class="bg-white rounded-2xl p-5 border border-brand-border shadow-sm flex flex-col justify-between opacity-80">
+        <div>
+          <div class="flex items-start justify-between gap-2 mb-2">
+            <h3 class="font-bold text-brand-textPrimary text-sm leading-snug">Thuê phông bạt & bàn ghế (18 mâm cỗ)</h3>
+            <span class="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-emerald-50 text-emerald-700 shrink-0">
+              Đã hoàn thành
+            </span>
+          </div>
+          <p class="text-xs text-brand-textSecondary mb-4 line-clamp-2">
+            Dựng rạp che 3 gian trước sân đình, 120 ghế inox, phông bạt hoa sen và hệ thống quạt mát công nghiệp.
+          </p>
+
+          <!-- Task Specs Box -->
+          <div class="space-y-2 p-3 rounded-xl bg-brand-bg text-xs mb-4">
+            <div class="flex items-center justify-between">
+              <span class="text-brand-textSecondary flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">schedule</span> Hạn chót:
+              </span>
+              <span class="font-mono font-semibold text-brand-textPrimary">18/04/2026 - 18:00</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-brand-textSecondary flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">request_quote</span> Tạm ứng:
+              </span>
+              <span class="font-mono font-bold text-brand-crimson">6.500.000 ₫</span>
+            </div>
+            <div class="flex items-center justify-between pt-1 border-t border-brand-border/60">
+              <span class="text-brand-textSecondary flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">person</span> Phụ trách:
+              </span>
+              <span class="font-semibold text-brand-textPrimary">Lê Đức Thắng (Chi 1)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer Action (Disabled for Completed) -->
+        <div class="pt-2 border-t border-brand-border/60 flex items-center justify-between">
+          <span class="text-[11px] font-mono text-brand-textSecondary">Mã: TSK10294101</span>
+          <span class="text-[11px] italic text-emerald-700 flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm">check_circle</span> Đã nghiệm thu
+          </span>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Modal: Tạo Hạng Mục Công Việc Mới -->
+  <div id="modal-create-task" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl border border-brand-border shadow-2xl max-w-xl w-full p-6 animate-scaleIn">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-4 border-b border-brand-border mb-5">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-brand-crimson/10 text-brand-crimson flex items-center justify-center">
+            <span class="material-symbols-outlined text-xl">add_task</span>
+          </div>
+          <div>
+            <h3 class="font-serif font-bold text-base text-brand-textPrimary">Tạo Hạng Mục Phân Việc</h3>
+            <p class="text-[11px] text-brand-textSecondary">Khởi tạo công việc và gán cho cá nhân hoặc nhánh gia phả</p>
+          </div>
+        </div>
+        <button onclick="closeCreateModal()" class="text-brand-textSecondary hover:text-brand-textPrimary p-1">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <!-- Form Fields -->
+      <form id="form-create-task" onsubmit="handleCreateSubmit(event)" class="space-y-4">
+        <!-- Task Name -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-xs font-semibold text-brand-textPrimary">Tên công việc <span class="text-red-500">*</span></label>
+            <span class="text-[10px] text-brand-textSecondary font-mono" id="task-name-counter">0/100</span>
+          </div>
+          <input type="text" id="input-task-name" maxlength="100" required placeholder="Ví dụ: Mua sắm hoa quả, chuẩn bị bài tế văn..." oninput="updateCounter()" class="w-full px-3.5 py-2 text-xs rounded-xl border border-brand-border focus:outline-none focus:border-brand-crimson transition"/>
+          <p id="err-task-name" class="hidden text-[11px] text-red-600 mt-1">Tên công việc không được để trống</p>
+        </div>
+
+        <!-- Task Details -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-xs font-semibold text-brand-textPrimary">Nội dung chi tiết</label>
+            <span class="text-[10px] text-brand-textSecondary font-mono">Tối đa 4000 ký tự</span>
+          </div>
+          <textarea id="input-details" rows="3" placeholder="Mô tả cụ thể các việc cần làm, yêu cầu chất lượng..." class="w-full px-3.5 py-2 text-xs rounded-xl border border-brand-border focus:outline-none focus:border-brand-crimson transition"></textarea>
+        </div>
+
+        <!-- Advance Budget & Deadline Row -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Advance Budget -->
+          <div>
+            <label class="text-xs font-semibold text-brand-textPrimary block mb-1">Ngân sách tạm ứng dự kiến (VNĐ)</label>
+            <input type="text" id="input-advance-budget" value="0 ₫" onfocus="this.select()" oninput="formatCurrencyInput(this)" class="w-full px-3.5 py-2 text-xs font-mono font-bold rounded-xl border border-brand-border focus:outline-none focus:border-brand-crimson transition"/>
+            <span class="text-[10px] text-brand-textSecondary block mt-0.5">Thủ quỹ duyệt cấp phát ở story tạm ứng</span>
+          </div>
+
+          <!-- Deadline -->
+          <div>
+            <label class="text-xs font-semibold text-brand-textPrimary block mb-1">Hạn chót hoàn thành <span class="text-red-500">*</span></label>
+            <input type="datetime-local" id="input-deadline" required value="2026-04-24T17:00" class="w-full px-3.5 py-2 text-xs font-mono rounded-xl border border-brand-border focus:outline-none focus:border-brand-crimson transition"/>
+            <span class="text-[10px] text-brand-textSecondary block mt-0.5">Phải trước ngày sự kiện (26/04/2026)</span>
+            <p id="err-deadline" class="hidden text-[11px] text-red-600 mt-0.5">Hạn chót phải trước ngày diễn ra sự kiện</p>
+          </div>
+        </div>
+
+        <!-- Assignee Selection Box -->
+        <div class="pt-2">
+          <label class="text-xs font-semibold text-brand-textPrimary block mb-1.5">Đối tượng nhận việc</label>
+          <div class="p-3.5 rounded-xl bg-brand-bg border border-brand-border flex items-center justify-between">
+            <div id="assignee-preview" class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-brand-textSecondary text-lg">person_outline</span>
+              <span class="text-xs text-brand-textSecondary italic" id="assignee-text">Chưa chỉ định (Trạng thái: Chưa giao - Unassigned)</span>
+            </div>
+            <button type="button" onclick="openPickerModal()" class="px-3 py-1.5 rounded-lg bg-white border border-brand-border hover:bg-slate-50 text-xs font-semibold text-brand-textPrimary transition">
+              Chọn người nhận
+            </button>
+          </div>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="pt-4 border-t border-brand-border flex items-center justify-end gap-3">
+          <button type="button" onclick="closeCreateModal()" class="px-4 py-2 rounded-xl border border-brand-border text-xs font-semibold hover:bg-brand-bg transition">Hủy bỏ</button>
+          <button type="submit" id="btn-submit-create" class="px-5 py-2 rounded-xl bg-brand-crimson text-white text-xs font-semibold hover:bg-brand-crimsonDark transition flex items-center gap-2">
+            <span>Lưu Phân Công</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Bộ Chọn Người Nhận Việc (Assignee Picker - 2 Tabs) -->
+  <div id="modal-picker" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl border border-brand-border shadow-2xl max-w-lg w-full p-6 animate-scaleIn">
+      <div class="flex items-center justify-between pb-3 border-b border-brand-border mb-4">
+        <div>
+          <h3 class="font-serif font-bold text-base text-brand-textPrimary">Chọn Đối Tượng Nhận Việc</h3>
+          <p class="text-[11px] text-brand-textSecondary">Tuân thủ US-25: Không để lộ số điện thoại, email, ngày sinh</p>
+        </div>
+        <button onclick="closePickerModal()" class="text-brand-textSecondary hover:text-brand-textPrimary p-1">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <!-- Tab Switcher -->
+      <div class="flex border-b border-brand-border mb-4">
+        <button type="button" onclick="switchPickerTab('member')" id="tab-btn-member" class="flex-1 pb-2.5 text-xs font-bold text-brand-crimson border-b-2 border-brand-crimson flex items-center justify-center gap-1.5">
+          <span class="material-symbols-outlined text-sm">person</span>
+          <span>Cá Nhân (Gia Phả)</span>
+        </button>
+        <button type="button" onclick="switchPickerTab('branch')" id="tab-btn-branch" class="flex-1 pb-2.5 text-xs font-bold text-brand-textSecondary border-b-2 border-transparent hover:text-brand-textPrimary flex items-center justify-center gap-1.5">
+          <span class="material-symbols-outlined text-sm">account_tree</span>
+          <span>Nhánh Gia Đình</span>
+        </button>
+      </div>
+
+      <!-- Tab 1: Member List View -->
+      <div id="picker-tab-member" class="space-y-3">
+        <div class="relative">
+          <span class="material-symbols-outlined absolute left-3 top-2.5 text-brand-textSecondary text-sm">search</span>
+          <input type="text" placeholder="Tìm theo họ tên thành viên..." class="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-brand-border bg-brand-bg focus:bg-white focus:outline-none"/>
+        </div>
+
+        <div class="max-h-60 overflow-y-auto space-y-2 pr-1 custom-scroll">
+          <div onclick="selectAssignee('member', 'MEM10000002', 'Lê Hữu Tuấn (Chi 2)')" class="p-2.5 rounded-xl border border-brand-border hover:border-brand-crimson hover:bg-brand-bg/50 cursor-pointer transition flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-800 text-xs font-bold flex items-center justify-center">T</div>
+              <div>
+                <h4 class="text-xs font-bold text-brand-textPrimary">Lê Hữu Tuấn</h4>
+                <p class="text-[11px] text-brand-textSecondary">Chi 2 • Đời thứ V</p>
+              </div>
+            </div>
+            <span class="text-xs text-brand-crimson font-medium">Chọn</span>
+          </div>
+
+          <div onclick="selectAssignee('member', 'MEM10000003', 'Lê Đức Thắng (Chi 1)')" class="p-2.5 rounded-xl border border-brand-border hover:border-brand-crimson hover:bg-brand-bg/50 cursor-pointer transition flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">T</div>
+              <div>
+                <h4 class="text-xs font-bold text-brand-textPrimary">Lê Đức Thắng</h4>
+                <p class="text-[11px] text-brand-textSecondary">Chi 1 • Đời thứ IV</p>
+              </div>
+            </div>
+            <span class="text-xs text-brand-crimson font-medium">Chọn</span>
+          </div>
+
+          <div onclick="selectAssignee('member', 'MEM10000005', 'Lê Thị Mai (Chi 3)')" class="p-2.5 rounded-xl border border-brand-border hover:border-brand-crimson hover:bg-brand-bg/50 cursor-pointer transition flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-800 text-xs font-bold flex items-center justify-center">M</div>
+              <div>
+                <h4 class="text-xs font-bold text-brand-textPrimary">Lê Thị Mai</h4>
+                <p class="text-[11px] text-brand-textSecondary">Chi 3 • Đời thứ V (Hồ sơ ảo)</p>
+              </div>
+            </div>
+            <span class="text-xs text-brand-crimson font-medium">Chọn</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Branch Tree List View -->
+      <div id="picker-tab-branch" class="space-y-3 hidden">
+        <div class="max-h-60 overflow-y-auto space-y-2 pr-1 custom-scroll">
+          <div onclick="selectAssignee('branch', 'BR10000001', 'Chi Trưởng - Phái Giáp')" class="p-2.5 rounded-xl border border-brand-border hover:border-brand-crimson hover:bg-brand-bg/50 cursor-pointer transition flex items-center justify-between">
+            <div>
+              <h4 class="text-xs font-bold text-brand-textPrimary flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-sm text-brand-teal">account_tree</span>
+                Chi Trưởng - Phái Giáp
+              </h4>
+              <p class="text-[11px] text-brand-textSecondary">Đời II • Đại diện: Lê Văn An • 42 thành viên</p>
+            </div>
+            <span class="text-xs text-brand-crimson font-medium">Chọn nhánh</span>
+          </div>
+
+          <div onclick="selectAssignee('branch', 'BR10000002', 'Chi Hai - Phái Ất')" class="p-2.5 ml-4 rounded-xl border border-brand-border hover:border-brand-crimson hover:bg-brand-bg/50 cursor-pointer transition flex items-center justify-between">
+            <div>
+              <h4 class="text-xs font-bold text-brand-textPrimary flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-sm text-brand-teal">subdirectory_arrow_right</span>
+                Chi Hai - Phái Ất
+              </h4>
+              <p class="text-[11px] text-brand-textSecondary">Đời III • Đại diện: Lê Hữu Tuấn • 28 thành viên</p>
+            </div>
+            <span class="text-xs text-brand-crimson font-medium">Chọn nhánh</span>
+          </div>
+
+          <div onclick="selectAssignee('branch', 'BR10000003', 'Chi Ba - Phái Bính')" class="p-2.5 ml-4 rounded-xl border border-brand-border hover:border-brand-crimson hover:bg-brand-bg/50 cursor-pointer transition flex items-center justify-between">
+            <div>
+              <h4 class="text-xs font-bold text-brand-textPrimary flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-sm text-brand-teal">subdirectory_arrow_right</span>
+                Chi Ba - Phái Bính
+              </h4>
+              <p class="text-[11px] text-brand-textSecondary">Đời III • Đại diện: Lê Văn Cường • 35 thành viên</p>
+            </div>
+            <span class="text-xs text-brand-crimson font-medium">Chọn nhánh</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive JavaScript logic -->
+  <script>
+    let currentSelectedAssignee = null;
+
+    function setState(state) {
+      document.querySelectorAll('#btn-state-normal, #btn-state-member, #btn-state-closed, #btn-state-empty, #btn-state-error')
+        .forEach(b => {
+          b.className = 'px-2.5 py-1 rounded bg-white/10 text-white/80 hover:bg-white/20 transition';
+        });
+      document.getElementById('btn-state-' + state).className = 'px-2.5 py-1 rounded bg-brand-crimson text-white font-medium hover:opacity-90 transition';
+
+      const bannerClosed = document.getElementById('banner-closed');
+      const bannerMember = document.getElementById('banner-member');
+      const viewNormal = document.getElementById('view-normal');
+      const viewEmpty = document.getElementById('view-empty');
+      const viewError = document.getElementById('view-error');
+      const btnCreate = document.getElementById('btn-create-task');
+      const assignBtns = document.querySelectorAll('.btn-assign');
+
+      bannerClosed.classList.add('hidden');
+      bannerMember.classList.add('hidden');
+      viewNormal.classList.add('hidden');
+      viewEmpty.classList.add('hidden');
+      viewError.classList.add('hidden');
+      btnCreate.classList.remove('opacity-40', 'cursor-not-allowed');
+      btnCreate.disabled = false;
+      assignBtns.forEach(b => { b.classList.remove('opacity-40', 'cursor-not-allowed'); b.disabled = false; });
+
+      if (state === 'normal') {
+        viewNormal.classList.remove('hidden');
+      } else if (state === 'member') {
+        bannerMember.classList.remove('hidden');
+        viewNormal.classList.remove('hidden');
+        btnCreate.classList.add('opacity-40', 'cursor-not-allowed');
+        btnCreate.disabled = true;
+        assignBtns.forEach(b => { b.classList.add('opacity-40', 'cursor-not-allowed'); b.disabled = true; });
+      } else if (state === 'closed') {
+        bannerClosed.classList.remove('hidden');
+        viewNormal.classList.remove('hidden');
+        btnCreate.classList.add('opacity-40', 'cursor-not-allowed');
+        btnCreate.disabled = true;
+        assignBtns.forEach(b => { b.classList.add('opacity-40', 'cursor-not-allowed'); b.disabled = true; });
+      } else if (state === 'empty') {
+        viewEmpty.classList.remove('hidden');
+      } else if (state === 'error') {
+        viewError.classList.remove('hidden');
+      }
+    }
+
+    function openCreateModal() {
+      document.getElementById('modal-create-task').classList.remove('hidden');
+    }
+
+    function closeCreateModal() {
+      document.getElementById('modal-create-task').classList.add('hidden');
+    }
+
+    function openPickerModal() {
+      document.getElementById('modal-picker').classList.remove('hidden');
+    }
+
+    function closePickerModal() {
+      document.getElementById('modal-picker').classList.add('hidden');
+    }
+
+    function switchPickerTab(tab) {
+      if (tab === 'member') {
+        document.getElementById('picker-tab-member').classList.remove('hidden');
+        document.getElementById('picker-tab-branch').classList.add('hidden');
+        document.getElementById('tab-btn-member').className = 'flex-1 pb-2.5 text-xs font-bold text-brand-crimson border-b-2 border-brand-crimson flex items-center justify-center gap-1.5';
+        document.getElementById('tab-btn-branch').className = 'flex-1 pb-2.5 text-xs font-bold text-brand-textSecondary border-b-2 border-transparent hover:text-brand-textPrimary flex items-center justify-center gap-1.5';
+      } else {
+        document.getElementById('picker-tab-branch').classList.remove('hidden');
+        document.getElementById('picker-tab-member').classList.add('hidden');
+        document.getElementById('tab-btn-branch').className = 'flex-1 pb-2.5 text-xs font-bold text-brand-crimson border-b-2 border-brand-crimson flex items-center justify-center gap-1.5';
+        document.getElementById('tab-btn-member').className = 'flex-1 pb-2.5 text-xs font-bold text-brand-textSecondary border-b-2 border-transparent hover:text-brand-textPrimary flex items-center justify-center gap-1.5';
+      }
+    }
+
+    function selectAssignee(type, id, displayName) {
+      currentSelectedAssignee = { type, id, displayName };
+      const preview = document.getElementById('assignee-preview');
+      preview.innerHTML = `
+        <span class="px-2.5 py-1 rounded-lg bg-brand-crimson/10 text-brand-crimson text-xs font-semibold flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-sm">${type === 'member' ? 'person' : 'account_tree'}</span>
+          <span>${displayName}</span>
+          <button type="button" onclick="clearAssignee(event)" class="text-brand-crimson hover:text-red-700 ml-1">×</button>
+        </span>
+      `;
+      closePickerModal();
+    }
+
+    function clearAssignee(e) {
+      e.stopPropagation();
+      currentSelectedAssignee = null;
+      document.getElementById('assignee-preview').innerHTML = `
+        <span class="material-symbols-outlined text-brand-textSecondary text-lg">person_outline</span>
+        <span class="text-xs text-brand-textSecondary italic">Chưa chỉ định (Trạng thái: Chưa giao - Unassigned)</span>
+      `;
+    }
+
+    function updateCounter() {
+      const val = document.getElementById('input-task-name').value;
+      document.getElementById('task-name-counter').innerText = val.length + '/100';
+    }
+
+    function formatCurrencyInput(elem) {
+      let num = elem.value.replace(/[^0-9]/g, '');
+      if (!num) num = '0';
+      elem.value = parseInt(num, 10).toLocaleString('vi-VN') + ' ₫';
+    }
+
+    function handleCreateSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('input-task-name').value.trim();
+      const deadline = new Date(document.getElementById('input-deadline').value);
+      const eventTime = new Date('2026-04-26T08:00:00');
+
+      if (!name) {
+        document.getElementById('err-task-name').classList.remove('hidden');
+        return;
+      }
+      if (deadline >= eventTime) {
+        document.getElementById('err-deadline').classList.remove('hidden');
+        return;
+      }
+
+      // Simulate double-click guard
+      const btn = document.getElementById('btn-submit-create');
+      btn.disabled = true;
+      btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> Đang lưu...`;
+
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = `Lưu Phân Công`;
+        closeCreateModal();
+        alert('Tạo công việc thành công! Hệ thống đã chuyển trạng thái sang InProgress và gửi thông báo.');
+        setState('normal');
+      }, 700);
+    }
+
+    function openAssignModal(taskName, currentId, currentName) {
+      currentSelectedAssignee = currentId ? { id: currentId, displayName: currentName } : null;
+      openPickerModal();
+    }
+
+    function filterStatus(status) {
+      // Mock filter visual highlight
+      document.querySelectorAll('.status-btn').forEach(b => {
+        b.className = 'status-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-bg text-brand-textSecondary hover:bg-slate-100';
+      });
+      event.target.className = 'status-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-crimson text-white';
+    }
+  </script>
+</body>
+</html>
+

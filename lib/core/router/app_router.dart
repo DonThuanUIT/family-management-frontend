@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/data/models/auth_models.dart';
 import '../../features/auth/presentation/screens/auth_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/invite_code_screen.dart';
@@ -17,6 +18,7 @@ import '../../features/event/presentation/screens/event_list_screen.dart';
 import '../../features/genealogy/presentation/screens/edit_root_branch_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/shared/presentation/widgets/heritage_nav_bar.dart';
+import '../../features/task/presentation/screens/event_task_list_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -80,7 +82,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/pending-approval',
         name: 'pending-approval',
-        builder: (context, state) => const PendingApprovalScreen(),
+        builder: (context, state) {
+          final request = state.extra is JoinRequestResponseDto
+              ? state.extra as JoinRequestResponseDto
+              : null;
+          return PendingApprovalScreen(joinRequest: request);
+        },
       ),
 
       // 8. Màn hình Quên Mật Khẩu (Forgot Password)
@@ -121,6 +128,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/events',
         name: 'events',
         builder: (context, state) => const EventListScreen(),
+        routes: [
+          // 10.1. Phân hệ Quản lý Công việc & Phân công Chuẩn bị Sự Kiện (US-07)
+          GoRoute(
+            path: ':eventId/tasks',
+            name: 'event-tasks',
+            builder: (context, state) {
+              final eventId = state.pathParameters['eventId'] ?? '';
+              return EventTaskListScreen(eventId: eventId);
+            },
+          ),
+        ],
       ),
 
       // 11. Bàn Tiếp Nhận Đóng Góp & Sổ Cái Thu Chi (Task #71)
