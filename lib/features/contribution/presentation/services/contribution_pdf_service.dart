@@ -46,7 +46,7 @@ class ContributionPdfService {
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
                     pw.Text(
-                      'DÒNG HỌ NGUYỄN (ĐẠI TÔN) • TỪ ĐƯỜNG DÒNG HỌ',
+                      'DÒNG HỌ NGUYỄN TỘC (ĐẠI TÔN) • TỪ ĐƯỜNG DÒNG HỌ',
                       style: pw.TextStyle(
                         font: boldFont,
                         fontSize: 10,
@@ -54,7 +54,7 @@ class ContributionPdfService {
                       ),
                     ),
                     pw.Text(
-                      'BAN TÀI CHÍNH & THỦ QUỸ',
+                      'BAN QUẢN LÝ TÀI CHÍNH & TỪ ĐƯỜNG TỔ',
                       style: pw.TextStyle(
                         font: boldFont,
                         fontSize: 9,
@@ -211,44 +211,49 @@ class ContributionPdfService {
           ),
           pw.SizedBox(height: 28),
 
-          // Chữ ký xác nhận 3 bên
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
-            children: [
-              pw.Column(
-                children: [
-                  pw.Text('NGƯỜI LẬP BIỂU',
-                      style: pw.TextStyle(font: boldFont, fontSize: 9.5)),
-                  pw.Text('(Ký & ghi rõ họ tên)',
-                      style: pw.TextStyle(font: italicFont, fontSize: 8)),
-                  pw.SizedBox(height: 36),
-                  pw.Text('Ban Thủ Quỹ',
-                      style: pw.TextStyle(font: boldFont, fontSize: 9)),
-                ],
-              ),
-              pw.Column(
-                children: [
-                  pw.Text('TRƯỞNG BAN TÀI CHÍNH',
-                      style: pw.TextStyle(font: boldFont, fontSize: 9.5)),
-                  pw.Text('(Ký & xác nhận)',
-                      style: pw.TextStyle(font: italicFont, fontSize: 8)),
-                  pw.SizedBox(height: 36),
-                  pw.Text('Hội Đồng Tộc Biểu',
-                      style: pw.TextStyle(font: boldFont, fontSize: 9)),
-                ],
-              ),
-              pw.Column(
-                children: [
-                  pw.Text('TỘC TRƯỞNG PHÊ DUYỆT',
-                      style: pw.TextStyle(font: boldFont, fontSize: 9.5)),
-                  pw.Text('(Ký tên & đóng mộc gia tộc)',
-                      style: pw.TextStyle(font: italicFont, fontSize: 8)),
-                  pw.SizedBox(height: 36),
-                  pw.Text('Nguyễn Trọng Hoàng (Trưởng Tộc Đại Tôn)',
-                      style: pw.TextStyle(font: boldFont, fontSize: 9)),
-                ],
-              ),
-            ],
+          // Khối chứng thực trích xuất tự động (không qua phê duyệt giấy tờ trung gian)
+          pw.Container(
+            padding: const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: pw.BoxDecoration(
+              color: PdfColors.grey100,
+              borderRadius: pw.BorderRadius.circular(6),
+              border: pw.Border.all(color: PdfColors.grey300),
+            ),
+            child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      'BÁO CÁO TRÍCH XUẤT TỰ ĐỘNG TỪ SỔ CÁI BẤT BIẾN FAMILYFUND',
+                      style: pw.TextStyle(
+                        font: boldFont,
+                        fontSize: 8.5,
+                        color: PdfColors.brown900,
+                      ),
+                    ),
+                    pw.SizedBox(height: 2),
+                    pw.Text(
+                      'Dữ liệu đối soát thời gian thực 1:1 • Hệ thống quản trị tài chính Dòng họ Nguyễn Tộc (Đại Tôn)',
+                      style: pw.TextStyle(
+                        font: italicFont,
+                        fontSize: 7.5,
+                        color: PdfColors.grey700,
+                      ),
+                    ),
+                  ],
+                ),
+                pw.Text(
+                  'Niêm phong: ${DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now())}',
+                  style: pw.TextStyle(
+                    font: boldFont,
+                    fontSize: 8,
+                    color: PdfColors.grey800,
+                  ),
+                ),
+              ],
+            ),
           ),
           pw.SizedBox(height: 20),
           pw.Center(

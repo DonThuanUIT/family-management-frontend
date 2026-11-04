@@ -121,3 +121,56 @@ final clanMembersProvider = FutureProvider<List<BranchMemberItem>>((ref) async {
   final repository = ref.watch(genealogyRepositoryProvider);
   return await repository.getClanMembers();
 });
+
+/// Provider lấy danh sách thành viên trong phả hệ để phục vụ combobox đóng góp & gán vai trò
+final genealogyMemberListProvider = FutureProvider<List<BranchMemberItem>>((ref) async {
+  try {
+    final members = await ref.watch(clanMembersProvider.future);
+    if (members.isNotEmpty) return members;
+  } catch (_) {}
+
+  try {
+    final tree = await ref.watch(branchTreeProvider.future);
+    final List<BranchMemberItem> list = [];
+    if (tree.representativeId != null && tree.representativeName != null) {
+      list.add(BranchMemberItem(
+        memberId: tree.representativeId!,
+        fullName: tree.representativeName!,
+        generation: tree.generationLevel,
+        roleInBranch: 'Khởi Tổ / Trưởng Tộc • Đời ${tree.generationLevel}',
+      ));
+    }
+    for (final child in tree.children) {
+      if (child.representativeId != null && child.representativeName != null) {
+        list.add(BranchMemberItem(
+          memberId: child.representativeId!,
+          fullName: child.representativeName!,
+          generation: child.generationLevel,
+          roleInBranch: '${child.branchName} • Đời ${child.generationLevel}',
+        ));
+      }
+    }
+    if (list.isNotEmpty) return list;
+  } catch (_) {}
+
+  return const [
+    BranchMemberItem(
+      memberId: 'MEM_TRUONG_TOC',
+      fullName: 'Nguyễn Trọng Hoàng',
+      generation: 1,
+      roleInBranch: 'Khởi Tổ / Trưởng Tộc • Đời 1',
+    ),
+    BranchMemberItem(
+      memberId: 'MEM_TRUONG_CHI',
+      fullName: 'Nguyễn Văn An',
+      generation: 2,
+      roleInBranch: 'Trưởng Chi 2 • Đời 2',
+    ),
+    BranchMemberItem(
+      memberId: 'MEM_MAI_ANH',
+      fullName: 'Nguyễn Thị Mai Anh',
+      generation: 3,
+      roleInBranch: 'Chi 2 • Đời 3',
+    ),
+  ];
+});

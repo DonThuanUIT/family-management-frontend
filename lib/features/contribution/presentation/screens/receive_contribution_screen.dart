@@ -10,6 +10,8 @@ import '../providers/contribution_ui_provider.dart';
 import '../widgets/electronic_receipt_dialog.dart';
 import '../services/contribution_pdf_service.dart';
 import 'package:familyfund_app/features/shared/presentation/widgets/heritage_nav_bar.dart';
+import 'package:familyfund_app/features/genealogy/data/models/branch_models.dart';
+import 'package:familyfund_app/features/genealogy/presentation/providers/genealogy_providers.dart';
 
 /// Task #71: Giao diện Bàn Tiếp Nhận Đóng Góp của Thủ Quỹ (TiepNhanDongGopUI).
 /// Chuẩn hóa theo tiêu chuẩn Warm Editorial Heritage & UI/UX Pro Max:
@@ -31,6 +33,14 @@ class _ReceiveContributionScreenState
   final _searchController = TextEditingController();
   String _keyword = '';
   String _selectedFilter = 'all'; // 'all', 'cash', 'bank_transfer', 'in_kind', 'pending'
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      ref.read(contributionUiProvider.notifier).fetchFromBackend();
+    });
+  }
 
   @override
   void dispose() {
@@ -551,10 +561,16 @@ class _ReceiveContributionScreenState
                     OutlinedButton.icon(
                       onPressed: () async {
                         try {
+                          final cashToExport = filteredCash.isNotEmpty
+                              ? filteredCash
+                              : uiState.cashReceipts;
+                          final inKindToExport = filteredInKind.isNotEmpty
+                              ? filteredInKind
+                              : uiState.inKindReceipts;
                           await ContributionPdfService.exportLedgerPdf(
                             eventName: 'Đại Lễ Giỗ Tổ Thủy Tộc Xuân Bính Ngọ 2026',
-                            cashReceipts: filteredCash,
-                            inKindReceipts: filteredInKind,
+                            cashReceipts: cashToExport,
+                            inKindReceipts: inKindToExport,
                           );
                         } catch (e) {
                           if (mounted) {
@@ -1847,13 +1863,17 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
   late TabController _tabController;
 
   // Form tiền
-  final _cashPayerController = TextEditingController();
+  String? _selectedCashMemberId;
+  bool _isCashCustomMember = false;
+  final _cashCustomPayerController = TextEditingController();
   final _cashAmountController = TextEditingController();
   PaymentMethod _paymentMethod = PaymentMethod.BankTransfer;
   String _liveCashWords = '';
 
   // Form hiện vật
-  final _inKindPayerController = TextEditingController();
+  String? _selectedInKindMemberId;
+  bool _isInKindCustomMember = false;
+  final _inKindCustomPayerController = TextEditingController();
   final _itemNameController = TextEditingController();
   final _quantityController = TextEditingController(text: '1');
   final _unitController = TextEditingController();
@@ -1865,14 +1885,16 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _selectedCashMemberId = 'MEM_TRUONG_CHI';
+    _selectedInKindMemberId = 'MEM_MAI_ANH';
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    _cashPayerController.dispose();
+    _cashCustomPayerController.dispose();
     _cashAmountController.dispose();
-    _inKindPayerController.dispose();
+    _inKindCustomPayerController.dispose();
     _itemNameController.dispose();
     _quantityController.dispose();
     _unitController.dispose();
@@ -1884,9 +1906,30 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
     return VietnameseMoneyConverter.toWords(amount);
   }
 
-
   @override
   Widget build(BuildContext context) {
+    final membersAsync = ref.watch(genealogyMemberListProvider);
+    final memberList = membersAsync.value ?? const [
+      BranchMemberItem(
+        memberId: 'MEM_TRUONG_TOC',
+        fullName: 'Nguyễn Trọng Hoàng',
+        generation: 1,
+        roleInBranch: 'Khởi Tổ / Trưởng Tộc • Đời 1',
+      ),
+      BranchMemberItem(
+        memberId: 'MEM_TRUONG_CHI',
+        fullName: 'Nguyễn Văn An',
+        generation: 2,
+        roleInBranch: 'Trưởng Chi 2 • Đời 2',
+      ),
+      BranchMemberItem(
+        memberId: 'MEM_MAI_ANH',
+        fullName: 'Nguyễn Thị Mai Anh',
+        generation: 3,
+        roleInBranch: 'Chi 2 • Đời 3',
+      ),
+    ];
+
     return Container(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -1989,8 +2032,8 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  _buildCashForm(),
-                  _buildInKindForm(),
+                  _buildCashForm(memberList),
+                  _buildInKindForm(memberList),
                 ],
               ),
             ),
@@ -2000,21 +2043,56 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
     );
   }
 
-  Widget _buildCashForm() {
+  Widget _buildCashForm(List<BranchMemberItem> memberList) {
+    final effectiveSelectedId = _selectedCashMemberId ??
+        (memberList.isNotEmpty ? memberList.first.memberId : null);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          TextField(
-            controller: _cashPayerController,
+          // 1. Combobox chọn thành viên trong phả hệ
+          DropdownButtonFormField<String>(
+            isExpanded: true,
+            value: effectiveSelectedId,
             decoration: const InputDecoration(
-              labelText: 'Họ và tên con cháu đóng góp *',
-              hintText: 'VD: Nguyễn Văn An (Chi 2)',
+              labelText: 'Họ và tên con cháu đóng góp (Cây phả hệ) *',
               prefixIcon: Icon(Icons.person, color: Color(0xFF8B1E1E)),
               border: OutlineInputBorder(),
             ),
+            items: [
+              ...memberList.map((m) => DropdownMenuItem<String>(
+                    value: m.memberId,
+                    child: Text(
+                      '${m.fullName} (${m.roleInBranch})',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  )),
+              const DropdownMenuItem<String>(
+                value: '__OTHER__',
+                child: Text('＋ Khách thập phương / Người ngoài gia phả...'),
+              ),
+            ],
+            onChanged: (val) {
+              setState(() {
+                _selectedCashMemberId = val;
+                _isCashCustomMember = val == '__OTHER__';
+              });
+            },
           ),
+          if (_isCashCustomMember) ...[
+            const SizedBox(height: 12),
+            TextField(
+              controller: _cashCustomPayerController,
+              decoration: const InputDecoration(
+                labelText: 'Họ và tên người đóng góp ngoài gia phả *',
+                hintText: 'Nhập họ và tên...',
+                prefixIcon: Icon(Icons.person_add_alt_1, color: Color(0xFF8B1E1E)),
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
 
           DropdownButtonFormField<PaymentMethod>(
@@ -2108,11 +2186,37 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
                 return;
               }
 
+              final String finalPayerId;
+              final String finalPayerName;
+              if (_isCashCustomMember) {
+                final customName = _cashCustomPayerController.text.trim();
+                if (customName.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Vui lòng nhập họ và tên người đóng góp!'),
+                      backgroundColor: Color(0xFFC64545),
+                    ),
+                  );
+                  return;
+                }
+                finalPayerId = 'MEM-GUEST-${1000 + Random().nextInt(9000)}';
+                finalPayerName = customName;
+              } else {
+                final targetId = _selectedCashMemberId ??
+                    (memberList.isNotEmpty ? memberList.first.memberId : 'MEM_TRUONG_CHI');
+                final found = memberList.firstWhere(
+                  (m) => m.memberId == targetId,
+                  orElse: () => memberList.first,
+                );
+                finalPayerId = found.memberId;
+                finalPayerName = found.fullName;
+              }
+
               final newReceipt = await
                   ref.read(contributionUiProvider.notifier).recordCashContribution(
                         eventId: 'EVT-GIO-TO-2026',
-                        payerMemberId: 'MEM-TEMP-${1000 + Random().nextInt(9000)}',
-                        payerMemberName: _cashPayerController.text.trim(),
+                        payerMemberId: finalPayerId,
+                        payerMemberName: finalPayerName,
                         amount: amount,
                         paymentMethod: _paymentMethod,
                       );
@@ -2144,21 +2248,56 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
     );
   }
 
-  Widget _buildInKindForm() {
+  Widget _buildInKindForm(List<BranchMemberItem> memberList) {
+    final effectiveSelectedId = _selectedInKindMemberId ??
+        (memberList.isNotEmpty ? memberList.first.memberId : null);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          TextField(
-            controller: _inKindPayerController,
+          // 1. Combobox chọn thành viên trong phả hệ
+          DropdownButtonFormField<String>(
+            isExpanded: true,
+            value: effectiveSelectedId,
             decoration: const InputDecoration(
-              labelText: 'Họ và tên con cháu cúng tiến *',
-              hintText: 'VD: Nguyễn Thị Mai Anh (Chi 2)',
+              labelText: 'Họ và tên con cháu cúng tiến (Cây phả hệ) *',
               prefixIcon: Icon(Icons.person, color: Color(0xFF8B1E1E)),
               border: OutlineInputBorder(),
             ),
+            items: [
+              ...memberList.map((m) => DropdownMenuItem<String>(
+                    value: m.memberId,
+                    child: Text(
+                      '${m.fullName} (${m.roleInBranch})',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  )),
+              const DropdownMenuItem<String>(
+                value: '__OTHER__',
+                child: Text('＋ Khách thập phương / Người ngoài gia phả...'),
+              ),
+            ],
+            onChanged: (val) {
+              setState(() {
+                _selectedInKindMemberId = val;
+                _isInKindCustomMember = val == '__OTHER__';
+              });
+            },
           ),
+          if (_isInKindCustomMember) ...[
+            const SizedBox(height: 12),
+            TextField(
+              controller: _inKindCustomPayerController,
+              decoration: const InputDecoration(
+                labelText: 'Họ và tên người cúng tiến ngoài gia phả *',
+                hintText: 'Nhập họ và tên...',
+                prefixIcon: Icon(Icons.person_add_alt_1, color: Color(0xFF8B1E1E)),
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
           const SizedBox(height: 14),
 
           TextField(
@@ -2286,15 +2425,43 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
                   double.tryParse(_convertedValueController.text.trim()) ?? 0;
               final qty = double.tryParse(_quantityController.text.trim()) ?? 1;
 
+              final String finalPayerId;
+              final String finalPayerName;
+              if (_isInKindCustomMember) {
+                final customName = _inKindCustomPayerController.text.trim();
+                if (customName.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Vui lòng nhập họ và tên người cúng tiến!'),
+                      backgroundColor: Color(0xFFC64545),
+                    ),
+                  );
+                  return;
+                }
+                finalPayerId = 'MEM-GUEST-${1000 + Random().nextInt(9000)}';
+                finalPayerName = customName;
+              } else {
+                final targetId = _selectedInKindMemberId ??
+                    (memberList.isNotEmpty ? memberList.first.memberId : 'MEM_MAI_ANH');
+                final found = memberList.firstWhere(
+                  (m) => m.memberId == targetId,
+                  orElse: () => memberList.first,
+                );
+                finalPayerId = found.memberId;
+                finalPayerName = found.fullName;
+              }
+
               final newReceipt = await ref
                   .read(contributionUiProvider.notifier)
                   .recordInKindContribution(
                     eventId: 'EVT-GIO-TO-2026',
-                    payerMemberId: 'MEM-TEMP-${1000 + Random().nextInt(9000)}',
-                    payerMemberName: _inKindPayerController.text.trim(),
+                    payerMemberId: finalPayerId,
+                    payerMemberName: finalPayerName,
                     itemName: _itemNameController.text.trim(),
                     quantity: qty,
-                    unit: _unitController.text.trim(),
+                    unit: _unitController.text.trim().isNotEmpty
+                        ? _unitController.text.trim()
+                        : 'món',
                     conversionMethod: _conversionMethod,
                     convertedMonetaryValue: val,
                   );
