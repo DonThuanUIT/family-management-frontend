@@ -13,6 +13,67 @@ enum AuthStatus {
   error,
 }
 
+/// Dữ liệu tài khoản mẫu đồng bộ với seed V6__seed_demo_accounts_and_test_data.sql
+class DemoAccount {
+  final String identifier;
+  final String password;
+  final String roleName;
+  final String roleDescription;
+  final String fullName;
+  final String accountId;
+  final String memberId;
+  final String clanId;
+  final List<String> roles;
+
+  const DemoAccount({
+    required this.identifier,
+    required this.password,
+    required this.roleName,
+    required this.roleDescription,
+    required this.fullName,
+    required this.accountId,
+    required this.memberId,
+    required this.clanId,
+    required this.roles,
+  });
+}
+
+const List<DemoAccount> kDemoAccounts = [
+  DemoAccount(
+    identifier: '0901234567',
+    password: '123456',
+    roleName: 'Trưởng Tộc',
+    roleDescription: 'Toàn quyền quản trị dòng họ, phê duyệt phiếu thu & bảo vật',
+    fullName: 'Nguyễn Trọng Hoàng',
+    accountId: 'ACC_TRUONG_TOC',
+    memberId: 'MEM_TRUONG_TOC',
+    clanId: 'CLAN_DEFAULT',
+    roles: ['ROLE_CLAN_HEAD', 'ROLE_MEMBER'],
+  ),
+  DemoAccount(
+    identifier: '0902345678',
+    password: '123456',
+    roleName: 'Trưởng Chi 2',
+    roleDescription: 'Đại diện phân chi họ, quản lý tiếp nhận đóng góp',
+    fullName: 'Nguyễn Văn An',
+    accountId: 'ACC_TRUONG_CHI',
+    memberId: 'MEM_TRUONG_CHI',
+    clanId: 'CLAN_DEFAULT',
+    roles: ['ROLE_BRANCH_HEAD', 'ROLE_MEMBER'],
+  ),
+  DemoAccount(
+    identifier: '0903888999',
+    password: '123456',
+    roleName: 'Thành Viên',
+    roleDescription: 'Con cháu dòng tộc, tra cứu sổ vàng và biên lai điện tử',
+    fullName: 'Nguyễn Thị Mai Anh',
+    accountId: 'ACC_MAI_ANH',
+    memberId: 'MEM_MAI_ANH',
+    clanId: 'CLAN_DEFAULT',
+    roles: ['ROLE_MEMBER'],
+  ),
+];
+
 class AuthState {
   final AuthStatus status;
   final String? errorMessage;

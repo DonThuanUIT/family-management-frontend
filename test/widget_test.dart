@@ -1,4 +1,5 @@
 import 'package:familyfund_app/core/router/app_router.dart';
+import 'package:familyfund_app/features/home/presentation/screens/home_screen.dart';
 import 'package:familyfund_app/main.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -27,7 +28,7 @@ void main() {
   );
 
   testWidgets(
-    'FamilyFundApp renders HomeScreen placeholder for authenticated users',
+    'FamilyFundApp renders HomeScreen with HeritageNavBar for authenticated users',
     (WidgetTester tester) async {
       await tester.pumpWidget(
         ProviderScope(
@@ -39,18 +40,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(
-        find.text('Khu Vực Thiết Kế Màn Hình Sau Đăng Nhập'),
-        findsOneWidget,
-      );
-      expect(
-        find.text('Dòng họ:'),
-        findsOneWidget,
-      );
-      expect(
-        find.text('Đăng Xuất Tài Khoản'),
-        findsOneWidget,
-      );
+      expect(find.byType(HomeScreen), findsOneWidget);
+      expect(find.text('Sổ Cái'), findsWidgets);
+      expect(find.text('Bảo Vật'), findsWidgets);
     },
   );
 }

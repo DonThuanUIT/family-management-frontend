@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -13,10 +13,18 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _identifierController = TextEditingController();
-  final _passwordController = TextEditingController();
+  late final TextEditingController _identifierController;
+  late final TextEditingController _passwordController;
   bool _obscurePassword = true;
   bool _rememberMe = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Mặc định điền sẵn thông tin tài khoản đăng nhập (0901234567 / 123456)
+    _identifierController = TextEditingController(text: '0901234567');
+    _passwordController = TextEditingController(text: '123456');
+  }
 
   @override
   void dispose() {
@@ -36,14 +44,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Đăng nhập thành công!'),
+            content: Text('Đăng nhập thành công vào dòng họ!'),
             backgroundColor: Color(0xFF0F766E),
+            duration: Duration(seconds: 2),
           ),
         );
         context.go('/home');
       }
     } catch (_) {
-      // Error is stored in authStateProvider
+      // Error is stored in authStateProvider and displayed on UI
     }
   }
 
@@ -58,8 +67,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF7A1518)),
-          onPressed: () => context.pop(),
+          tooltip: Navigator.of(context).canPop()
+              ? 'Quay lại'
+              : 'Về trang chào mừng & đăng ký',
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              context.pop();
+            } else {
+              context.go('/welcome');
+            }
+          },
         ),
+        actions: [
+          TextButton.icon(
+            onPressed: () => context.push('/welcome'),
+            icon: const Icon(Icons.app_registration,
+                size: 18, color: Color(0xFF7A1518)),
+            label: const Text(
+              'Đăng Ký',
+              style: TextStyle(
+                color: Color(0xFF7A1518),
+                fontWeight: FontWeight.bold,
+                fontSize: 13.5,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SafeArea(
         child: Center(
@@ -125,7 +159,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: 28),
 
-                    // Error Message Banner
+                    // Error Message Banner (Shows real backend error message)
                     if (authState.errorMessage != null) ...[
                       _buildErrorBanner(context, authState.errorMessage!),
                       const SizedBox(height: 16),
@@ -243,7 +277,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Submit Button
+                    // Submit Button (Calls online backend REST API)
                     ElevatedButton(
                       onPressed: authState.isLoading ? null : _submitLogin,
                       style: ElevatedButton.styleFrom(
@@ -301,35 +335,110 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 24),
 
-                    // Bottom Link to Register/Invite
-                    Wrap(
-                      alignment: WrapAlignment.center,
-                      crossAxisAlignment: WrapCrossAlignment.center,
+                    const SizedBox(height: 24),
+
+                    // Phân tách & Tiêu đề khu vực Đăng ký
+                    Row(
                       children: [
-                        const Text(
-                          'Chưa có tài khoản? ',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF2B1810),
+                        Expanded(
+                          child: Divider(
+                            color: const Color(0xFFD6C8BF).withValues(alpha: 0.8),
                           ),
                         ),
-                        GestureDetector(
-                          onTap: () => context.push('/invite-code'),
-                          child: const Text(
-                            'Nhập mã mời gia tộc',
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            'CHƯA CÓ TÀI KHOẢN GIA TỘC?',
                             style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF7A1518),
-                              decoration: TextDecoration.underline,
-                              decorationColor: Color(0xFF7A1518),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                              color: Color(0xFF8C7A70),
                             ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Divider(
+                            color: const Color(0xFFD6C8BF).withValues(alpha: 0.8),
                           ),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 16),
+
+                    // Lựa chọn 1: Đăng ký Khởi lập Dòng họ mới (Dành cho Trưởng Tộc)
+                    OutlinedButton.icon(
+                      onPressed: () => context.push('/register-creator'),
+                      icon: const Icon(Icons.account_tree_outlined,
+                          color: Color(0xFF7A1518), size: 20),
+                      label: const Text(
+                        'Đăng Ký Khởi Lập Dòng Họ Mới (Trưởng Tộc)',
+                        style: TextStyle(
+                          color: Color(0xFF7A1518),
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 14, horizontal: 16),
+                        side: const BorderSide(
+                            color: Color(0xFF7A1518), width: 1.2),
+                        backgroundColor:
+                            const Color(0xFF7A1518).withValues(alpha: 0.04),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Lựa chọn 2: Tham gia bằng Mã Thư Mời (Thành Viên / Con Cháu)
+                    OutlinedButton.icon(
+                      onPressed: () => context.push('/invite-code'),
+                      icon: const Icon(Icons.mail_outline,
+                          color: Color(0xFF6B584E), size: 20),
+                      label: const Text(
+                        'Gia Nhập Bằng Mã Mời Gia Tộc (Thành Viên)',
+                        style: TextStyle(
+                          color: Color(0xFF4A3831),
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 14, horizontal: 16),
+                        side: const BorderSide(
+                            color: Color(0xFFD6C8BF), width: 1.2),
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Liên kết quay về trang Chào mừng / Giới thiệu tổng quan
+                    Center(
+                      child: TextButton.icon(
+                        onPressed: () => context.go('/welcome'),
+                        icon: const Icon(Icons.info_outline,
+                            size: 16, color: Color(0xFF8C7A70)),
+                        label: const Text(
+                          'Xem trang giới thiệu & hướng dẫn đăng ký',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF8C7A70),
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                   ],
                 ),
               ),

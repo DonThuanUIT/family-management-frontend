@@ -12,15 +12,19 @@ import '../../features/auth/presentation/screens/register_creator_screen.dart';
 import '../../features/auth/presentation/screens/register_member_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/auth/presentation/screens/welcome_screen.dart';
+import '../../features/contribution/presentation/screens/clan_asset_inventory_screen.dart';
+import '../../features/contribution/presentation/screens/receive_contribution_screen.dart';
 import '../../features/event/presentation/screens/event_list_screen.dart';
+import '../../features/genealogy/presentation/screens/edit_root_branch_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/role/presentation/screens/role_management_screen.dart';
+import '../../features/shared/presentation/widgets/heritage_nav_bar.dart';
 import '../../features/task/presentation/screens/event_task_list_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
-/// Provider xác định vị trí khởi đầu của ứng dụng (mặc định là Splash Screen '/').
-final initialLocationProvider = Provider<String>((ref) => '/');
+/// Provider xác định vị trí khởi đầu của ứng dụng (mặc định là Login Screen '/login').
+final initialLocationProvider = Provider<String>((ref) => '/login');
 
 /// Cấu hình điều hướng tập trung với GoRouter hỗ trợ cả Web URL routing và Mobile Deep Linking.
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -101,11 +105,23 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AuthScreen(),
       ),
 
-      // Màn hình Chính sau khi Đăng Nhập Thành Công (Placeholder để nhóm tự thiết kế các phân hệ)
+      // Màn hình Chính sau khi Đăng Nhập Thành Công (Cây Phả Hệ)
       GoRoute(
         path: '/home',
         name: 'home',
         builder: (context, state) => const HomeScreen(),
+      ),
+
+      // 9. Biểu mẫu chỉnh sửa thông tin Nhánh Gốc (Task #16)
+      GoRoute(
+        path: '/branches/root/edit',
+        name: 'edit-root-branch',
+        builder: (context, state) => const EditRootBranchScreen(),
+      ),
+      GoRoute(
+        path: '/genealogy/root/edit',
+        name: 'edit-root-branch-alt',
+        builder: (context, state) => const EditRootBranchScreen(),
       ),
 
       // 10. Phân hệ Quản lý & Khởi tạo Sự Kiện Dòng Họ (US-21 & US-22)
@@ -131,6 +147,32 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/roles',
         name: 'roles',
         builder: (context, state) => const RoleManagementScreen(),
+      ),
+
+      // 12. Bàn Tiếp Nhận Đóng Góp & Sổ Cái Thu Chi (Task #71)
+      GoRoute(
+        path: '/contributions',
+        name: 'contributions',
+        builder: (context, state) => const ReceiveContributionScreen(),
+      ),
+
+      // 13. Kho Hiện Vật & Bảo Vật Từ Đường (Task #74)
+      GoRoute(
+        path: '/clan-assets',
+        name: 'clan-assets',
+        builder: (context, state) => const ClanAssetInventoryScreen(),
+      ),
+
+      // 14. Phân hệ Cấp Mã Mời Gia Tộc (Chưa triển khai - để trống theo yêu cầu)
+      GoRoute(
+        path: '/clan-invites',
+        name: 'clan-invites',
+        builder: (context, state) => const Scaffold(
+          backgroundColor: Color(0xFFFAF6F0),
+          appBar: HeritageNavBar(currentRoute: '/clan-invites'),
+          bottomNavigationBar: HeritageBottomNavBar(currentRoute: '/clan-invites'),
+          body: SizedBox.shrink(),
+        ),
       ),
     ],
   );

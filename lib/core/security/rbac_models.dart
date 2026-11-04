@@ -192,10 +192,10 @@ class DualRbacSessionNotifier extends Notifier<DualRbacSession> {
   DualRbacSession build() {
     // Khởi tạo phiên mẫu phục vụ phát triển giao diện cả 2 phân hệ
     return const DualRbacSession(
-      accountId: 'ACC_HOANG_01',
-      memberId: 'MEM_001',
+      accountId: 'ACC_TRUONG_TOC',
+      memberId: 'MEM_TRUONG_TOC',
       fullName: 'Nguyễn Trọng Hoàng',
-      branchName: 'Chi 1 - Nhánh Trưởng',
+      branchName: 'Chi Gốc (Đại Tôn)',
       globalRoles: {
         SystemRole.roleClanHead,
         SystemRole.roleBranchHead,

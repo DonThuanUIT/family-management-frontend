@@ -1,4 +1,4 @@
-import 'package:dio/dio.dart';
+﻿import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_response.dart';
@@ -136,6 +136,9 @@ class AuthRemoteDataSource {
       if (map['error'] != null) {
         return map['error'].toString();
       }
+    }
+    if (e.type == DioExceptionType.connectionError || e.type == DioExceptionType.connectionTimeout || e.response == null) {
+      return 'Không thể kết nối đến máy chủ Backend (cổng 8080). Vui lòng đảm bảo Backend đang chạy.';
     }
     return e.message ?? 'Đã có lỗi xảy ra trong quá trình kết nối';
   }

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -72,7 +72,14 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF7A1518)),
-          onPressed: () => context.pop(),
+          tooltip: 'Quay lại',
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              context.pop();
+            } else {
+              context.go('/login');
+            }
+          },
         ),
       ),
       body: SafeArea(

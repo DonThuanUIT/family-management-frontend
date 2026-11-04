@@ -1,11 +1,11 @@
-import 'package:familyfund_app/core/router/app_router.dart';
+﻿import 'package:familyfund_app/core/router/app_router.dart';
 import 'package:familyfund_app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('LoginScreen renders all input fields and buttons',
+  testWidgets('LoginScreen renders all input fields, buttons, and prefilled credentials',
       (WidgetTester tester) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -20,9 +20,36 @@ void main() {
     expect(find.text('Đăng Nhập Gia Tộc'), findsOneWidget);
     expect(find.text('Số điện thoại hoặc Email *'), findsOneWidget);
     expect(find.text('Mật khẩu *'), findsOneWidget);
+    expect(find.text('0901234567'), findsOneWidget);
+    expect(find.text('123456'), findsOneWidget);
     expect(find.text('Đăng Nhập Vào Dòng Họ'), findsOneWidget);
     expect(find.text('Quên mật khẩu?'), findsOneWidget);
     expect(find.byIcon(Icons.fingerprint), findsOneWidget);
+    expect(find.text('Đăng Ký Khởi Lập Dòng Họ Mới (Trưởng Tộc)'), findsOneWidget);
+    expect(find.text('Gia Nhập Bằng Mã Mời Gia Tộc (Thành Viên)'), findsOneWidget);
+    expect(find.text('Xem trang giới thiệu & hướng dẫn đăng ký'), findsOneWidget);
+    expect(find.text('Đăng Ký'), findsOneWidget);
+  });
+
+  testWidgets('LoginScreen navigates to RegisterCreatorScreen when clicking register button',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          initialLocationProvider.overrideWithValue('/login'),
+        ],
+        child: const FamilyFundApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final registerBtn = find.text('Đăng Ký Khởi Lập Dòng Họ Mới (Trưởng Tộc)');
+    await tester.ensureVisible(registerBtn);
+    await tester.tap(registerBtn);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Khởi Lập Dòng Họ'), findsOneWidget);
+    expect(find.text('1. Thông Tin Dòng Họ'), findsOneWidget);
   });
 
   testWidgets('InviteCodeScreen renders manual code input and QR trigger',

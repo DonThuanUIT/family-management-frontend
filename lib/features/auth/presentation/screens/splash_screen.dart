@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -35,14 +35,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     await Future.delayed(const Duration(milliseconds: 1500));
     if (!mounted) return;
 
-    final isAuthenticated =
-        await ref.read(authStateProvider.notifier).checkAuthStatus();
+    final isAuthenticated = await ref.read(authStateProvider.notifier).checkAuthStatus();
     if (!mounted) return;
 
     if (isAuthenticated) {
       context.go('/home');
     } else {
-      context.go('/welcome');
+      context.go('/login');
     }
   }
 
