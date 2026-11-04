@@ -198,6 +198,30 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(height: 12),
+                        ElevatedButton.icon(
+                          onPressed: () => context.push('/roles'),
+                          icon: const Icon(Icons.admin_panel_settings_outlined),
+                          label: const Text(
+                            'Quản Lý Phân Quyền & Chức Sự (US-03)',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF6A020A),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 14,
+                            ),
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
                         OutlinedButton.icon(
                           onPressed: () async {
                             await ref.read(authStateProvider.notifier).logout();
@@ -248,6 +272,7 @@ class HomeScreen extends ConsumerWidget {
               label,
               style: const TextStyle(
                 fontSize: 13,
+                fontWeight: FontWeight.w500,
                 color: Color(0xFF6B584E),
               ),
             ),
@@ -256,8 +281,8 @@ class HomeScreen extends ConsumerWidget {
             child: Text(
               value,
               style: const TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
                 color: Color(0xFF2B1810),
               ),
             ),

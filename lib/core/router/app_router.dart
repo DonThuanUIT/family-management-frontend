@@ -14,6 +14,7 @@ import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/auth/presentation/screens/welcome_screen.dart';
 import '../../features/event/presentation/screens/event_list_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/role/presentation/screens/role_management_screen.dart';
 import '../../features/task/presentation/screens/event_task_list_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -123,6 +124,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             },
           ),
         ],
+      ),
+
+      // 11. Phân hệ Quản lý Phân Quyền & Chức Sự Tác Nghiệp (US-03)
+      GoRoute(
+        path: '/roles',
+        name: 'roles',
+        builder: (context, state) => const RoleManagementScreen(),
       ),
     ],
   );
