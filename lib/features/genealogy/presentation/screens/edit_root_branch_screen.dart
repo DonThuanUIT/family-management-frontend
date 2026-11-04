@@ -160,7 +160,9 @@ class _EditRootBranchScreenState extends ConsumerState<EditRootBranchScreen> {
             Text(
               branch?.clanName.isNotEmpty == true
                   ? branch!.clanName
-                  : 'Họ Lê - Nam Trung, Thái Bình',
+                  : (branchState.isLoading
+                      ? 'Đang tải dữ liệu...'
+                      : 'Dòng họ Nguyễn Tộc (Đại Tôn)'),
               style: const TextStyle(
                 fontFamily: 'Plus Jakarta Sans',
                 fontSize: 12,

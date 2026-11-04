@@ -123,7 +123,7 @@ class ElectronicReceiptDialog extends StatelessWidget {
                   children: [
                     // Tiêu đề & Dòng tộc
                     const Text(
-                      'HỘI ĐỒNG GIA TỘC DÒNG HỌ LÊ VIỆT NAM',
+                      'HỘI ĐỒNG GIA TỘC DÒNG HỌ NGUYỄN (ĐẠI TÔN)',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14.5,

@@ -46,7 +46,7 @@ class ContributionPdfService {
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
                     pw.Text(
-                      'DÒNG HỌ LÊ VIỆT NAM • TỪ ĐƯỜNG TỔ NAM TRUNG',
+                      'DÒNG HỌ NGUYỄN (ĐẠI TÔN) • TỪ ĐƯỜNG DÒNG HỌ',
                       style: pw.TextStyle(
                         font: boldFont,
                         fontSize: 10,
@@ -244,7 +244,7 @@ class ContributionPdfService {
                   pw.Text('(Ký tên & đóng mộc gia tộc)',
                       style: pw.TextStyle(font: italicFont, fontSize: 8)),
                   pw.SizedBox(height: 36),
-                  pw.Text('Lê Tuấn Anh (Trưởng Chi 1 • Trưởng Tộc)',
+                  pw.Text('Nguyễn Trọng Hoàng (Trưởng Tộc Đại Tôn)',
                       style: pw.TextStyle(font: boldFont, fontSize: 9)),
                 ],
               ),

@@ -48,24 +48,9 @@ class RootBranchNotifier extends Notifier<RootBranchState> {
   RootBranchState build() {
     // Tự động tải thông tin nhánh gốc từ API backend
     Future.microtask(() => loadRootBranch());
-    return _createInitialData();
-  }
-
-  RootBranchState _createInitialData() {
-    return RootBranchState(
-      isLoading: false,
-      branch: FamilyBranchDetail(
-        branchId: 'BR_ROOT',
-        clanId: 'CLAN_DEFAULT',
-        clanName: 'Dòng Họ Nguyễn Việt Nam',
-        branchName: 'Chi Gốc (Đại Tôn)',
-        generationLevel: 1,
-        representativeId: 'MEM_TRUONG_TOC',
-        representativeName: 'Nguyễn Trọng Hoàng',
-        description: 'Chi nhánh gốc khởi lập gia phả dòng họ, nơi quy tụ toàn thể con cháu.',
-        createdAt: DateTime(2026, 1, 1),
-      ),
-      isFallback: true,
+    return const RootBranchState(
+      isLoading: true,
+      isFallback: false,
     );
   }
 
@@ -122,85 +107,17 @@ final rootBranchProvider =
 /// Provider tải toàn bộ cấu trúc cây phả hệ từ Backend API (kết nối trực tiếp GET /api/v1/branches/tree)
 final branchTreeProvider = FutureProvider<BranchTreeNodeDto>((ref) async {
   final repository = ref.watch(genealogyRepositoryProvider);
-  try {
-    return await repository.getBranchTree();
-  } catch (e) {
-    // Fallback dự phòng khi kiểm thử offline hoặc chưa kết nối mạng
-    return const BranchTreeNodeDto(
-      branchId: 'BR_ROOT',
-      clanId: 'CLAN_DEFAULT',
-      branchName: 'Chi Gốc (Đại Tôn)',
-      clanName: 'Dòng Họ Nguyễn Việt Nam',
-      generationLevel: 1,
-      representativeId: 'MEM_TRUONG_TOC',
-      representativeName: 'Nguyễn Trọng Hoàng',
-      memberCount: 1,
-      children: [
-        BranchTreeNodeDto(
-          branchId: 'BR_CHI_2',
-          clanId: 'CLAN_DEFAULT',
-          branchName: 'Chi 2 - Nhánh Giáp',
-          clanName: 'Dòng Họ Nguyễn Việt Nam',
-          generationLevel: 2,
-          parentBranchId: 'BR_ROOT',
-          representativeId: 'MEM_TRUONG_CHI',
-          representativeName: 'Nguyễn Văn An',
-          memberCount: 2,
-          children: [],
-        ),
-      ],
-    );
-  }
+  return await repository.getBranchTree();
 });
 
 /// Provider tải danh sách thành viên của một chi/nhánh cụ thể từ Backend API
 final branchMembersProvider = FutureProvider.family<List<BranchMemberItem>, String>((ref, branchId) async {
   final repository = ref.watch(genealogyRepositoryProvider);
-  try {
-    return await repository.getBranchMembers(branchId);
-  } catch (e) {
-    if (branchId == 'BR_ROOT') {
-      return const [
-        BranchMemberItem(
-          memberId: 'MEM_TRUONG_TOC',
-          fullName: 'Nguyễn Trọng Hoàng',
-          generation: 1,
-          birthDeathInfo: 'Sinh 1965',
-          roleInBranch: 'Khởi Tổ / Trưởng Tộc',
-          isActivated: true,
-        ),
-      ];
-    } else if (branchId == 'BR_CHI_2') {
-      return const [
-        BranchMemberItem(
-          memberId: 'MEM_TRUONG_CHI',
-          fullName: 'Nguyễn Văn An',
-          generation: 2,
-          birthDeathInfo: 'Sinh 1978',
-          roleInBranch: 'Trưởng Chi 2',
-          isActivated: true,
-        ),
-        BranchMemberItem(
-          memberId: 'MEM_MAI_ANH',
-          fullName: 'Nguyễn Thị Mai Anh',
-          generation: 3,
-          birthDeathInfo: 'Sinh 1992',
-          roleInBranch: 'Thành viên • Đời 3',
-          gender: 'female',
-          isActivated: true,
-        ),
-      ];
-    }
-    return const [];
-  }
+  return await repository.getBranchMembers(branchId);
 });
 
 /// Provider tải danh sách toàn bộ thành viên dòng họ từ Backend API
 final clanMembersProvider = FutureProvider<List<BranchMemberItem>>((ref) async {
   final repository = ref.watch(genealogyRepositoryProvider);
-  try {
-    return await repository.getClanMembers();
-  } catch (e) {
-    return const [];
-  }
+  return await repository.getClanMembers();
 });

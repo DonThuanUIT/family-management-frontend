@@ -2,6 +2,9 @@ import 'package:familyfund_app/core/router/app_router.dart';
 import 'package:familyfund_app/features/auth/data/models/auth_models.dart';
 import 'package:familyfund_app/features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:familyfund_app/features/genealogy/data/models/branch_models.dart';
+import 'package:familyfund_app/features/genealogy/data/repositories/genealogy_repository_impl.dart';
+import 'package:familyfund_app/features/genealogy/domain/entities/family_branch.dart';
+import 'package:familyfund_app/features/genealogy/domain/repositories/genealogy_repository.dart';
 import 'package:familyfund_app/features/genealogy/presentation/providers/genealogy_providers.dart';
 import 'package:familyfund_app/features/genealogy/presentation/screens/edit_root_branch_screen.dart';
 import 'package:familyfund_app/features/home/presentation/screens/home_screen.dart';
@@ -16,6 +19,35 @@ class MockAuthNotifier extends AuthNotifier {
 
   @override
   AuthState build() => _initial;
+}
+
+final kTestRootBranch = FamilyBranchDetail(
+  branchId: 'BR_ROOT',
+  clanId: 'CLAN_DEFAULT',
+  clanName: 'Dòng Họ Nguyễn Việt Nam',
+  branchName: 'Chi Gốc (Đại Tôn)',
+  generationLevel: 1,
+  representativeId: 'MEM_TRUONG_TOC',
+  representativeName: 'Nguyễn Trọng Hoàng',
+  description: 'Chi nhánh gốc khởi lập gia phả dòng họ, nơi quy tụ toàn thể con cháu.',
+  createdAt: DateTime(2026, 1, 1),
+);
+
+class FakeGenealogyRepository implements GenealogyRepository {
+  @override
+  Future<FamilyBranchDetail> getRootBranch() async => kTestRootBranch;
+
+  @override
+  Future<FamilyBranchDetail> updateRootBranch(UpdateRootBranchRequestDto request) async => kTestRootBranch;
+
+  @override
+  Future<BranchTreeNodeDto> getBranchTree() async => kTestBranchTree;
+
+  @override
+  Future<List<BranchMemberItem>> getBranchMembers(String branchId) async => kTestChi2Members;
+
+  @override
+  Future<List<BranchMemberItem>> getClanMembers() async => kTestChi2Members;
 }
 
 const kTestBranchTree = BranchTreeNodeDto(
@@ -75,6 +107,7 @@ void main() {
         ProviderScope(
           overrides: [
             initialLocationProvider.overrideWithValue('/branches/root/edit'),
+            genealogyRepositoryProvider.overrideWithValue(FakeGenealogyRepository()),
           ],
           child: const FamilyFundApp(),
         ),

@@ -1847,21 +1847,19 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
   late TabController _tabController;
 
   // Form tiền
-  final _cashPayerController =
-      TextEditingController(text: 'Lê Hữu Đạt (Chi 2 - Đời 5)');
-  final _cashAmountController = TextEditingController(text: '2000000');
+  final _cashPayerController = TextEditingController();
+  final _cashAmountController = TextEditingController();
   PaymentMethod _paymentMethod = PaymentMethod.BankTransfer;
-  String _liveCashWords = 'Hai triệu đồng chẵn';
+  String _liveCashWords = '';
 
   // Form hiện vật
-  final _inKindPayerController =
-      TextEditingController(text: 'Lê Quang Huy (Chi 2 - Đời 4)');
-  final _itemNameController = TextEditingController(text: 'Cặp hoành phi chữ Hán cổ');
+  final _inKindPayerController = TextEditingController();
+  final _itemNameController = TextEditingController();
   final _quantityController = TextEditingController(text: '1');
-  final _unitController = TextEditingController(text: 'cặp');
-  final _convertedValueController = TextEditingController(text: '8000000');
+  final _unitController = TextEditingController();
+  final _convertedValueController = TextEditingController();
   ConversionMethod _conversionMethod = ConversionMethod.BtcBenchmark;
-  String _liveInKindWords = 'Tám triệu đồng chẵn';
+  String _liveInKindWords = '';
 
   @override
   void initState() {
@@ -2012,6 +2010,7 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
             controller: _cashPayerController,
             decoration: const InputDecoration(
               labelText: 'Họ và tên con cháu đóng góp *',
+              hintText: 'VD: Nguyễn Văn An (Chi 2)',
               prefixIcon: Icon(Icons.person, color: Color(0xFF8B1E1E)),
               border: OutlineInputBorder(),
             ),
@@ -2048,11 +2047,12 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
             onChanged: (val) {
               final parsed = double.tryParse(val) ?? 0;
               setState(() {
-                _liveCashWords = _convertToWords(parsed);
+                _liveCashWords = parsed > 0 ? _convertToWords(parsed) : '';
               });
             },
             decoration: const InputDecoration(
               labelText: 'Số tiền đóng góp (VNĐ) *',
+              hintText: 'VD: 2000000',
               prefixIcon: Icon(Icons.monetization_on, color: Color(0xFF2E8B43)),
               suffixText: 'VNĐ',
               border: OutlineInputBorder(),
@@ -2077,11 +2077,15 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Số tiền bằng chữ: $_liveCashWords',
-                    style: const TextStyle(
+                    _liveCashWords.isNotEmpty
+                        ? 'Số tiền bằng chữ: $_liveCashWords'
+                        : 'Nhập số tiền để xem bằng chữ',
+                    style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF2E8B43),
+                      color: _liveCashWords.isNotEmpty
+                          ? const Color(0xFF2E8B43)
+                          : const Color(0xFF8C7A70),
                     ),
                   ),
                 ),
@@ -2150,6 +2154,7 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
             controller: _inKindPayerController,
             decoration: const InputDecoration(
               labelText: 'Họ và tên con cháu cúng tiến *',
+              hintText: 'VD: Nguyễn Thị Mai Anh (Chi 2)',
               prefixIcon: Icon(Icons.person, color: Color(0xFF8B1E1E)),
               border: OutlineInputBorder(),
             ),
@@ -2160,6 +2165,7 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
             controller: _itemNameController,
             decoration: const InputDecoration(
               labelText: 'Tên vật phẩm / đồ lễ dâng hương *',
+              hintText: 'VD: Bộ đỉnh đồng tam sự chạm khắc',
               prefixIcon: Icon(Icons.inventory_2, color: Color(0xFFB36E1B)),
               border: OutlineInputBorder(),
             ),
@@ -2175,6 +2181,7 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
                     labelText: 'Số lượng *',
+                    hintText: '1',
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -2186,6 +2193,7 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
                   controller: _unitController,
                   decoration: const InputDecoration(
                     labelText: 'Đơn vị tính *',
+                    hintText: 'VD: bộ, món, chiếc',
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -2226,11 +2234,12 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
             onChanged: (val) {
               final parsed = double.tryParse(val) ?? 0;
               setState(() {
-                _liveInKindWords = _convertToWords(parsed);
+                _liveInKindWords = parsed > 0 ? _convertToWords(parsed) : '';
               });
             },
             decoration: const InputDecoration(
               labelText: 'Giá trị quy đổi ước tính (VNĐ) *',
+              hintText: 'VD: 5000000',
               prefixIcon: Icon(Icons.price_check, color: Color(0xFFB36E1B)),
               suffixText: 'VNĐ',
               border: OutlineInputBorder(),
@@ -2254,11 +2263,15 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Giá trị bằng chữ: $_liveInKindWords',
-                    style: const TextStyle(
+                    _liveInKindWords.isNotEmpty
+                        ? 'Giá trị bằng chữ: $_liveInKindWords'
+                        : 'Nhập giá trị quy đổi để xem bằng chữ',
+                    style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFFB36E1B),
+                      color: _liveInKindWords.isNotEmpty
+                          ? const Color(0xFFB36E1B)
+                          : const Color(0xFF8C7A70),
                     ),
                   ),
                 ),
