@@ -5,4 +5,6 @@ abstract class GenealogyRepository {
   Future<FamilyBranchDetail> getRootBranch();
   Future<FamilyBranchDetail> updateRootBranch(UpdateRootBranchRequestDto request);
   Future<BranchTreeNodeDto> getBranchTree();
+  Future<List<BranchMemberItem>> getBranchMembers(String branchId);
+  Future<List<BranchMemberItem>> getClanMembers();
 }

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -114,7 +114,14 @@ class _RegisterCreatorScreenState extends ConsumerState<RegisterCreatorScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF7A1518)),
-          onPressed: () => context.pop(),
+          tooltip: 'Quay lại',
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              context.pop();
+            } else {
+              context.go('/login');
+            }
+          },
         ),
       ),
       body: SafeArea(
@@ -506,6 +513,35 @@ class _RegisterCreatorScreenState extends ConsumerState<RegisterCreatorScreen> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Đã có tài khoản? Đăng nhập ngay
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        const Text(
+                          'Đã có tài khoản gia tộc? ',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF2B1810),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => context.go('/login'),
+                          child: const Text(
+                            'Đăng nhập ngay',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF7A1518),
+                              decoration: TextDecoration.underline,
+                              decorationColor: Color(0xFF7A1518),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 24),
                   ],

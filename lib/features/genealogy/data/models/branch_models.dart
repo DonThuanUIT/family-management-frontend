@@ -176,6 +176,37 @@ class BranchMemberItem {
     this.isActivated = true,
     this.phone,
   });
+
+  factory BranchMemberItem.fromJson(Map<String, dynamic> json) {
+    final dob = json['dateOfBirth']?.toString();
+    final status = json['status']?.toString();
+    final deathLunar = json['deathDateLunar']?.toString();
+    final isLiving = status != 'Deceased';
+
+    String? birthDeath;
+    if (dob != null && dob.isNotEmpty) {
+      final year = dob.split('-').first;
+      if (isLiving) {
+        birthDeath = 'Sinh $year';
+      } else {
+        birthDeath = 'Năm sinh: $year${deathLunar != null ? ' • Mất: $deathLunar' : ''}';
+      }
+    }
+
+    final gen = (json['generation'] as num?)?.toInt() ?? 1;
+    final isPlaceholder = json['isPlaceholder'] == true;
+
+    return BranchMemberItem(
+      memberId: json['memberId']?.toString() ?? '',
+      fullName: json['fullName']?.toString() ?? '',
+      generation: gen,
+      birthDeathInfo: birthDeath,
+      roleInBranch: gen == 1 ? 'Khởi Tổ / Trưởng Tộc' : 'Đời $gen',
+      gender: (json['gender']?.toString().toLowerCase() == 'female') ? 'female' : 'male',
+      isActivated: !isPlaceholder,
+      phone: null,
+    );
+  }
 }
 
 /// Model hiển thị thông tin chi tiết một chi/nhánh trên Sidebar / BottomSheet
@@ -211,4 +242,68 @@ class BranchUiDetail {
     this.members = const [],
     this.isRoot = false,
   });
+
+  BranchUiDetail copyWith({
+    String? id,
+    String? name,
+    String? badge,
+    String? code,
+    String? representative,
+    String? representativeSubtext,
+    int? memberCount,
+    int? activatedMemberCount,
+    String? fundAmount,
+    String? kycStatus,
+    String? description,
+    List<String>? successionChain,
+    List<BranchMemberItem>? members,
+    bool? isRoot,
+  }) {
+    return BranchUiDetail(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      badge: badge ?? this.badge,
+      code: code ?? this.code,
+      representative: representative ?? this.representative,
+      representativeSubtext: representativeSubtext ?? this.representativeSubtext,
+      memberCount: memberCount ?? this.memberCount,
+      activatedMemberCount: activatedMemberCount ?? this.activatedMemberCount,
+      fundAmount: fundAmount ?? this.fundAmount,
+      kycStatus: kycStatus ?? this.kycStatus,
+      description: description ?? this.description,
+      successionChain: successionChain ?? this.successionChain,
+      members: members ?? this.members,
+      isRoot: isRoot ?? this.isRoot,
+    );
+  }
+
+  factory BranchUiDetail.fromTreeNode(
+    BranchTreeNodeDto node, {
+    List<BranchMemberItem> members = const [],
+    String? description,
+  }) {
+    final isRoot = node.parentBranchId == null || node.generationLevel == 1;
+    final repName = node.representativeName ?? 'Chưa cập nhật';
+    return BranchUiDetail(
+      id: node.branchId,
+      name: node.branchName,
+      badge: isRoot ? 'KHỞI TỔ • ĐỜI 1' : 'CHI ĐỜI ${node.generationLevel}',
+      code: node.branchId,
+      representative: repName,
+      representativeSubtext: isRoot
+          ? 'Trưởng Tộc • Đại diện Dòng họ'
+          : 'Đại diện Chi • Đời ${node.generationLevel}',
+      memberCount: node.memberCount,
+      activatedMemberCount: members.where((m) => m.isActivated).length > 0
+          ? members.where((m) => m.isActivated).length
+          : node.memberCount,
+      fundAmount: '0 đ',
+      description: description ?? (isRoot
+          ? 'Chi nhánh gốc khởi lập gia phả dòng họ.'
+          : 'Chi nhánh trực thuộc phả hệ dòng họ.'),
+      successionChain: [repName],
+      members: members,
+      isRoot: isRoot,
+    );
+  }
 }

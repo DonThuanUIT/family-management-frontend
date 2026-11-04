@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -35,11 +35,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     await Future.delayed(const Duration(milliseconds: 1500));
     if (!mounted) return;
 
-    await ref.read(authStateProvider.notifier).checkAuthStatus();
+    final isAuthenticated = await ref.read(authStateProvider.notifier).checkAuthStatus();
     if (!mounted) return;
 
-    // Thiết lập đi thẳng tới màn hình bàn tiếp nhận đóng góp & sổ cái đã thiết kế (Task #71 & #74) không cần đăng nhập
-    context.go('/contributions');
+    if (isAuthenticated) {
+      context.go('/home');
+    } else {
+      context.go('/login');
+    }
   }
 
   @override

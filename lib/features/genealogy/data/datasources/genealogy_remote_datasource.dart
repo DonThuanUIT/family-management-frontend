@@ -8,6 +8,8 @@ abstract class GenealogyRemoteDataSource {
   Future<BranchDetailDto> getRootBranch();
   Future<BranchDetailDto> updateRootBranch(UpdateRootBranchRequestDto request);
   Future<BranchTreeNodeDto> getBranchTree();
+  Future<List<BranchMemberItem>> getBranchMembers(String branchId);
+  Future<List<BranchMemberItem>> getClanMembers();
 }
 
 class GenealogyRemoteDataSourceImpl implements GenealogyRemoteDataSource {
@@ -59,6 +61,40 @@ class GenealogyRemoteDataSourceImpl implements GenealogyRemoteDataSource {
       throw Exception('Không nhận được dữ liệu cây phả hệ');
     } on DioException catch (e) {
       final msg = e.response?.data?['message'] ?? e.message ?? 'Lỗi khi tải cây phả hệ';
+      throw Exception(msg);
+    }
+  }
+
+  @override
+  Future<List<BranchMemberItem>> getBranchMembers(String branchId) async {
+    try {
+      final response = await _dio.get('branches/$branchId/members');
+      final data = response.data;
+      if (data != null && data['data'] != null && data['data'] is List) {
+        return (data['data'] as List)
+            .map((item) => BranchMemberItem.fromJson(item as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? e.message ?? 'Lỗi khi tải thành viên chi nhánh';
+      throw Exception(msg);
+    }
+  }
+
+  @override
+  Future<List<BranchMemberItem>> getClanMembers() async {
+    try {
+      final response = await _dio.get('members');
+      final data = response.data;
+      if (data != null && data['data'] != null && data['data'] is List) {
+        return (data['data'] as List)
+            .map((item) => BranchMemberItem.fromJson(item as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? e.message ?? 'Lỗi khi tải danh sách thành viên';
       throw Exception(msg);
     }
   }

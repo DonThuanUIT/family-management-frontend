@@ -1,6 +1,8 @@
 import 'package:familyfund_app/core/router/app_router.dart';
 import 'package:familyfund_app/features/auth/data/models/auth_models.dart';
 import 'package:familyfund_app/features/auth/presentation/providers/auth_state_provider.dart';
+import 'package:familyfund_app/features/genealogy/data/models/branch_models.dart';
+import 'package:familyfund_app/features/genealogy/presentation/providers/genealogy_providers.dart';
 import 'package:familyfund_app/features/genealogy/presentation/screens/edit_root_branch_screen.dart';
 import 'package:familyfund_app/features/home/presentation/screens/home_screen.dart';
 import 'package:familyfund_app/main.dart';
@@ -15,6 +17,51 @@ class MockAuthNotifier extends AuthNotifier {
   @override
   AuthState build() => _initial;
 }
+
+const kTestBranchTree = BranchTreeNodeDto(
+  branchId: 'BR_ROOT',
+  clanId: 'CLAN_DEFAULT',
+  branchName: 'Chi Gốc (Đại Tôn)',
+  clanName: 'Dòng Họ Nguyễn Việt Nam',
+  generationLevel: 1,
+  representativeId: 'MEM_TRUONG_TOC',
+  representativeName: 'Nguyễn Trọng Hoàng',
+  memberCount: 1,
+  children: [
+    BranchTreeNodeDto(
+      branchId: 'BR_CHI_2',
+      clanId: 'CLAN_DEFAULT',
+      branchName: 'Chi 2 - Nhánh Giáp',
+      clanName: 'Dòng Họ Nguyễn Việt Nam',
+      generationLevel: 2,
+      parentBranchId: 'BR_ROOT',
+      representativeId: 'MEM_TRUONG_CHI',
+      representativeName: 'Nguyễn Văn An',
+      memberCount: 2,
+      children: [],
+    ),
+  ],
+);
+
+const kTestChi2Members = [
+  BranchMemberItem(
+    memberId: 'MEM_TRUONG_CHI',
+    fullName: 'Nguyễn Văn An',
+    generation: 2,
+    birthDeathInfo: 'Sinh 1978',
+    roleInBranch: 'Trưởng Chi 2',
+    isActivated: true,
+  ),
+  BranchMemberItem(
+    memberId: 'MEM_MAI_ANH',
+    fullName: 'Nguyễn Thị Mai Anh',
+    generation: 3,
+    birthDeathInfo: 'Sinh 1992',
+    roleInBranch: 'Thành viên • Đời 3',
+    gender: 'female',
+    isActivated: true,
+  ),
+];
 
 void main() {
   testWidgets(
@@ -67,7 +114,7 @@ void main() {
   );
 
   testWidgets(
-    'HomeScreen renders 2 branch columns, aligns sub-generations, removes bottom switcher, and harmonizes identity',
+    'HomeScreen dynamically loads branch tree and real members from Backend API without seed data',
     (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1280, 1600);
       tester.view.devicePixelRatio = 1.0;
@@ -77,6 +124,8 @@ void main() {
         ProviderScope(
           overrides: [
             initialLocationProvider.overrideWithValue('/home'),
+            branchTreeProvider.overrideWith((ref) => Future.value(kTestBranchTree)),
+            branchMembersProvider('BR_CHI_2').overrideWith((ref) => Future.value(kTestChi2Members)),
           ],
           child: const FamilyFundApp(),
         ),
@@ -85,41 +134,33 @@ void main() {
 
       expect(find.byType(HomeScreen), findsOneWidget);
 
-      // 1. Kiểm tra danh tính người dùng trên Navbar đã đồng bộ thành Lê Hữu Tuấn (không còn Nguyễn Trọng Hoàng)
-      expect(find.text('Lê Hữu Tuấn'), findsWidgets);
-      expect(find.text('Nguyễn Trọng Hoàng'), findsNothing);
+      // 1. Kiểm tra danh tính người dùng và dòng họ trên Navbar
+      expect(find.text('Nguyễn Trọng Hoàng'), findsWidgets);
 
-      // 2. Kiểm tra Cụ Khởi Tổ và 2 nhánh đời 2 xuất hiện
-      expect(find.text('CỤ KHỞI TỔ • ĐỜI 1'), findsOneWidget);
-      expect(find.text('Chi 1 (Trưởng Phái) • Đời 2'), findsOneWidget);
-      expect(find.text('Chi 2 (Thứ Phái) • Đời 2'), findsWidgets);
+      // 2. Kiểm tra Nhánh Gốc (Đời 1) và Chi Nhánh 2 từ Database xuất hiện
+      expect(find.text('Chi Gốc (Đại Tôn)'), findsWidgets);
+      expect(find.text('Chi 2 - Nhánh Giáp'), findsWidgets);
 
-      // 3. Kiểm tra hộp chuyển tuyến phẳng dưới đáy màn hình đã bị loại bỏ hoàn toàn
-      expect(find.text('Tuyến Chi Trưởng (Cụ An)'), findsNothing);
-      expect(find.text('Tuyến Chi Thứ (Cụ Bình)'), findsNothing);
+      // 3. Kiểm tra số lượng thành viên thực tế (1 người ở Chi Gốc, 2 người ở Chi 2)
+      expect(find.text('1 Thành viên (Xem chi tiết →)'), findsOneWidget);
+      expect(find.text('2 người'), findsOneWidget);
 
-      // 4. Mở rộng toàn bộ cây 5 đời
-      final expandButton = find.text('Hiện Đầy Đủ Cây (5 Đời)');
+      // 4. Mở rộng cây phả hệ để xem các đời tiếp theo
+      final expandButton = find.text('Hiện Đầy Đủ Cây (Tất Cả Đời)');
       expect(expandButton, findsOneWidget);
       await tester.tap(expandButton);
       await tester.pumpAndSettle();
 
       expect(find.text('Thu Gọn Sơ Đồ'), findsOneWidget);
 
-      // 5. Kiểm tra các thế hệ đời 3, 4, 5 của Chi 1 xuất hiện
-      expect(find.text('Bác Lê Tuấn Anh'), findsOneWidget);
-      expect(find.text('Chú Lê Đình Khôi'), findsOneWidget);
-      expect(find.text('Lê Hoàng Long'), findsOneWidget);
-
-      // 6. Kiểm tra các thế hệ đời 3, 4, 5 của Chi 2 xuất hiện
-      expect(find.text('Bác Lê Văn Hùng'), findsOneWidget);
-      expect(find.text('Chú Lê Hữu Nam'), findsOneWidget);
-      expect(find.text('VỊ TRÍ CỦA BẠN • ĐỜI 5'), findsOneWidget);
+      // 5. Kiểm tra thành viên thực tế của Chi 2: Nguyễn Thị Mai Anh (Đời 3) xuất hiện
+      expect(find.text('Nguyễn Thị Mai Anh'), findsOneWidget);
+      expect(find.text('ĐỜI 3'), findsWidgets);
     },
   );
 
   testWidgets(
-    'HomeScreen dynamically loads Nguyen Clan tree and highlights Clan Head when logged in as Nguyen Trong Hoang',
+    'HomeScreen dynamically highlights Clan Head and pins position when logged in as Nguyen Trong Hoang',
     (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1280, 1600);
       tester.view.devicePixelRatio = 1.0;
@@ -129,6 +170,8 @@ void main() {
         ProviderScope(
           overrides: [
             initialLocationProvider.overrideWithValue('/home'),
+            branchTreeProvider.overrideWith((ref) => Future.value(kTestBranchTree)),
+            branchMembersProvider('BR_CHI_2').overrideWith((ref) => Future.value(kTestChi2Members)),
             authStateProvider.overrideWith(
               () => MockAuthNotifier(
                 const AuthState(
@@ -157,29 +200,23 @@ void main() {
 
       expect(find.byType(HomeScreen), findsOneWidget);
 
-      // 1. Kiểm tra Navbar và Toolbar hiển thị đúng Dòng Họ Nguyễn
+      // 1. Kiểm tra Navbar hiển thị Dòng Họ Nguyễn và tên Trưởng tộc
       expect(find.text('DÒNG HỌ NGUYỄN VIỆT NAM'), findsOneWidget);
       expect(find.text('Nguyễn Trọng Hoàng'), findsWidgets);
-      expect(find.text('Dòng Họ Nguyễn Việt Nam • Chi Gốc'), findsOneWidget);
 
       // 2. Kiểm tra Thẻ Cụ Khởi Tổ / Trưởng Tộc được tự động ghim huy hiệu "VỊ TRÍ CỦA BẠN • TRƯỞNG TỘC"
       expect(find.text('★ VỊ TRÍ CỦA BẠN • TRƯỞNG TỘC'), findsWidgets);
       expect(find.text('● Đang quản trị'), findsOneWidget);
 
-      // 3. Kiểm tra thẻ con cháu Đời 5 không còn bị gán nhầm "VỊ TRÍ CỦA BẠN"
-      expect(find.text('VỊ TRÍ CỦA BẠN • ĐỜI 5'), findsNothing);
-
-      // 4. Mở rộng toàn bộ cây 5 đời của Dòng Họ Nguyễn
-      final expandButton = find.text('Hiện Đầy Đủ Cây (5 Đời)');
+      // 3. Mở rộng toàn bộ cây để kiểm tra thành viên thực tế
+      final expandButton = find.text('Hiện Đầy Đủ Cây (Tất Cả Đời)');
       expect(expandButton, findsOneWidget);
       await tester.tap(expandButton);
       await tester.pumpAndSettle();
 
-      // 5. Kiểm tra các thế hệ con cháu Dòng Họ Nguyễn xuất hiện
+      // 4. Kiểm tra thành viên thực tế của Chi 2: Nguyễn Thị Mai Anh
       expect(find.text('Nguyễn Thị Mai Anh'), findsOneWidget);
-      expect(find.text('Nguyễn Hoàng Long'), findsOneWidget);
-      expect(find.text('Bác Nguyễn Hữu Nam'), findsOneWidget);
-      expect(find.text('Chú Nguyễn Hữu Đạt'), findsOneWidget);
+      expect(find.text('Chi 2 - Nhánh Giáp'), findsWidgets);
     },
   );
 }
