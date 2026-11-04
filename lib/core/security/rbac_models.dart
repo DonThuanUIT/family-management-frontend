@@ -140,6 +140,34 @@ class DualRbacSession {
   /// Quy tắc A & Luồng 1: Trưởng tộc hoặc Trưởng chi duyệt đơn gia nhập & sinh mã mời.
   bool get canReviewBranchJoinRequests => isClanHead || isBranchHead || isAdmin;
 
+  /// Kiểm tra người dùng có quyền quản lý công việc sự kiện (US-07) hay không.
+  /// Ràng buộc cứng: Sự kiện chưa Closed VÀ (là Quản trị viên, Trưởng tộc, hoặc giữ vai trò HeadOfOrganizer/OrganizerMember trong ban tổ chức sự kiện).
+  bool canManageTasks({
+    required bool isClosed,
+    List<dynamic>? personnel,
+    String? eventId,
+  }) {
+    if (isClosed) return false;
+    if (isAdmin || isClanHead) return true;
+    if (eventId != null && eventRolesByEventId.containsKey(eventId)) {
+      final ctx = eventRolesByEventId[eventId]!;
+      if (ctx.canManageEventTasks) return true;
+    }
+    if (personnel != null) {
+      for (final p in personnel) {
+        final pMemberId = p is Map ? p['memberId'] : (p.memberId as String?);
+        final pRole = p is Map ? p['eventRole'] : (p.eventRole as String?);
+        final pReadOnly = p is Map ? p['isReadOnly'] == true : (p.isReadOnly == true);
+        if (pMemberId == memberId && !pReadOnly) {
+          if (pRole == 'HeadOfOrganizer' || pRole == 'OrganizerMember') {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   DualRbacSession copyWith({
     Set<SystemRole>? globalRoles,
     Map<String, EventPermissionContext>? eventRolesByEventId,

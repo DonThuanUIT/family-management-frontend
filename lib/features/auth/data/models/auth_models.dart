@@ -74,12 +74,93 @@ class RegisterCreatorRequestDto {
   }
 }
 
+enum ProposalType {
+  existingBranchLeaf('ExistingBranchLeaf'),
+  newChildBranch('NewChildBranch');
+
+  final String value;
+  const ProposalType(this.value);
+
+  static ProposalType fromString(String? val) {
+    if (val == 'NewChildBranch') return ProposalType.newChildBranch;
+    return ProposalType.existingBranchLeaf;
+  }
+}
+
+enum JoinRequestApprovalStatus {
+  pending('Pending'),
+  approved('Approved'),
+  rejected('Rejected');
+
+  final String value;
+  const JoinRequestApprovalStatus(this.value);
+
+  static JoinRequestApprovalStatus fromString(String? val) {
+    if (val == 'Approved') return JoinRequestApprovalStatus.approved;
+    if (val == 'Rejected') return JoinRequestApprovalStatus.rejected;
+    return JoinRequestApprovalStatus.pending;
+  }
+}
+
+class OnboardingBranchTreeNodeDto {
+  final String branchId;
+  final String clanId;
+  final String clanName;
+  final String branchName;
+  final int? generationLevel;
+  final String? parentBranchId;
+  final String? representativeName;
+  final int memberCount;
+  final List<OnboardingBranchTreeNodeDto> children;
+
+  const OnboardingBranchTreeNodeDto({
+    required this.branchId,
+    required this.clanId,
+    required this.clanName,
+    required this.branchName,
+    this.generationLevel,
+    this.parentBranchId,
+    this.representativeName,
+    this.memberCount = 0,
+    this.children = const [],
+  });
+
+  factory OnboardingBranchTreeNodeDto.fromJson(Map<String, dynamic> json) {
+    final rawChildren = json['children'];
+    final List<OnboardingBranchTreeNodeDto> parsedChildren = [];
+    if (rawChildren is List) {
+      for (final child in rawChildren) {
+        if (child is Map<String, dynamic>) {
+          parsedChildren.add(OnboardingBranchTreeNodeDto.fromJson(child));
+        }
+      }
+    }
+
+    return OnboardingBranchTreeNodeDto(
+      branchId: (json['branchId'] as String?) ?? '',
+      clanId: (json['clanId'] as String?) ?? '',
+      clanName: (json['clanName'] as String?) ?? '',
+      branchName: (json['branchName'] as String?) ?? '',
+      generationLevel: (json['generationLevel'] as num?)?.toInt(),
+      parentBranchId: json['parentBranchId'] as String?,
+      representativeName: json['representativeName'] as String?,
+      memberCount: (json['memberCount'] as num?)?.toInt() ?? 0,
+      children: parsedChildren,
+    );
+  }
+}
+
 class RegisterMemberRequestDto {
   final String inviteCode;
   final String fullName;
   final String phoneNumber;
   final String password;
   final String gender;
+  final ProposalType proposalType;
+  final String targetBranchId;
+  final int proposedGeneration;
+  final String? proposedNewBranchName;
+  final String? relationshipNote;
   final String? dateOfBirth;
   final String? email;
 
@@ -89,18 +170,31 @@ class RegisterMemberRequestDto {
     required this.phoneNumber,
     required this.password,
     required this.gender,
+    this.proposalType = ProposalType.existingBranchLeaf,
+    required this.targetBranchId,
+    this.proposedGeneration = 1,
+    this.proposedNewBranchName,
+    this.relationshipNote,
     this.dateOfBirth,
     this.email,
   });
 
   Map<String, dynamic> toJson() {
     final map = <String, dynamic>{
-      'inviteCode': inviteCode.trim(),
-      'fullName': fullName.trim(),
       'phoneNumber': phoneNumber.trim(),
       'password': password.trim(),
+      'fullName': fullName.trim(),
       'gender': gender,
+      'proposalType': proposalType.value,
+      'targetBranchId': targetBranchId.trim(),
+      'proposedGeneration': proposedGeneration,
     };
+    if (proposedNewBranchName != null && proposedNewBranchName!.trim().isNotEmpty) {
+      map['proposedNewBranchName'] = proposedNewBranchName!.trim();
+    }
+    if (relationshipNote != null && relationshipNote!.trim().isNotEmpty) {
+      map['relationshipNote'] = relationshipNote!.trim();
+    }
     if (dateOfBirth != null && dateOfBirth!.trim().isNotEmpty) {
       map['dateOfBirth'] = dateOfBirth!.trim();
     }
@@ -108,6 +202,77 @@ class RegisterMemberRequestDto {
       map['email'] = email!.trim();
     }
     return map;
+  }
+}
+
+class JoinRequestResponseDto {
+  final String requestId;
+  final String accountId;
+  final String clanId;
+  final String inviteCode;
+  final String fullName;
+  final String? phoneNumber;
+  final String? email;
+  final String? dateOfBirth;
+  final String gender;
+  final ProposalType proposalType;
+  final String targetBranchId;
+  final String? targetBranchName;
+  final String? proposedNewBranchName;
+  final int proposedGeneration;
+  final String? relationshipNote;
+  final JoinRequestApprovalStatus approvalStatus;
+  final String? reviewedByAccountId;
+  final String? rejectionReason;
+  final String? createdAt;
+  final String? reviewedAt;
+
+  const JoinRequestResponseDto({
+    required this.requestId,
+    required this.accountId,
+    required this.clanId,
+    required this.inviteCode,
+    required this.fullName,
+    this.phoneNumber,
+    this.email,
+    this.dateOfBirth,
+    required this.gender,
+    required this.proposalType,
+    required this.targetBranchId,
+    this.targetBranchName,
+    this.proposedNewBranchName,
+    required this.proposedGeneration,
+    this.relationshipNote,
+    required this.approvalStatus,
+    this.reviewedByAccountId,
+    this.rejectionReason,
+    this.createdAt,
+    this.reviewedAt,
+  });
+
+  factory JoinRequestResponseDto.fromJson(Map<String, dynamic> json) {
+    return JoinRequestResponseDto(
+      requestId: (json['requestId'] as String?) ?? '',
+      accountId: (json['accountId'] as String?) ?? '',
+      clanId: (json['clanId'] as String?) ?? '',
+      inviteCode: (json['inviteCode'] as String?) ?? '',
+      fullName: (json['fullName'] as String?) ?? '',
+      phoneNumber: json['phoneNumber'] as String?,
+      email: json['email'] as String?,
+      dateOfBirth: json['dateOfBirth'] as String?,
+      gender: (json['gender'] as String?) ?? 'Male',
+      proposalType: ProposalType.fromString(json['proposalType'] as String?),
+      targetBranchId: (json['targetBranchId'] as String?) ?? '',
+      targetBranchName: json['targetBranchName'] as String?,
+      proposedNewBranchName: json['proposedNewBranchName'] as String?,
+      proposedGeneration: (json['proposedGeneration'] as num?)?.toInt() ?? 1,
+      relationshipNote: json['relationshipNote'] as String?,
+      approvalStatus: JoinRequestApprovalStatus.fromString(json['approvalStatus'] as String?),
+      reviewedByAccountId: json['reviewedByAccountId'] as String?,
+      rejectionReason: json['rejectionReason'] as String?,
+      createdAt: json['createdAt'] as String?,
+      reviewedAt: json['reviewedAt'] as String?,
+    );
   }
 }
 
@@ -166,9 +331,11 @@ class AuthTokenResponseDto {
 class InviteCodePreviewDto {
   final String inviteCode;
   final String? clanId;
+  final String? clanName;
   final String? inviteType;
   final String? shareableUrl;
   final String? targetBranchId;
+  final String? targetBranchName;
   final String? targetMemberId;
   final int? maxUses;
   final int? usedCount;
@@ -178,9 +345,11 @@ class InviteCodePreviewDto {
   const InviteCodePreviewDto({
     required this.inviteCode,
     this.clanId,
+    this.clanName,
     this.inviteType,
     this.shareableUrl,
     this.targetBranchId,
+    this.targetBranchName,
     this.targetMemberId,
     this.maxUses,
     this.usedCount,
@@ -192,9 +361,11 @@ class InviteCodePreviewDto {
     return InviteCodePreviewDto(
       inviteCode: (json['inviteCode'] as String?) ?? '',
       clanId: json['clanId'] as String?,
+      clanName: json['clanName'] as String?,
       inviteType: json['inviteType'] as String?,
       shareableUrl: json['shareableUrl'] as String?,
       targetBranchId: json['targetBranchId'] as String?,
+      targetBranchName: json['targetBranchName'] as String?,
       targetMemberId: json['targetMemberId'] as String?,
       maxUses: (json['maxUses'] as num?)?.toInt(),
       usedCount: (json['usedCount'] as num?)?.toInt(),
