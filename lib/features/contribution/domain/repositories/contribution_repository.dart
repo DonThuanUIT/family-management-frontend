@@ -1,4 +1,4 @@
-import '../../data/models/contribution_models.dart';
+﻿import '../../data/models/contribution_models.dart';
 
 abstract class ContributionRepository {
   Future<ElectronicReceiptDto> recordCashContribution({
@@ -20,6 +20,10 @@ abstract class ContributionRepository {
     String? benchmarkId,
     String? invoiceReference,
     List<MemberAllocationDto> allocations = const [],
+  });
+
+  Future<List<ElectronicReceiptDto>> getCashContributionsByEvent({
+    required String eventId,
   });
 
   Future<List<InKindElectronicReceiptDto>> getInKindContributionsByEvent({

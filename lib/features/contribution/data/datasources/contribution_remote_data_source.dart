@@ -26,6 +26,10 @@ abstract class ContributionRemoteDataSource {
     List<MemberAllocationDto> allocations = const [],
   });
 
+  Future<List<ElectronicReceiptDto>> getCashContributionsByEvent({
+    required String eventId,
+  });
+
   Future<List<InKindElectronicReceiptDto>> getInKindContributionsByEvent({
     required String eventId,
     InKindProcessingStatus? status,
@@ -116,6 +120,17 @@ class ContributionRemoteDataSourceImpl implements ContributionRemoteDataSource {
 
     final data = response.data['data'] as Map<String, dynamic>;
     return InKindElectronicReceiptDto.fromJson(data);
+  }
+
+  @override
+  Future<List<ElectronicReceiptDto>> getCashContributionsByEvent({
+    required String eventId,
+  }) async {
+    final response = await _dio.get('contributions/cash/events/');
+    final rawList = response.data['data'] as List<dynamic>? ?? [];
+    return rawList
+        .map((e) => ElectronicReceiptDto.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   @override

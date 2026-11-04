@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/repositories/contribution_repository.dart';
 import '../datasources/contribution_remote_data_source.dart';
@@ -51,6 +51,13 @@ class ContributionRepositoryImpl implements ContributionRepository {
       invoiceReference: invoiceReference,
       allocations: allocations,
     );
+  }
+
+  @override
+  Future<List<ElectronicReceiptDto>> getCashContributionsByEvent({
+    required String eventId,
+  }) {
+    return _remoteDataSource.getCashContributionsByEvent(eventId: eventId);
   }
 
   @override
