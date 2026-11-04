@@ -1,4 +1,4 @@
-﻿import 'package:dio/dio.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_client.dart';
@@ -126,7 +126,7 @@ class ContributionRemoteDataSourceImpl implements ContributionRemoteDataSource {
   Future<List<ElectronicReceiptDto>> getCashContributionsByEvent({
     required String eventId,
   }) async {
-    final response = await _dio.get('contributions/cash/events/');
+    final response = await _dio.get('contributions/cash/events/$eventId');
     final rawList = response.data['data'] as List<dynamic>? ?? [];
     return rawList
         .map((e) => ElectronicReceiptDto.fromJson(e as Map<String, dynamic>))

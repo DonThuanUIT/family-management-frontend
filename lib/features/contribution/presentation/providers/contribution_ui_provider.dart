@@ -1,4 +1,4 @@
-﻿import 'dart:math';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/utils/vietnamese_money_converter.dart';
@@ -90,26 +90,38 @@ class ContributionUiNotifier extends Notifier<ContributionUiState> {
 
   /// Tải dữ liệu thật từ Backend qua REST API
   Future<void> fetchFromBackend({String eventId = 'EVT-GIO-TO-2026'}) async {
+    List<ElectronicReceiptDto> cashList = state.cashReceipts;
+    List<InKindElectronicReceiptDto> inKindList = state.inKindReceipts;
+    List<ClanAssetDto> assetList = state.clanAssets;
+    bool connected = false;
+
     try {
-      final results = await Future.wait([
-        _repository.getCashContributionsByEvent(eventId: eventId),
-        _repository.getInKindContributionsByEvent(eventId: eventId),
-        _repository.getClanAssets(),
-      ]);
-
-      final cashList = results[0] as List<ElectronicReceiptDto>;
-      final inKindList = results[1] as List<InKindElectronicReceiptDto>;
-      final assetList = results[2] as List<ClanAssetDto>;
-
-      state = state.copyWith(
-        cashReceipts: cashList,
-        inKindReceipts: inKindList,
-        clanAssets: assetList,
-        isLiveConnected: true,
-      );
+      cashList = await _repository.getCashContributionsByEvent(eventId: eventId);
+      connected = true;
     } catch (e) {
-      debugPrint('Backend sync error: $e');
+      debugPrint('Backend sync error (cash): $e');
     }
+
+    try {
+      inKindList = await _repository.getInKindContributionsByEvent(eventId: eventId);
+      connected = true;
+    } catch (e) {
+      debugPrint('Backend sync error (in-kind): $e');
+    }
+
+    try {
+      assetList = await _repository.getClanAssets();
+      connected = true;
+    } catch (e) {
+      debugPrint('Backend sync error (assets): $e');
+    }
+
+    state = state.copyWith(
+      cashReceipts: cashList,
+      inKindReceipts: inKindList,
+      clanAssets: assetList,
+      isLiveConnected: connected,
+    );
   }
 
   ContributionUiState _createInitialData() {
