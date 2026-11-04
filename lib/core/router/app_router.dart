@@ -17,6 +17,7 @@ import '../../features/contribution/presentation/screens/receive_contribution_sc
 import '../../features/event/presentation/screens/event_list_screen.dart';
 import '../../features/genealogy/presentation/screens/edit_root_branch_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/role/presentation/screens/role_management_screen.dart';
 import '../../features/shared/presentation/widgets/heritage_nav_bar.dart';
 import '../../features/task/presentation/screens/event_task_list_screen.dart';
 
@@ -141,21 +142,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ],
       ),
 
-      // 11. Bàn Tiếp Nhận Đóng Góp & Sổ Cái Thu Chi (Task #71)
+      // 11. Phân hệ Quản lý Phân Quyền & Chức Sự Tác Nghiệp (US-03)
+      GoRoute(
+        path: '/roles',
+        name: 'roles',
+        builder: (context, state) => const RoleManagementScreen(),
+      ),
+
+      // 12. Bàn Tiếp Nhận Đóng Góp & Sổ Cái Thu Chi (Task #71)
       GoRoute(
         path: '/contributions',
         name: 'contributions',
         builder: (context, state) => const ReceiveContributionScreen(),
       ),
 
-      // 12. Kho Hiện Vật & Bảo Vật Từ Đường (Task #74)
+      // 13. Kho Hiện Vật & Bảo Vật Từ Đường (Task #74)
       GoRoute(
         path: '/clan-assets',
         name: 'clan-assets',
         builder: (context, state) => const ClanAssetInventoryScreen(),
       ),
 
-      // 13. Phân hệ Cấp Mã Mời Gia Tộc (Chưa triển khai - để trống theo yêu cầu)
+      // 14. Phân hệ Cấp Mã Mời Gia Tộc (Chưa triển khai - để trống theo yêu cầu)
       GoRoute(
         path: '/clan-invites',
         name: 'clan-invites',
