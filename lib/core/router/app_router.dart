@@ -12,6 +12,7 @@ import '../../features/auth/presentation/screens/register_creator_screen.dart';
 import '../../features/auth/presentation/screens/register_member_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/auth/presentation/screens/welcome_screen.dart';
+import '../../features/audit/presentation/screens/system_audit_log_screen.dart';
 import '../../features/contribution/presentation/screens/clan_asset_inventory_screen.dart';
 import '../../features/contribution/presentation/screens/receive_contribution_screen.dart';
 import '../../features/event/presentation/screens/event_list_screen.dart';
@@ -173,6 +174,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           bottomNavigationBar: HeritageBottomNavBar(currentRoute: '/clan-invites'),
           body: SizedBox.shrink(),
         ),
+      ),
+
+      // 15. Nhật Ký Thao Tác Hệ Thống & So Sánh Diff (Audit Log Viewer)
+      GoRoute(
+        path: '/audit-logs',
+        name: 'audit-logs',
+        builder: (context, state) => const SystemAuditLogScreen(),
       ),
     ],
   );
