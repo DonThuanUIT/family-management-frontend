@@ -173,8 +173,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               code: tree.branchId,
               representative: tree.representativeName ?? 'Chưa cập nhật',
               representativeSubtext: 'Trưởng Tộc • Đại diện Dòng họ',
+              representativeId: tree.representativeId,
               memberCount: tree.memberCount,
-              activatedMemberCount: activeBranchMembers.where((m) => m.isActivated).length > 0
+              activatedMemberCount: activeBranchMembers.where((m) => m.isActivated).isNotEmpty
                   ? activeBranchMembers.where((m) => m.isActivated).length
                   : tree.memberCount,
               fundAmount: '0 đ',
@@ -206,8 +207,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               code: childNode.branchId,
               representative: childNode.representativeName ?? 'Chưa cập nhật',
               representativeSubtext: 'Đại diện Chi • Đời ${childNode.generationLevel}',
+              representativeId: childNode.representativeId,
               memberCount: childNode.memberCount,
-              activatedMemberCount: activeBranchMembers.where((m) => m.isActivated).length > 0
+              activatedMemberCount: activeBranchMembers.where((m) => m.isActivated).isNotEmpty
                   ? activeBranchMembers.where((m) => m.isActivated).length
                   : childNode.memberCount,
               fundAmount: '0 đ',
@@ -230,6 +232,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             code: tree.branchId,
             representative: tree.representativeName ?? 'Chưa cập nhật',
             representativeSubtext: 'Trưởng Tộc • Đại diện Dòng họ',
+            representativeId: tree.representativeId,
             memberCount: tree.memberCount,
             activatedMemberCount: tree.memberCount,
             fundAmount: '0 đ',
@@ -338,7 +341,70 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 28),
+                            const SizedBox(height: 12),
+
+                            // [US-23] Demo Bar: Kiểm thử phân quyền phạm vi chi nhánh (Branch Scope Guard)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: kBorderColor),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.02),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.security, size: 18, color: kPrimaryColor),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    'GIẢ LẬP VAI TRÒ (US-23):',
+                                    style: TextStyle(
+                                      fontFamily: 'JetBrains Mono',
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: kPrimaryColor,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      child: Row(
+                                        children: [
+                                          _buildPersonaChip(
+                                            ref: ref,
+                                            label: 'Trưởng Tộc (Toàn quyền)',
+                                            personaKey: 'CLAN_HEAD',
+                                            isSelected: session.isClanHead,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          _buildPersonaChip(
+                                            ref: ref,
+                                            label: 'Trưởng Chi 2 (Chỉ quản lý Chi 2)',
+                                            personaKey: 'BRANCH_HEAD_CHI_2',
+                                            isSelected: session.isBranchHead && !session.isClanHead,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          _buildPersonaChip(
+                                            ref: ref,
+                                            label: 'Thành Viên (Chỉ xem)',
+                                            personaKey: 'MEMBER',
+                                            isSelected: !session.isClanHead && !session.isBranchHead,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 18),
 
                             // ROOT ANCESTOR NODE (Cụ Khởi Tổ • Đời 1 - Nhánh Gốc)
                             _buildRootAncestorCard(
@@ -497,8 +563,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       code: child.branchId,
       representative: child.representativeName ?? 'Chưa cập nhật',
       representativeSubtext: 'Đại diện Chi • Đời ${child.generationLevel}',
+      representativeId: child.representativeId,
       memberCount: child.memberCount,
-      activatedMemberCount: childMembers.where((m) => m.isActivated).length > 0
+      activatedMemberCount: childMembers.where((m) => m.isActivated).isNotEmpty
           ? childMembers.where((m) => m.isActivated).length
           : child.memberCount,
       fundAmount: '0 đ',
@@ -1247,6 +1314,56 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             else
               const Icon(Icons.chevron_right, size: 18, color: Color(0xFF8F482F)),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// [US-23] Widget Chip chuyển đổi Persona giả lập vai trò trên cây gia phả
+  Widget _buildPersonaChip({
+    required WidgetRef ref,
+    required String label,
+    required String personaKey,
+    required bool isSelected,
+  }) {
+    return InkWell(
+      onTap: () {
+        ref.read(dualRbacSessionProvider.notifier).simulatePersona(personaKey);
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.badge_outlined, color: Colors.white, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('Đã chuyển vai trò giả lập sang: $label'),
+                ),
+              ],
+            ),
+            backgroundColor: const Color(0xFF8F482F),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF8F482F) : const Color(0xFFF0EDEB),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF8F482F) : const Color(0xFFDAC1BA),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Plus Jakarta Sans',
+            fontSize: 11,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            color: isSelected ? Colors.white : const Color(0xFF54433E),
+          ),
         ),
       ),
     );

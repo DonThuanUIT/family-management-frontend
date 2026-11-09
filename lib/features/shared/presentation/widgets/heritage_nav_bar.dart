@@ -265,39 +265,40 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // Verified Pill
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF006E2A).withAlpha(18),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                            color: const Color(0xFF006E2A).withAlpha(40),
-                            width: 1),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.verified,
-                              size: 14, color: Color(0xFF006E2A)),
-                          SizedBox(width: 4),
-                          Text(
-                            'Niêm Phong 2026',
-                            style: TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF006E2A),
+                    if (isWide) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF006E2A).withAlpha(18),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                              color: const Color(0xFF006E2A).withAlpha(40),
+                              width: 1),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.verified,
+                                size: 14, color: Color(0xFF006E2A)),
+                            SizedBox(width: 4),
+                            Text(
+                              'Niêm Phong 2026',
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF006E2A),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-
-                    const SizedBox(width: 10),
-                    Container(
-                        width: 1, height: 26, color: const Color(0xFFE6DFD8)),
-                    const SizedBox(width: 10),
+                      const SizedBox(width: 10),
+                      Container(
+                          width: 1, height: 26, color: const Color(0xFFE6DFD8)),
+                      const SizedBox(width: 10),
+                    ],
 
                     // User Profile & Logout Popover
                     PopupMenuButton<String>(
@@ -353,6 +354,55 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                                     )),
                               ],
                             ),
+                          ),
+                        ),
+                        const PopupMenuDivider(),
+                        PopupMenuItem(
+                          value: '/roles',
+                          child: Row(
+                            children: [
+                              Icon(Icons.admin_panel_settings_outlined,
+                                  size: 18,
+                                  color: currentRoute == '/roles'
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF54433E)),
+                              const SizedBox(width: 10),
+                              Text(
+                                'Phân Quyền Vai Trò',
+                                style: TextStyle(
+                                  fontWeight: currentRoute == '/roles'
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  color: currentRoute == '/roles'
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF2B1810),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: '/audit-logs',
+                          child: Row(
+                            children: [
+                              Icon(Icons.history_edu_outlined,
+                                  size: 18,
+                                  color: currentRoute == '/audit-logs'
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF54433E)),
+                              const SizedBox(width: 10),
+                              Text(
+                                'Nhật Ký Thao Tác (Audit Log)',
+                                style: TextStyle(
+                                  fontWeight: currentRoute == '/audit-logs'
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  color: currentRoute == '/audit-logs'
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF2B1810),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const PopupMenuDivider(),

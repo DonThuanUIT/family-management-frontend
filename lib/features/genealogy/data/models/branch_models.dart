@@ -217,6 +217,7 @@ class BranchUiDetail {
   final String code;
   final String representative;
   final String representativeSubtext;
+  final String? representativeId;
   final int memberCount;
   final int activatedMemberCount;
   final String fundAmount;
@@ -233,6 +234,7 @@ class BranchUiDetail {
     required this.code,
     required this.representative,
     required this.representativeSubtext,
+    this.representativeId,
     required this.memberCount,
     required this.activatedMemberCount,
     required this.fundAmount,
@@ -250,6 +252,7 @@ class BranchUiDetail {
     String? code,
     String? representative,
     String? representativeSubtext,
+    String? representativeId,
     int? memberCount,
     int? activatedMemberCount,
     String? fundAmount,
@@ -266,6 +269,7 @@ class BranchUiDetail {
       code: code ?? this.code,
       representative: representative ?? this.representative,
       representativeSubtext: representativeSubtext ?? this.representativeSubtext,
+      representativeId: representativeId ?? this.representativeId,
       memberCount: memberCount ?? this.memberCount,
       activatedMemberCount: activatedMemberCount ?? this.activatedMemberCount,
       fundAmount: fundAmount ?? this.fundAmount,
@@ -293,8 +297,9 @@ class BranchUiDetail {
       representativeSubtext: isRoot
           ? 'Trưởng Tộc • Đại diện Dòng họ'
           : 'Đại diện Chi • Đời ${node.generationLevel}',
+      representativeId: node.representativeId,
       memberCount: node.memberCount,
-      activatedMemberCount: members.where((m) => m.isActivated).length > 0
+      activatedMemberCount: members.where((m) => m.isActivated).isNotEmpty
           ? members.where((m) => m.isActivated).length
           : node.memberCount,
       fundAmount: '0 đ',
