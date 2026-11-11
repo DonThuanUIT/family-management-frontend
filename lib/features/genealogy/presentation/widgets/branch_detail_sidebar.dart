@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/security/rbac_models.dart';
 import '../../data/models/branch_models.dart';
 import 'branch_action_dialogs.dart';
+import 'update_life_status_dialog.dart';
 
 /// Bảng hiển thị thông tin chi tiết và danh sách thành viên của một Chi/Nhánh.
 /// Có thể hiển thị ở dạng Sidebar bên phải (trên Web/Tablet) hoặc Modal Bottom Sheet (trên Mobile).
@@ -829,27 +830,40 @@ class _BranchDetailSidebarState extends ConsumerState<BranchDetailSidebar> {
                   separatorBuilder: (context, index) => const Divider(height: 8, color: Color(0xFFEFECE8)),
                   itemBuilder: (context, index) {
                     final member = members[index];
+                    final isDeceased = member.isDeceased;
+
                     return Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: isDeceased ? const Color(0xFFFFFDF8) : Colors.white,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFEAE5E0)),
+                        border: Border.all(
+                          color: isDeceased
+                              ? const Color(0xFFB8860B).withAlpha(140)
+                              : const Color(0xFFEAE5E0),
+                          width: isDeceased ? 1.2 : 1.0,
+                        ),
                       ),
                       child: Row(
                         children: [
                           // Avatar
                           CircleAvatar(
                             radius: 18,
-                            backgroundColor: member.gender == 'female'
-                                ? const Color(0xFFFFD8E4)
-                                : const Color(0xFFDBE7FF),
+                            backgroundColor: isDeceased
+                                ? const Color(0xFFEFE8E2)
+                                : (member.gender == 'female'
+                                    ? const Color(0xFFFFD8E4)
+                                    : const Color(0xFFDBE7FF)),
                             child: Icon(
-                              member.gender == 'female' ? Icons.face_3 : Icons.face,
-                              size: 20,
-                              color: member.gender == 'female'
-                                  ? const Color(0xFFB3261E)
-                                  : const Color(0xFF1B5E20),
+                              isDeceased
+                                  ? Icons.brightness_3
+                                  : (member.gender == 'female' ? Icons.face_3 : Icons.face),
+                              size: 19,
+                              color: isDeceased
+                                  ? const Color(0xFF8F482F)
+                                  : (member.gender == 'female'
+                                      ? const Color(0xFFB3261E)
+                                      : const Color(0xFF1B5E20)),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -860,15 +874,28 @@ class _BranchDetailSidebarState extends ConsumerState<BranchDetailSidebar> {
                               children: [
                                 Row(
                                   children: [
-                                    Text(
-                                      member.fullName,
-                                      style: const TextStyle(
-                                        fontFamily: 'Plus Jakarta Sans',
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF1C1C1A),
+                                    Flexible(
+                                      child: Text(
+                                        member.fullName,
+                                        style: TextStyle(
+                                          fontFamily: 'Plus Jakarta Sans',
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: isDeceased
+                                              ? const Color(0xFF54433E)
+                                              : const Color(0xFF1C1C1A),
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
+                                    if (isDeceased) ...[
+                                      const SizedBox(width: 4),
+                                      const Icon(
+                                        Icons.brightness_3,
+                                        size: 12,
+                                        color: Color(0xFFB8860B),
+                                      ),
+                                    ],
                                     const SizedBox(width: 6),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
@@ -898,7 +925,23 @@ class _BranchDetailSidebarState extends ConsumerState<BranchDetailSidebar> {
                                         color: Color(0xFF6B584E),
                                       ),
                                     ),
-                                    if (member.birthDeathInfo != null) ...[
+                                    if (isDeceased && member.deathDateLunar != null) ...[
+                                      const Text(
+                                        ' • ',
+                                        style: TextStyle(fontSize: 11, color: Color(0xFF8F482F)),
+                                      ),
+                                      Flexible(
+                                        child: Text(
+                                          'Giỗ: ${member.deathDateLunar}',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF8F482F),
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ] else if (member.birthDeathInfo != null) ...[
                                       const Text(
                                         ' • ',
                                         style: TextStyle(fontSize: 11, color: Color(0xFF6B584E)),
@@ -928,27 +971,60 @@ class _BranchDetailSidebarState extends ConsumerState<BranchDetailSidebar> {
                               ],
                             ),
                           ),
+                          const SizedBox(width: 6),
                           // Status Badge
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                             decoration: BoxDecoration(
-                              color: member.isActivated
-                                  ? const Color(0xFF99F8A2).withValues(alpha: 0.25)
-                                  : const Color(0xFFFFDCBE).withValues(alpha: 0.4),
+                              color: isDeceased
+                                  ? const Color(0xFF54433E).withAlpha(18)
+                                  : (member.isActivated
+                                      ? const Color(0xFF99F8A2).withValues(alpha: 0.25)
+                                      : const Color(0xFFFFDCBE).withValues(alpha: 0.4)),
                               borderRadius: BorderRadius.circular(6),
+                              border: isDeceased
+                                  ? Border.all(color: const Color(0xFF54433E).withAlpha(40))
+                                  : null,
                             ),
                             child: Text(
-                              member.isActivated ? 'Đã KYC' : 'Chờ liên kết',
+                              isDeceased
+                                  ? 'Đã mất'
+                                  : (member.isActivated ? 'Đã KYC' : 'Chờ liên kết'),
                               style: TextStyle(
                                 fontFamily: 'JetBrains Mono',
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.bold,
-                                color: member.isActivated
-                                    ? const Color(0xFF006E2A)
-                                    : const Color(0xFF874E00),
+                                color: isDeceased
+                                    ? const Color(0xFF54433E)
+                                    : (member.isActivated
+                                        ? const Color(0xFF006E2A)
+                                        : const Color(0xFF874E00)),
                               ),
                             ),
                           ),
+                          // Nút cập nhật tình trạng sinh/tử cho quản lý
+                          if (canManage) ...[
+                            const SizedBox(width: 4),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.edit_calendar_outlined,
+                                size: 17,
+                                color: Color(0xFF8F482F),
+                              ),
+                              tooltip: 'Ghi nhận sinh / tử (US-27)',
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                              onPressed: () async {
+                                await showDialog(
+                                  context: context,
+                                  builder: (ctx) => UpdateLifeStatusDialog(
+                                    member: member,
+                                    branchId: widget.branch.id,
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
                         ],
                       ),
                     );

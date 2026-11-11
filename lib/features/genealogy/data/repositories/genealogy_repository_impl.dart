@@ -49,6 +49,17 @@ class GenealogyRepositoryImpl implements GenealogyRepository {
     return _remoteDataSource.updateMyPrivacySettings(request);
   }
 
+  @override
+  Future<void> updateLifeStatus({
+    required String memberId,
+    required UpdateLifeStatusRequestDto request,
+  }) {
+    return _remoteDataSource.updateLifeStatus(
+      memberId: memberId,
+      request: request,
+    );
+  }
+
   FamilyBranchDetail _toEntity(BranchDetailDto dto) {
     return FamilyBranchDetail(
       branchId: dto.branchId,

@@ -174,3 +174,40 @@ final genealogyMemberListProvider = FutureProvider<List<BranchMemberItem>>((ref)
     ),
   ];
 });
+
+/// Provider quản lý thao tác cập nhật tình trạng sinh/tử (US-27)
+class LifeStatusActionNotifier extends Notifier<AsyncValue<void>> {
+  @override
+  AsyncValue<void> build() => const AsyncValue.data(null);
+
+  Future<bool> updateLifeStatus({
+    required String memberId,
+    required UpdateLifeStatusRequestDto request,
+    String? branchId,
+  }) async {
+    state = const AsyncValue.loading();
+    try {
+      final repo = ref.read(genealogyRepositoryProvider);
+      await repo.updateLifeStatus(memberId: memberId, request: request);
+      state = const AsyncValue.data(null);
+
+      // Invalidate các provider liên quan để đồng bộ lại dữ liệu
+      if (branchId != null) {
+        ref.invalidate(branchMembersProvider(branchId));
+      }
+      ref.invalidate(branchTreeProvider);
+      ref.invalidate(clanMembersProvider);
+      ref.invalidate(genealogyMemberListProvider);
+
+      return true;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return false;
+    }
+  }
+}
+
+final lifeStatusActionProvider =
+    NotifierProvider<LifeStatusActionNotifier, AsyncValue<void>>(
+  LifeStatusActionNotifier.new,
+);

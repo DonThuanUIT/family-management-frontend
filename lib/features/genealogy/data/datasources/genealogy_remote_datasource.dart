@@ -13,6 +13,10 @@ abstract class GenealogyRemoteDataSource {
   Future<List<BranchMemberItem>> getClanMembers();
   Future<MemberPrivacySettingDto> getMyPrivacySettings();
   Future<MemberPrivacySettingDto> updateMyPrivacySettings(UpdateMemberPrivacySettingRequestDto request);
+  Future<void> updateLifeStatus({
+    required String memberId,
+    required UpdateLifeStatusRequestDto request,
+  });
 }
 
 class GenealogyRemoteDataSourceImpl implements GenealogyRemoteDataSource {
@@ -132,6 +136,24 @@ class GenealogyRemoteDataSourceImpl implements GenealogyRemoteDataSource {
       throw Exception('Không nhận được phản hồi sau khi cập nhật quyền riêng tư');
     } on DioException catch (e) {
       final msg = e.response?.data?['message'] ?? e.message ?? 'Lỗi khi cập nhật cài đặt quyền riêng tư';
+      throw Exception(msg);
+    }
+  }
+
+  @override
+  Future<void> updateLifeStatus({
+    required String memberId,
+    required UpdateLifeStatusRequestDto request,
+  }) async {
+    try {
+      await _dio.put(
+        'members/$memberId/life-status',
+        data: request.toJson(),
+      );
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Lỗi khi cập nhật tình trạng sinh/tử của thành viên';
       throw Exception(msg);
     }
   }
