@@ -17,6 +17,7 @@ import '../../features/contribution/presentation/screens/clan_asset_inventory_sc
 import '../../features/contribution/presentation/screens/receive_contribution_screen.dart';
 import '../../features/event/presentation/screens/event_list_screen.dart';
 import '../../features/genealogy/presentation/screens/edit_root_branch_screen.dart';
+import '../../features/genealogy/presentation/screens/privacy_settings_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/role/presentation/screens/role_management_screen.dart';
 import '../../features/shared/presentation/widgets/heritage_nav_bar.dart';
@@ -181,6 +182,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/audit-logs',
         name: 'audit-logs',
         builder: (context, state) => const SystemAuditLogScreen(),
+      ),
+
+      // 16. Cài đặt Quyền riêng tư Cá nhân (US-25)
+      GoRoute(
+        path: '/privacy-settings',
+        name: 'privacy-settings',
+        builder: (context, state) => const PrivacySettingsScreen(),
       ),
     ],
   );

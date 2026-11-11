@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FamilyFund - Quyền Riêng Tư Cá Nhân (Desktop Mockup)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            heritage: {
+              crimson: '#8B1E1E',
+              gold: '#B8860B',
+              bg: '#FAF6F0',
+              card: '#FFFFFF',
+              border: '#E6DFD8',
+              text: '#2B1810',
+              subtext: '#6B584E',
+              teal: '#0F766E',
+              amber: '#D97706'
+            }
+          },
+          fontFamily: {
+            display: ['Cinzel', 'serif'],
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #FAF6F0; color: #2B1810; }
+    .heritage-shadow { box-shadow: 0 4px 20px -2px rgba(43, 24, 16, 0.08); }
+    .switch-track { transition: background-color 0.2s ease; }
+    .switch-thumb { transition: transform 0.2s ease; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Heritage Navigation Bar (Desktop ~1280px) -->
+  <header class="bg-white border-b border-heritage-border sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-heritage-crimson/10 border border-heritage-crimson/20 flex items-center justify-center text-heritage-crimson">
+          <span class="material-symbols-outlined text-2xl">account_balance</span>
+        </div>
+        <div>
+          <span class="font-display font-bold text-lg text-heritage-crimson tracking-wider">NGUYỄN TỘC</span>
+          <span class="text-xs block text-heritage-subtext font-mono">Đại Tông Phả Hệ • Niêm Phong 2026</span>
+        </div>
+      </div>
+
+      <nav class="flex items-center gap-2">
+        <a href="#" class="px-3 py-1.5 rounded-lg text-heritage-subtext hover:bg-stone-100 text-sm font-medium flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-lg">receipt_long</span> Sổ Cái
+        </a>
+        <a href="#" class="px-3 py-1.5 rounded-lg text-heritage-subtext hover:bg-stone-100 text-sm font-medium flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-lg">celebration</span> Sự Kiện
+        </a>
+        <a href="#" class="px-3 py-1.5 rounded-lg text-heritage-subtext hover:bg-stone-100 text-sm font-medium flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-lg">account_tree</span> Cây Phả Hệ
+        </a>
+        <div class="h-6 w-px bg-heritage-border mx-2"></div>
+        <div class="px-3 py-1.5 rounded-lg bg-heritage-crimson/10 border border-heritage-crimson/30 text-heritage-crimson text-sm font-semibold flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-lg">lock_person</span> Quyền Riêng Tư
+        </div>
+      </nav>
+
+      <div class="flex items-center gap-3">
+        <div class="text-right">
+          <div class="text-sm font-bold text-heritage-text">Nguyễn Văn An</div>
+          <div class="text-xs text-heritage-subtext font-mono">MEM001 • Đời thứ 3</div>
+        </div>
+        <div class="w-9 h-9 rounded-full bg-heritage-crimson text-white flex items-center justify-center font-bold text-sm">
+          A
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="flex-1 max-w-7xl mx-auto px-6 py-10 w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+    
+    <!-- Left Column: Privacy Form (7 cols) -->
+    <div class="lg:col-span-7 bg-white rounded-2xl border border-heritage-border p-8 heritage-shadow">
+      
+      <div class="flex items-center gap-3 pb-6 border-b border-heritage-border">
+        <div class="w-12 h-12 rounded-xl bg-heritage-crimson/10 text-heritage-crimson flex items-center justify-center">
+          <span class="material-symbols-outlined text-2xl">shield</span>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-heritage-text">Cài Đặt Quyền Riêng Tư Cá Nhân</h1>
+          <p class="text-sm text-heritage-subtext">Quản lý các thông tin cá nhân của bạn hiển thị trên Cây phả hệ cho người khác</p>
+        </div>
+      </div>
+
+      <!-- Info Box (Privacy by Default explanation) -->
+      <div class="my-6 p-4 rounded-xl bg-amber-50/70 border border-amber-200/80 flex items-start gap-3">
+        <span class="material-symbols-outlined text-heritage-amber mt-0.5">verified_user</span>
+        <div class="text-xs text-stone-700 leading-relaxed">
+          <strong>Nguyên tắc bảo vệ dữ liệu dòng họ (US-25):</strong> Mọi thông tin nhạy cảm của bạn mặc định được giữ riêng tư. Bạn có toàn quyền bật cho phép con cháu, bà con trong dòng họ cùng xem khi cần kết nối.
+        </div>
+      </div>
+
+      <!-- Settings List -->
+      <div class="space-y-4">
+        
+        <!-- Setting 1: Date of Birth -->
+        <div class="p-5 rounded-xl border border-heritage-border hover:border-heritage-crimson/40 transition bg-stone-50/40 flex items-start justify-between gap-4">
+          <div class="flex items-start gap-3.5">
+            <div class="w-10 h-10 rounded-lg bg-stone-200/70 text-heritage-text flex items-center justify-center shrink-0 mt-0.5">
+              <span class="material-symbols-outlined text-xl">cake</span>
+            </div>
+            <div>
+              <div class="font-bold text-sm text-heritage-text">Ngày Sinh &amp; Năm Sinh</div>
+              <p class="text-xs text-heritage-subtext mt-1 leading-normal">
+                Cho phép con cháu trong dòng họ xem ngày sinh nhật trên cây phả hệ để gửi lời chúc mừng.
+              </p>
+              <div class="mt-2 text-xs font-mono text-stone-500">
+                Giá trị hiện tại: <span class="font-bold text-heritage-text">20/05/1990</span>
+              </div>
+            </div>
+          </div>
+          <!-- Switch Button -->
+          <button type="button" id="toggle-dob" onclick="toggleSetting('dob')" class="relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-stone-300">
+            <span id="thumb-dob" class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out translate-x-0"></span>
+          </button>
+        </div>
+
+        <!-- Setting 2: Phone Number -->
+        <div class="p-5 rounded-xl border border-heritage-border hover:border-heritage-crimson/40 transition bg-stone-50/40 flex items-start justify-between gap-4">
+          <div class="flex items-start gap-3.5">
+            <div class="w-10 h-10 rounded-lg bg-stone-200/70 text-heritage-text flex items-center justify-center shrink-0 mt-0.5">
+              <span class="material-symbols-outlined text-xl">call</span>
+            </div>
+            <div>
+              <div class="font-bold text-sm text-heritage-text">Số Điện Thoại Liên Lạc</div>
+              <p class="text-xs text-heritage-subtext mt-1 leading-normal">
+                Cho phép bà con trong họ xem số điện thoại để tiện thăm hỏi, họp mặt hoặc liên hệ khi có việc họ.
+              </p>
+              <div class="mt-2 text-xs font-mono text-stone-500">
+                Giá trị hiện tại: <span class="font-bold text-heritage-text">0912 ••• 678</span>
+              </div>
+            </div>
+          </div>
+          <!-- Switch Button -->
+          <button type="button" id="toggle-phone" onclick="toggleSetting('phone')" class="relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-heritage-crimson">
+            <span id="thumb-phone" class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out translate-x-5"></span>
+          </button>
+        </div>
+
+        <!-- Setting 3: Email -->
+        <div class="p-5 rounded-xl border border-heritage-border hover:border-heritage-crimson/40 transition bg-stone-50/40 flex items-start justify-between gap-4">
+          <div class="flex items-start gap-3.5">
+            <div class="w-10 h-10 rounded-lg bg-stone-200/70 text-heritage-text flex items-center justify-center shrink-0 mt-0.5">
+              <span class="material-symbols-outlined text-xl">mail</span>
+            </div>
+            <div>
+              <div class="font-bold text-sm text-heritage-text">Địa Chỉ Email</div>
+              <p class="text-xs text-heritage-subtext mt-1 leading-normal">
+                Cho phép nhận thư mời điện tử, thông báo sự kiện giỗ tổ và tài liệu tộc phả qua hòm thư.
+              </p>
+              <div class="mt-2 text-xs font-mono text-stone-500">
+                Giá trị hiện tại: <span class="font-bold text-heritage-text">an.nguyen@example.com</span>
+              </div>
+            </div>
+          </div>
+          <!-- Switch Button -->
+          <button type="button" id="toggle-email" onclick="toggleSetting('email')" class="relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-stone-300">
+            <span id="thumb-email" class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out translate-x-0"></span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Save Actions -->
+      <div class="mt-8 pt-6 border-t border-heritage-border flex items-center justify-between">
+        <span class="text-xs text-heritage-subtext flex items-center gap-1 font-mono">
+          <span class="material-symbols-outlined text-sm text-green-700">cloud_done</span> Cập nhật lần cuối: Hôm nay 14:45
+        </span>
+        <button type="button" onclick="saveSettings()" class="px-6 py-2.5 rounded-xl bg-heritage-crimson hover:bg-red-900 text-white font-semibold text-sm shadow-sm flex items-center gap-2 transition active:scale-95">
+          <span class="material-symbols-outlined text-lg">save</span>
+          Lưu Thiết Lập
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Live Preview of How Others See You (5 cols) -->
+    <div class="lg:col-span-5 space-y-6">
+      
+      <!-- Live Preview Card -->
+      <div class="bg-white rounded-2xl border border-heritage-border p-6 heritage-shadow">
+        <div class="flex items-center justify-between pb-4 border-b border-heritage-border">
+          <span class="text-xs font-bold uppercase tracking-wider text-heritage-crimson font-mono flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-base">visibility</span>
+            Người khác trong họ nhìn thấy bạn thế nào?
+          </span>
+          <span class="text-[11px] px-2 py-0.5 rounded-full bg-stone-100 text-heritage-subtext border border-stone-200">
+            Mô phỏng
+          </span>
+        </div>
+
+        <!-- Sample Sidebar Tile -->
+        <div class="mt-5 p-4 rounded-xl border border-stone-200 bg-heritage-bg flex items-center gap-3.5">
+          <div class="w-11 h-11 rounded-full bg-stone-200 text-heritage-crimson font-bold flex items-center justify-center border border-stone-300">
+            AN
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-sm text-heritage-text">Nguyễn Văn An</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-heritage-crimson/10 text-heritage-crimson font-bold">Đời 3</span>
+            </div>
+            
+            <!-- Date of Birth Preview -->
+            <div id="preview-dob-line" class="text-xs mt-1 text-heritage-subtext flex items-center gap-1">
+              <span class="material-symbols-outlined text-xs text-stone-500">lock</span>
+              <span class="italic text-stone-500">Ngày sinh riêng tư</span>
+            </div>
+
+            <!-- Phone Preview -->
+            <div id="preview-phone-line" class="text-xs mt-0.5 text-stone-700 flex items-center gap-1">
+              <span class="material-symbols-outlined text-xs text-green-700">call</span>
+              <span>0912 345 678</span>
+            </div>
+
+            <!-- Email Preview -->
+            <div id="preview-email-line" class="text-xs mt-0.5 text-heritage-subtext flex items-center gap-1">
+              <span class="material-symbols-outlined text-xs text-stone-500">lock</span>
+              <span class="italic text-stone-500">Email riêng tư</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="text-[11px] text-stone-500 mt-4 leading-relaxed italic">
+          * Trưởng tộc và Trưởng nhánh quản lý vẫn có thẩm quyền xem đầy đủ để phục vụ việc ghi chép sổ phả hệ.
+        </p>
+      </div>
+
+      <!-- Sidebar Mini Snippet -->
+      <div class="bg-stone-50 rounded-2xl border border-heritage-border p-5 text-xs space-y-3">
+        <div class="font-bold text-heritage-text flex items-center gap-2">
+          <span class="material-symbols-outlined text-sm text-heritage-crimson">help_outline</span>
+          Hỏi đáp nhanh về quyền riêng tư
+        </div>
+        <p class="text-heritage-subtext">
+          <strong>Người ngoài dòng họ có xem được không?</strong><br/>
+          Không. Toàn bộ cây phả hệ và thông tin cá nhân đều yêu cầu đăng nhập thành viên đã được phê duyệt.
+        </p>
+        <p class="text-heritage-subtext">
+          <strong>Khi nào nên bật chia sẻ số điện thoại?</strong><br/>
+          Khi bạn muốn anh em con cháu tiện bấm gọi điện thoại chúc mừng lễ Tết hoặc bàn việc họ.
+        </p>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    const state = {
+      dob: false,
+      phone: true,
+      email: false
+    };
+
+    function toggleSetting(key) {
+      state[key] = !state[key];
+      const btn = document.getElementById(`toggle-${key}`);
+      const thumb = document.getElementById(`thumb-${key}`);
+
+      if (state[key]) {
+        btn.classList.remove('bg-stone-300');
+        btn.classList.add('bg-heritage-crimson');
+        thumb.classList.remove('translate-x-0');
+        thumb.classList.add('translate-x-5');
+      } else {
+        btn.classList.remove('bg-heritage-crimson');
+        btn.classList.add('bg-stone-300');
+        thumb.classList.remove('translate-x-5');
+        thumb.classList.add('translate-x-0');
+      }
+
+      updatePreview();
+    }
+
+    function updatePreview() {
+      // DOB
+      const dobLine = document.getElementById('preview-dob-line');
+      if (state.dob) {
+        dobLine.innerHTML = `<span class="material-symbols-outlined text-xs text-heritage-crimson">cake</span> <span class="font-medium text-heritage-text">Sinh 20/05/1990</span>`;
+      } else {
+        dobLine.innerHTML = `<span class="material-symbols-outlined text-xs text-stone-500">lock</span> <span class="italic text-stone-500">Ngày sinh riêng tư</span>`;
+      }
+
+      // Phone
+      const phoneLine = document.getElementById('preview-phone-line');
+      if (state.phone) {
+        phoneLine.innerHTML = `<span class="material-symbols-outlined text-xs text-green-700">call</span> <span class="font-medium text-heritage-text">0912 345 678</span>`;
+      } else {
+        phoneLine.innerHTML = `<span class="material-symbols-outlined text-xs text-stone-500">lock</span> <span class="italic text-stone-500">Số điện thoại riêng tư</span>`;
+      }
+
+      // Email
+      const emailLine = document.getElementById('preview-email-line');
+      if (state.email) {
+        emailLine.innerHTML = `<span class="material-symbols-outlined text-xs text-blue-700">mail</span> <span class="font-medium text-heritage-text">an.nguyen@example.com</span>`;
+      } else {
+        emailLine.innerHTML = `<span class="material-symbols-outlined text-xs text-stone-500">lock</span> <span class="italic text-stone-500">Email riêng tư</span>`;
+      }
+    }
+
+    function saveSettings() {
+      alert("Đã lưu thiết lập quyền riêng tư thành công! Cây phả hệ sẽ cập nhật theo cài đặt mới của bạn.");
+    }
+  </script>
+
+</body>
+</html>

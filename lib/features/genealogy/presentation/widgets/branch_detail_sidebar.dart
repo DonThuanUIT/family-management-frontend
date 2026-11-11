@@ -889,12 +889,41 @@ class _BranchDetailSidebarState extends ConsumerState<BranchDetailSidebar> {
                                   ],
                                 ),
                                 const SizedBox(height: 2),
-                                Text(
-                                  '${member.roleInBranch}${member.birthDeathInfo != null ? " • ${member.birthDeathInfo}" : ""}',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: Color(0xFF6B584E),
-                                  ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      member.roleInBranch,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Color(0xFF6B584E),
+                                      ),
+                                    ),
+                                    if (member.birthDeathInfo != null) ...[
+                                      const Text(
+                                        ' • ',
+                                        style: TextStyle(fontSize: 11, color: Color(0xFF6B584E)),
+                                      ),
+                                      if (member.isDateOfBirthRestricted) ...[
+                                        const Icon(Icons.lock_outline, size: 11, color: Color(0xFF8F482F)),
+                                        const SizedBox(width: 3),
+                                      ],
+                                      Flexible(
+                                        child: Text(
+                                          member.birthDeathInfo!,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: member.isDateOfBirthRestricted
+                                                ? const Color(0xFF8F482F)
+                                                : const Color(0xFF6B584E),
+                                            fontStyle: member.isDateOfBirthRestricted
+                                                ? FontStyle.italic
+                                                : FontStyle.normal,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               ],
                             ),
