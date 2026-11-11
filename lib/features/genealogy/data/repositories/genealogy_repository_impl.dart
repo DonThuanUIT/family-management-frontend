@@ -4,6 +4,7 @@ import '../../domain/entities/family_branch.dart';
 import '../../domain/repositories/genealogy_repository.dart';
 import '../datasources/genealogy_remote_datasource.dart';
 import '../models/branch_models.dart';
+import '../models/privacy_setting_models.dart';
 
 class GenealogyRepositoryImpl implements GenealogyRepository {
   final GenealogyRemoteDataSource _remoteDataSource;
@@ -35,6 +36,17 @@ class GenealogyRepositoryImpl implements GenealogyRepository {
   @override
   Future<List<BranchMemberItem>> getClanMembers() {
     return _remoteDataSource.getClanMembers();
+  }
+
+  @override
+  Future<MemberPrivacySettingDto> getMyPrivacySettings() {
+    return _remoteDataSource.getMyPrivacySettings();
+  }
+
+  @override
+  Future<MemberPrivacySettingDto> updateMyPrivacySettings(
+      UpdateMemberPrivacySettingRequestDto request) {
+    return _remoteDataSource.updateMyPrivacySettings(request);
   }
 
   FamilyBranchDetail _toEntity(BranchDetailDto dto) {

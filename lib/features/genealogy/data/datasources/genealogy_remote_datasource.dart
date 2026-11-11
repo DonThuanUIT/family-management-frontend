@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_client.dart';
 import '../models/branch_models.dart';
+import '../models/privacy_setting_models.dart';
 
 abstract class GenealogyRemoteDataSource {
   Future<BranchDetailDto> getRootBranch();
@@ -10,6 +11,8 @@ abstract class GenealogyRemoteDataSource {
   Future<BranchTreeNodeDto> getBranchTree();
   Future<List<BranchMemberItem>> getBranchMembers(String branchId);
   Future<List<BranchMemberItem>> getClanMembers();
+  Future<MemberPrivacySettingDto> getMyPrivacySettings();
+  Future<MemberPrivacySettingDto> updateMyPrivacySettings(UpdateMemberPrivacySettingRequestDto request);
 }
 
 class GenealogyRemoteDataSourceImpl implements GenealogyRemoteDataSource {
@@ -95,6 +98,40 @@ class GenealogyRemoteDataSourceImpl implements GenealogyRemoteDataSource {
       return [];
     } on DioException catch (e) {
       final msg = e.response?.data?['message'] ?? e.message ?? 'Lỗi khi tải danh sách thành viên';
+      throw Exception(msg);
+    }
+  }
+
+  @override
+  Future<MemberPrivacySettingDto> getMyPrivacySettings() async {
+    try {
+      final response = await _dio.get('members/me/privacy-settings');
+      final data = response.data;
+      if (data != null && data['data'] != null) {
+        return MemberPrivacySettingDto.fromJson(data['data'] as Map<String, dynamic>);
+      }
+      throw Exception('Không nhận được dữ liệu cài đặt quyền riêng tư');
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? e.message ?? 'Lỗi khi tải cài đặt quyền riêng tư';
+      throw Exception(msg);
+    }
+  }
+
+  @override
+  Future<MemberPrivacySettingDto> updateMyPrivacySettings(
+      UpdateMemberPrivacySettingRequestDto request) async {
+    try {
+      final response = await _dio.put(
+        'members/me/privacy-settings',
+        data: request.toJson(),
+      );
+      final data = response.data;
+      if (data != null && data['data'] != null) {
+        return MemberPrivacySettingDto.fromJson(data['data'] as Map<String, dynamic>);
+      }
+      throw Exception('Không nhận được phản hồi sau khi cập nhật quyền riêng tư');
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? e.message ?? 'Lỗi khi cập nhật cài đặt quyền riêng tư';
       throw Exception(msg);
     }
   }

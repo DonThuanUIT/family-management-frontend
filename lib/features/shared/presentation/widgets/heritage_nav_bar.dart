@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -398,6 +398,30 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                                       ? FontWeight.bold
                                       : FontWeight.normal,
                                   color: currentRoute == '/audit-logs'
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF2B1810),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: '/privacy-settings',
+                          child: Row(
+                            children: [
+                              Icon(Icons.shield_outlined,
+                                  size: 18,
+                                  color: currentRoute == '/privacy-settings'
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF54433E)),
+                              const SizedBox(width: 10),
+                              Text(
+                                'Quyền Riêng Tư Cá Nhân',
+                                style: TextStyle(
+                                  fontWeight: currentRoute == '/privacy-settings'
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  color: currentRoute == '/privacy-settings'
                                       ? const Color(0xFF8B1E1E)
                                       : const Color(0xFF2B1810),
                                 ),

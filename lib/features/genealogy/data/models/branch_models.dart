@@ -165,6 +165,10 @@ class BranchMemberItem {
   final String gender;
   final bool isActivated;
   final String? phone;
+  final String? email;
+  final bool isDateOfBirthRestricted;
+  final bool isPhoneRestricted;
+  final bool isEmailRestricted;
 
   const BranchMemberItem({
     required this.memberId,
@@ -175,6 +179,10 @@ class BranchMemberItem {
     this.gender = 'male',
     this.isActivated = true,
     this.phone,
+    this.email,
+    this.isDateOfBirthRestricted = false,
+    this.isPhoneRestricted = false,
+    this.isEmailRestricted = false,
   });
 
   factory BranchMemberItem.fromJson(Map<String, dynamic> json) {
@@ -183,8 +191,18 @@ class BranchMemberItem {
     final deathLunar = json['deathDateLunar']?.toString();
     final isLiving = status != 'Deceased';
 
+    final fieldVisibility = json['fieldVisibility'] as Map<String, dynamic>?;
+    final isDobRestricted = fieldVisibility != null &&
+        fieldVisibility['dateOfBirth']?.toString() == 'RESTRICTED';
+    final isPhoneRestricted = fieldVisibility != null &&
+        fieldVisibility['phoneNumber']?.toString() == 'RESTRICTED';
+    final isEmailRestricted = fieldVisibility != null &&
+        fieldVisibility['email']?.toString() == 'RESTRICTED';
+
     String? birthDeath;
-    if (dob != null && dob.isNotEmpty) {
+    if (isDobRestricted) {
+      birthDeath = 'Ngày sinh riêng tư';
+    } else if (dob != null && dob.isNotEmpty) {
       final year = dob.split('-').first;
       if (isLiving) {
         birthDeath = 'Sinh $year';
@@ -195,6 +213,8 @@ class BranchMemberItem {
 
     final gen = (json['generation'] as num?)?.toInt() ?? 1;
     final isPlaceholder = json['isPlaceholder'] == true;
+    final phone = json['phoneNumber']?.toString();
+    final email = json['email']?.toString();
 
     return BranchMemberItem(
       memberId: json['memberId']?.toString() ?? '',
@@ -204,7 +224,11 @@ class BranchMemberItem {
       roleInBranch: gen == 1 ? 'Khởi Tổ / Trưởng Tộc' : 'Đời $gen',
       gender: (json['gender']?.toString().toLowerCase() == 'female') ? 'female' : 'male',
       isActivated: !isPlaceholder,
-      phone: null,
+      phone: phone,
+      email: email,
+      isDateOfBirthRestricted: isDobRestricted,
+      isPhoneRestricted: isPhoneRestricted,
+      isEmailRestricted: isEmailRestricted,
     );
   }
 }
