@@ -169,6 +169,13 @@ class BranchMemberItem {
   final bool isDateOfBirthRestricted;
   final bool isPhoneRestricted;
   final bool isEmailRestricted;
+  final String status;
+  final DateTime? dateOfBirth;
+  final DateTime? deathDate;
+  final String? deathDateLunar;
+  final String? burialPlace;
+
+  bool get isDeceased => status.toLowerCase() == 'deceased';
 
   const BranchMemberItem({
     required this.memberId,
@@ -183,6 +190,11 @@ class BranchMemberItem {
     this.isDateOfBirthRestricted = false,
     this.isPhoneRestricted = false,
     this.isEmailRestricted = false,
+    this.status = 'Living',
+    this.dateOfBirth,
+    this.deathDate,
+    this.deathDateLunar,
+    this.burialPlace,
   });
 
   factory BranchMemberItem.fromJson(Map<String, dynamic> json) {
@@ -215,6 +227,9 @@ class BranchMemberItem {
     final isPlaceholder = json['isPlaceholder'] == true;
     final phone = json['phoneNumber']?.toString();
     final email = json['email']?.toString();
+    final deathDate = json['deathDate'] != null ? DateTime.tryParse(json['deathDate'].toString()) : null;
+    final dateOfBirth = dob != null ? DateTime.tryParse(dob) : null;
+    final burialPlace = json['burialPlace']?.toString();
 
     return BranchMemberItem(
       memberId: json['memberId']?.toString() ?? '',
@@ -229,6 +244,11 @@ class BranchMemberItem {
       isDateOfBirthRestricted: isDobRestricted,
       isPhoneRestricted: isPhoneRestricted,
       isEmailRestricted: isEmailRestricted,
+      status: status ?? 'Living',
+      dateOfBirth: dateOfBirth,
+      deathDate: deathDate,
+      deathDateLunar: deathLunar,
+      burialPlace: burialPlace,
     );
   }
 }
@@ -334,5 +354,30 @@ class BranchUiDetail {
       members: members,
       isRoot: isRoot,
     );
+  }
+}
+
+/// Payload yêu cầu cập nhật tình trạng sinh/tử (US-27)
+class UpdateLifeStatusRequestDto {
+  final String status;
+  final DateTime? deathDate;
+  final String? burialPlace;
+
+  const UpdateLifeStatusRequestDto({
+    required this.status,
+    this.deathDate,
+    this.burialPlace,
+  });
+
+  bool get isDeceased => status.toLowerCase() == 'deceased';
+
+  Map<String, dynamic> toJson() {
+    return {
+      'status': status,
+      'deathDate': deathDate != null
+          ? '${deathDate!.year.toString().padLeft(4, '0')}-${deathDate!.month.toString().padLeft(2, '0')}-${deathDate!.day.toString().padLeft(2, '0')}'
+          : null,
+      'burialPlace': burialPlace,
+    };
   }
 }

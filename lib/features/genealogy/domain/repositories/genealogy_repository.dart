@@ -10,4 +10,8 @@ abstract class GenealogyRepository {
   Future<List<BranchMemberItem>> getClanMembers();
   Future<MemberPrivacySettingDto> getMyPrivacySettings();
   Future<MemberPrivacySettingDto> updateMyPrivacySettings(UpdateMemberPrivacySettingRequestDto request);
+  Future<void> updateLifeStatus({
+    required String memberId,
+    required UpdateLifeStatusRequestDto request,
+  });
 }
