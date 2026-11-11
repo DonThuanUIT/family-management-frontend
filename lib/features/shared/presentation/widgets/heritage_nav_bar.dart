@@ -406,6 +406,30 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                           ),
                         ),
                         PopupMenuItem(
+                          value: '/profile',
+                          child: Row(
+                            children: [
+                              Icon(Icons.person_outline,
+                                  size: 18,
+                                  color: currentRoute == '/profile'
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF54433E)),
+                              const SizedBox(width: 10),
+                              Text(
+                                'Hồ Sơ Cá Nhân',
+                                style: TextStyle(
+                                  fontWeight: currentRoute == '/profile'
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  color: currentRoute == '/profile'
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF2B1810),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
                           value: '/privacy-settings',
                           child: Row(
                             children: [

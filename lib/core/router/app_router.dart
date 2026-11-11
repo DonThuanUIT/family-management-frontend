@@ -7,6 +7,7 @@ import '../../features/auth/presentation/screens/auth_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/invite_code_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/auth/presentation/screens/my_profile_screen.dart';
 import '../../features/auth/presentation/screens/pending_approval_screen.dart';
 import '../../features/auth/presentation/screens/register_creator_screen.dart';
 import '../../features/auth/presentation/screens/register_member_screen.dart';
@@ -189,6 +190,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/privacy-settings',
         name: 'privacy-settings',
         builder: (context, state) => const PrivacySettingsScreen(),
+      ),
+
+      // 17. Hồ sơ cá nhân và đổi mật khẩu (US-22)
+      GoRoute(
+        path: '/profile',
+        name: 'profile',
+        builder: (context, state) => const MyProfileScreen(),
       ),
     ],
   );
