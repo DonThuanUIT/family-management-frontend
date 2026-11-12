@@ -19,6 +19,7 @@ import '../../features/contribution/presentation/screens/receive_contribution_sc
 import '../../features/event/presentation/screens/event_list_screen.dart';
 import '../../features/event/presentation/screens/event_logistics_dashboard_screen.dart';
 import '../../features/genealogy/presentation/screens/edit_root_branch_screen.dart';
+import '../../features/genealogy/presentation/screens/member_import_screen.dart';
 import '../../features/genealogy/presentation/screens/privacy_settings_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/member_media/presentation/screens/member_detail_screen.dart';
@@ -216,6 +217,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/profile',
         name: 'profile',
         builder: (context, state) => const MyProfileScreen(),
+      ),
+
+      // 18. Nhập hàng loạt thành viên từ file Excel/CSV (US-31)
+      GoRoute(
+        path: '/members/import',
+        name: 'members-import',
+        builder: (context, state) => const MemberImportScreen(),
       ),
     ],
   );
