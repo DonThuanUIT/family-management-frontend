@@ -20,9 +20,11 @@ class _CreateEventSheetState extends ConsumerState<CreateEventSheet> {
   final _lunarController = TextEditingController();
   final _budgetController = TextEditingController();
   final _descController = TextEditingController();
+  final _maxCapacityController = TextEditingController();
 
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 14));
   TimeOfDay _selectedTime = const TimeOfDay(hour: 8, minute: 30);
+  DateTime? _registrationDeadline;
 
   String? _selectedHeadOfOrganizer;
   String? _selectedTreasurer;
@@ -36,6 +38,7 @@ class _CreateEventSheetState extends ConsumerState<CreateEventSheet> {
     _lunarController.dispose();
     _budgetController.dispose();
     _descController.dispose();
+    _maxCapacityController.dispose();
     super.dispose();
   }
 
@@ -61,6 +64,34 @@ class _CreateEventSheetState extends ConsumerState<CreateEventSheet> {
     }
   }
 
+  Future<void> _pickDeadline() async {
+    final now = DateTime.now();
+    final initialDate = _registrationDeadline ?? now.add(const Duration(days: 7));
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365 * 2)),
+    );
+    if (pickedDate == null || !mounted) return;
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: _registrationDeadline != null
+          ? TimeOfDay.fromDateTime(_registrationDeadline!)
+          : const TimeOfDay(hour: 23, minute: 59),
+    );
+    if (pickedTime == null || !mounted) return;
+    setState(() {
+      _registrationDeadline = DateTime(
+        pickedDate.year,
+        pickedDate.month,
+        pickedDate.day,
+        pickedTime.hour,
+        pickedTime.minute,
+      );
+    });
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -79,6 +110,10 @@ class _CreateEventSheetState extends ConsumerState<CreateEventSheet> {
         ) ??
         0.0;
 
+    final maxCapacityText = _maxCapacityController.text.trim();
+    final maxCapacity =
+        maxCapacityText.isNotEmpty ? int.tryParse(maxCapacityText) : null;
+
     final request = CreateEventRequestDto(
       eventName: _nameController.text.trim(),
       description: _descController.text.trim(),
@@ -90,6 +125,8 @@ class _CreateEventSheetState extends ConsumerState<CreateEventSheet> {
       estimatedBudget: budget,
       headOfOrganizerMemberId: _selectedHeadOfOrganizer,
       treasurerMemberId: _selectedTreasurer,
+      registrationDeadline: _registrationDeadline,
+      maxCapacity: maxCapacity,
     );
 
     final success =
@@ -295,6 +332,68 @@ class _CreateEventSheetState extends ConsumerState<CreateEventSheet> {
                   prefixIcon: Icon(Icons.payments_outlined, size: 20),
                   suffixText: 'đ',
                 ),
+              ),
+              const SizedBox(height: 14),
+
+              // 5b. Cấu hình Hạn chót đăng ký & Sức chứa tối đa cho BTC (US-43)
+              Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: InkWell(
+                      key: const Key('create_event_deadline_picker'),
+                      onTap: _pickDeadline,
+                      borderRadius: BorderRadius.circular(10),
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: 'Hạn Chót Đăng Ký',
+                          prefixIcon: const Icon(Icons.timer_outlined, size: 18),
+                          suffixIcon: _registrationDeadline != null
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear, size: 16),
+                                  onPressed: () => setState(
+                                      () => _registrationDeadline = null),
+                                )
+                              : null,
+                        ),
+                        child: Text(
+                          _registrationDeadline != null
+                              ? DateFormat('dd/MM/yyyy HH:mm')
+                                  .format(_registrationDeadline!)
+                              : 'Không giới hạn',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            color: _registrationDeadline != null
+                                ? const Color(0xFF2B1810)
+                                : const Color(0xFF8A7A70),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 2,
+                    child: TextFormField(
+                      key: const Key('create_event_max_capacity_input'),
+                      controller: _maxCapacityController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Sức Chứa Tối Đa',
+                        hintText: 'VD: 150',
+                        prefixIcon: Icon(Icons.groups_outlined, size: 18),
+                      ),
+                      validator: (val) {
+                        if (val == null || val.trim().isEmpty) return null;
+                        final parsed = int.tryParse(val.trim());
+                        if (parsed == null || parsed < 1) {
+                          return 'Phải >= 1';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 14),
 
