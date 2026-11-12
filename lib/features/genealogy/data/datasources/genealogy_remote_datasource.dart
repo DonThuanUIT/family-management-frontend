@@ -1,8 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_client.dart';
 import '../models/branch_models.dart';
+import '../models/member_import_models.dart';
 import '../models/privacy_setting_models.dart';
 
 abstract class GenealogyRemoteDataSource {
@@ -17,6 +20,14 @@ abstract class GenealogyRemoteDataSource {
     required String memberId,
     required UpdateLifeStatusRequestDto request,
   });
+  Future<Uint8List> downloadImportTemplate();
+  Future<ImportMembersPreviewResponseDto> previewMemberImport({
+    required Uint8List bytes,
+    required String fileName,
+  });
+  Future<ImportMembersConfirmResponseDto> confirmMemberImport(
+    ConfirmMemberImportRequestDto request,
+  );
 }
 
 class GenealogyRemoteDataSourceImpl implements GenealogyRemoteDataSource {
@@ -154,6 +165,78 @@ class GenealogyRemoteDataSourceImpl implements GenealogyRemoteDataSource {
       final msg = e.response?.data?['message'] ??
           e.message ??
           'Lỗi khi cập nhật tình trạng sinh/tử của thành viên';
+      throw Exception(msg);
+    }
+  }
+
+  @override
+  Future<Uint8List> downloadImportTemplate() async {
+    try {
+      final response = await _dio.get<List<int>>(
+        'members/import-template',
+        options: Options(responseType: ResponseType.bytes),
+      );
+      final bytes = response.data;
+      if (bytes == null || bytes.isEmpty) {
+        throw Exception('Không nhận được file mẫu từ máy chủ');
+      }
+      return Uint8List.fromList(bytes);
+    } on DioException catch (e) {
+      final msg = e.response?.data is Map
+          ? (e.response?.data['message']?.toString() ?? 'Lỗi khi tải file mẫu')
+          : (e.message ?? 'Lỗi khi tải file mẫu');
+      throw Exception(msg);
+    }
+  }
+
+  @override
+  Future<ImportMembersPreviewResponseDto> previewMemberImport({
+    required Uint8List bytes,
+    required String fileName,
+  }) async {
+    try {
+      final formData = FormData.fromMap({
+        'file': MultipartFile.fromBytes(bytes, filename: fileName),
+      });
+      final response = await _dio.post(
+        'members/import-preview',
+        data: formData,
+      );
+      final data = response.data;
+      if (data != null && data['data'] != null) {
+        return ImportMembersPreviewResponseDto.fromJson(
+          data['data'] as Map<String, dynamic>,
+        );
+      }
+      throw Exception('Không nhận được kết quả xem trước từ máy chủ');
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Lỗi khi đọc và kiểm tra file nhập thành viên';
+      throw Exception(msg);
+    }
+  }
+
+  @override
+  Future<ImportMembersConfirmResponseDto> confirmMemberImport(
+    ConfirmMemberImportRequestDto request,
+  ) async {
+    try {
+      final response = await _dio.post(
+        'members/import-confirm',
+        data: request.toJson(),
+      );
+      final data = response.data;
+      if (data != null && data['data'] != null) {
+        return ImportMembersConfirmResponseDto.fromJson(
+          data['data'] as Map<String, dynamic>,
+        );
+      }
+      throw Exception('Không nhận được phản hồi xác nhận nhập thành viên');
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ??
+          e.message ??
+          'Lỗi khi xác nhận nhập thành viên';
       throw Exception(msg);
     }
   }
