@@ -198,6 +198,12 @@ class EventModel {
   final int totalTasks;
   final double donatedAmount;
 
+  // Cấu hình hạn chót đăng ký & sức chứa tối đa (US-43)
+  final DateTime? registrationDeadline;
+  final int? maxCapacity;
+  final int currentAttendees;
+  final int? remainingSlots;
+
   const EventModel({
     required this.eventId,
     required this.eventName,
@@ -216,7 +222,24 @@ class EventModel {
     this.completedTasks = 0,
     this.totalTasks = 0,
     this.donatedAmount = 0.0,
+    this.registrationDeadline,
+    this.maxCapacity,
+    this.currentAttendees = 0,
+    this.remainingSlots,
   });
+
+  bool get isRegistrationDeadlinePassed =>
+      registrationDeadline != null && DateTime.now().isAfter(registrationDeadline!);
+
+  int? get effectiveRemainingSlots {
+    if (remainingSlots != null) return remainingSlots;
+    if (maxCapacity == null) return null;
+    final left = maxCapacity! - currentAttendees;
+    return left < 0 ? 0 : left;
+  }
+
+  bool get isCapacityFull =>
+      maxCapacity != null && (effectiveRemainingSlots ?? 0) <= 0;
 
   EventLifecycleStatus get lifecycleStatus =>
       EventLifecycleStatus.fromCode(status);
@@ -305,6 +328,12 @@ class EventModel {
       completedTasks: (json['completedTasks'] as num?)?.toInt() ?? 0,
       totalTasks: (json['totalTasks'] as num?)?.toInt() ?? 0,
       donatedAmount: (json['donatedAmount'] as num?)?.toDouble() ?? 0.0,
+      registrationDeadline: json['registrationDeadline'] != null
+          ? DateTime.tryParse(json['registrationDeadline'].toString())?.toLocal()
+          : null,
+      maxCapacity: (json['maxCapacity'] as num?)?.toInt(),
+      currentAttendees: (json['currentAttendees'] as num?)?.toInt() ?? 0,
+      remainingSlots: (json['remainingSlots'] as num?)?.toInt(),
     );
   }
 
@@ -333,6 +362,10 @@ class EventModel {
     int? completedTasks,
     int? totalTasks,
     double? donatedAmount,
+    DateTime? registrationDeadline,
+    int? maxCapacity,
+    int? currentAttendees,
+    int? remainingSlots,
   }) {
     return EventModel(
       eventId: eventId,
@@ -352,6 +385,10 @@ class EventModel {
       completedTasks: completedTasks ?? this.completedTasks,
       totalTasks: totalTasks ?? this.totalTasks,
       donatedAmount: donatedAmount ?? this.donatedAmount,
+      registrationDeadline: registrationDeadline ?? this.registrationDeadline,
+      maxCapacity: maxCapacity ?? this.maxCapacity,
+      currentAttendees: currentAttendees ?? this.currentAttendees,
+      remainingSlots: remainingSlots ?? this.remainingSlots,
     );
   }
 }
@@ -366,6 +403,8 @@ class CreateEventRequestDto {
   final double estimatedBudget;
   final String? headOfOrganizerMemberId;
   final String? treasurerMemberId;
+  final DateTime? registrationDeadline;
+  final int? maxCapacity;
 
   const CreateEventRequestDto({
     required this.eventName,
@@ -376,6 +415,8 @@ class CreateEventRequestDto {
     this.estimatedBudget = 0.0,
     this.headOfOrganizerMemberId,
     this.treasurerMemberId,
+    this.registrationDeadline,
+    this.maxCapacity,
   });
 
   Map<String, dynamic> toJson() => {
@@ -387,6 +428,9 @@ class CreateEventRequestDto {
           'eventDateLunar': eventDateLunar!.trim(),
         'location': location.trim(),
         'estimatedBudget': estimatedBudget,
+        if (registrationDeadline != null)
+          'registrationDeadline': registrationDeadline!.toUtc().toIso8601String(),
+        if (maxCapacity != null) 'maxCapacity': maxCapacity,
       };
 }
 
@@ -398,6 +442,8 @@ class UpdateEventRequestDto {
   final String? eventDateLunar;
   final String location;
   final double estimatedBudget;
+  final DateTime? registrationDeadline;
+  final int? maxCapacity;
 
   const UpdateEventRequestDto({
     required this.eventName,
@@ -406,6 +452,8 @@ class UpdateEventRequestDto {
     this.eventDateLunar,
     required this.location,
     this.estimatedBudget = 0.0,
+    this.registrationDeadline,
+    this.maxCapacity,
   });
 
   Map<String, dynamic> toJson() => {
@@ -417,6 +465,8 @@ class UpdateEventRequestDto {
           'eventDateLunar': eventDateLunar!.trim(),
         'location': location.trim(),
         'estimatedBudget': estimatedBudget,
+        'registrationDeadline': registrationDeadline?.toUtc().toIso8601String(),
+        'maxCapacity': maxCapacity,
       };
 }
 

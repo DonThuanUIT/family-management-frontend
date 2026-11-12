@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,6 +21,11 @@ class EventRegistrationSection extends ConsumerWidget {
     final isSubmitting = actionState.isLoading;
     final isRegistrationOpen = event.status == 'RegistrationOpen';
     final isRegistrationClosed = event.status == 'RegistrationClosed';
+    final isDeadlinePassed = event.isRegistrationDeadlinePassed;
+    final isCapacityFull = event.isCapacityFull;
+    final canRegisterNew =
+        isRegistrationOpen && !isDeadlinePassed && !isCapacityFull;
+    final canModifyExisting = isRegistrationOpen && !isDeadlinePassed;
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -52,6 +59,10 @@ class EventRegistrationSection extends ConsumerWidget {
                 ),
             ],
           ),
+          if (event.registrationDeadline != null || event.maxCapacity != null) ...[
+            const SizedBox(height: 8),
+            _RegistrationDeadlineCapacityBanner(event: event),
+          ],
           const SizedBox(height: 8),
           registrationAsync.when(
             loading: () => const Padding(
@@ -77,19 +88,36 @@ class EventRegistrationSection extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    if (isRegistrationOpen)
+                    if (isRegistrationOpen) ...[
+                      if (isDeadlinePassed)
+                        _buildWarningBanner(
+                          'Đã hết hạn đăng ký tham dự sự kiện. Vui lòng liên hệ Ban tổ chức.',
+                        )
+                      else if (isCapacityFull)
+                        _buildWarningBanner(
+                          'Sự kiện đã hết chỗ trống (đạt sức chứa tối đa ${event.maxCapacity} người).',
+                        ),
+                      if (isDeadlinePassed || isCapacityFull)
+                        const SizedBox(height: 8),
                       ElevatedButton.icon(
-                        onPressed: isSubmitting
-                            ? null
-                            : () => _openRegisterDialog(context, ref),
+                        onPressed: (canRegisterNew && !isSubmitting)
+                            ? () => _openRegisterDialog(context, ref)
+                            : null,
                         icon: const Icon(Icons.add_circle_outline, size: 16),
-                        label: const Text('Đăng Ký Tham Dự'),
+                        label: Text(
+                          isDeadlinePassed
+                              ? 'Đã Hết Hạn Đăng Ký'
+                              : isCapacityFull
+                                  ? 'Đã Hết Chỗ'
+                                  : 'Đăng Ký Tham Dự',
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF7A1518),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 9),
                         ),
-                      )
+                      ),
+                    ]
                     else
                       _buildClosedNotice(isRegistrationClosed),
                   ],
@@ -122,13 +150,18 @@ class EventRegistrationSection extends ConsumerWidget {
                   if (!isRegistrationOpen) ...[
                     const SizedBox(height: 8),
                     _buildClosedNotice(isRegistrationClosed),
+                  ] else if (isDeadlinePassed) ...[
+                    const SizedBox(height: 8),
+                    _buildWarningBanner(
+                      'Đã hết hạn chỉnh sửa hoặc hủy đăng ký. Vui lòng liên hệ Ban tổ chức.',
+                    ),
                   ],
                   const SizedBox(height: 10),
                   Row(
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: (isRegistrationOpen && !isSubmitting)
+                          onPressed: (canModifyExisting && !isSubmitting)
                               ? () => _openEditDialog(
                                     context,
                                     ref,
@@ -143,7 +176,7 @@ class EventRegistrationSection extends ConsumerWidget {
                           style: OutlinedButton.styleFrom(
                             foregroundColor: const Color(0xFF7A1518),
                             side: BorderSide(
-                              color: isRegistrationOpen
+                              color: canModifyExisting
                                   ? const Color(0xFF7A1518)
                                   : Colors.grey.shade400,
                             ),
@@ -154,7 +187,7 @@ class EventRegistrationSection extends ConsumerWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: (isRegistrationOpen && !isSubmitting)
+                          onPressed: (canModifyExisting && !isSubmitting)
                               ? () => _confirmCancel(
                                     context,
                                     ref,
@@ -169,7 +202,7 @@ class EventRegistrationSection extends ConsumerWidget {
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.red.shade700,
                             side: BorderSide(
-                              color: isRegistrationOpen
+                              color: canModifyExisting
                                   ? Colors.red.shade400
                                   : Colors.grey.shade400,
                             ),
@@ -182,6 +215,34 @@ class EventRegistrationSection extends ConsumerWidget {
                 ],
               );
             },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWarningBanner(String message) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.red.shade300),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.event_busy_outlined, size: 16, color: Colors.red.shade800),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                fontSize: 11.5,
+                color: Colors.red.shade900,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
         ],
       ),
@@ -540,6 +601,159 @@ class _RegistrationFormDialogState extends State<_RegistrationFormDialog> {
           child: Text(widget.confirmLabel),
         ),
       ],
+    );
+  }
+}
+
+/// Hiển thị bộ đếm ngược thời gian đến hạn chót đăng ký và số chỗ còn lại (US-43).
+class _RegistrationDeadlineCapacityBanner extends StatefulWidget {
+  final EventModel event;
+
+  const _RegistrationDeadlineCapacityBanner({required this.event});
+
+  @override
+  State<_RegistrationDeadlineCapacityBanner> createState() =>
+      _RegistrationDeadlineCapacityBannerState();
+}
+
+class _RegistrationDeadlineCapacityBannerState
+    extends State<_RegistrationDeadlineCapacityBanner> {
+  Timer? _timer;
+  late Duration _remainingTime;
+
+  @override
+  void initState() {
+    super.initState();
+    _syncRemainingTime();
+    if (widget.event.registrationDeadline != null) {
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) {
+          setState(_syncRemainingTime);
+        }
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _RegistrationDeadlineCapacityBanner oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.event.registrationDeadline !=
+        widget.event.registrationDeadline) {
+      _syncRemainingTime();
+    }
+  }
+
+  void _syncRemainingTime() {
+    final deadline = widget.event.registrationDeadline;
+    if (deadline == null) {
+      _remainingTime = Duration.zero;
+      return;
+    }
+    final diff = deadline.difference(DateTime.now());
+    _remainingTime = diff.isNegative ? Duration.zero : diff;
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  String _formatCountdown(Duration d) {
+    if (d <= Duration.zero) return 'Đã hết hạn đăng ký';
+    final days = d.inDays;
+    final hours = (d.inHours % 24).toString().padLeft(2, '0');
+    final minutes = (d.inMinutes % 60).toString().padLeft(2, '0');
+    final seconds = (d.inSeconds % 60).toString().padLeft(2, '0');
+    if (days > 0) {
+      return '$days ngày $hours:$minutes:$seconds';
+    }
+    return '$hours:$minutes:$seconds';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final deadline = widget.event.registrationDeadline;
+    final maxCap = widget.event.maxCapacity;
+    final remainingSlots = widget.event.effectiveRemainingSlots;
+    final isExpired = deadline != null && _remainingTime <= Duration.zero;
+    final isFull = maxCap != null && (remainingSlots ?? 0) <= 0;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: (isExpired || isFull)
+            ? Colors.red.shade50
+            : const Color(0xFFFFF8EE),
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(
+          color: (isExpired || isFull)
+              ? Colors.red.shade200
+              : const Color(0xFFF3D5A5),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (deadline != null)
+            Row(
+              key: const Key('registration_countdown_row'),
+              children: [
+                Icon(
+                  Icons.timer_outlined,
+                  size: 15,
+                  color: isExpired
+                      ? Colors.red.shade700
+                      : const Color(0xFF7A1518),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    isExpired
+                        ? 'Đã hết hạn đăng ký'
+                        : 'Còn lại: ${_formatCountdown(_remainingTime)}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isExpired
+                          ? Colors.red.shade800
+                          : const Color(0xFF5D4037),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          if (deadline != null && maxCap != null) const SizedBox(height: 5),
+          if (maxCap != null)
+            Row(
+              key: const Key('registration_remaining_slots_row'),
+              children: [
+                Icon(
+                  Icons.event_seat_outlined,
+                  size: 15,
+                  color: isFull
+                      ? Colors.red.shade700
+                      : const Color(0xFF1B5E20),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    isFull
+                        ? 'Đã hết chỗ (0 / $maxCap chỗ)'
+                        : 'Số chỗ còn lại: $remainingSlots / $maxCap chỗ',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isFull
+                          ? Colors.red.shade800
+                          : const Color(0xFF1B5E20),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
     );
   }
 }
