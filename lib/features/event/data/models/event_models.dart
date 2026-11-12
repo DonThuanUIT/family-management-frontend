@@ -446,3 +446,127 @@ class AssignPersonnelRequestDto {
         'eventRole': eventRole,
       };
 }
+
+/// Tùy chọn chi/nhánh trong bộ lọc Dashboard Hậu Cần (US-42).
+class LogisticsBranchOptionModel {
+  final String branchId;
+  final String branchName;
+
+  const LogisticsBranchOptionModel({
+    required this.branchId,
+    required this.branchName,
+  });
+
+  factory LogisticsBranchOptionModel.fromJson(Map<String, dynamic> json) {
+    return LogisticsBranchOptionModel(
+      branchId: json['branchId']?.toString() ?? '',
+      branchName: json['branchName']?.toString() ?? '',
+    );
+  }
+}
+
+/// Chi tiết từng hộ đăng ký trong Dashboard Hậu Cần (US-42).
+class HouseholdLogisticsItemModel {
+  final String registrationId;
+  final String representativeMemberId;
+  final String representativeName;
+  final String? branchId;
+  final String? branchName;
+  final int totalAttendees;
+  final int savoryMeals;
+  final int vegetarianMeals;
+  final int shuttleSeats;
+  final String? dietaryRequirements;
+  final String? transportationNotes;
+  final String status;
+  final DateTime? registrationDate;
+
+  const HouseholdLogisticsItemModel({
+    required this.registrationId,
+    required this.representativeMemberId,
+    required this.representativeName,
+    this.branchId,
+    this.branchName,
+    required this.totalAttendees,
+    required this.savoryMeals,
+    required this.vegetarianMeals,
+    required this.shuttleSeats,
+    this.dietaryRequirements,
+    this.transportationNotes,
+    required this.status,
+    this.registrationDate,
+  });
+
+  factory HouseholdLogisticsItemModel.fromJson(Map<String, dynamic> json) {
+    return HouseholdLogisticsItemModel(
+      registrationId: json['registrationId']?.toString() ?? '',
+      representativeMemberId: json['representativeMemberId']?.toString() ?? '',
+      representativeName: json['representativeName']?.toString() ?? '',
+      branchId: json['branchId']?.toString(),
+      branchName: json['branchName']?.toString(),
+      totalAttendees: (json['totalAttendees'] as num?)?.toInt() ?? 0,
+      savoryMeals: (json['savoryMeals'] as num?)?.toInt() ?? 0,
+      vegetarianMeals: (json['vegetarianMeals'] as num?)?.toInt() ?? 0,
+      shuttleSeats: (json['shuttleSeats'] as num?)?.toInt() ?? 0,
+      dietaryRequirements: json['dietaryRequirements']?.toString(),
+      transportationNotes: json['transportationNotes']?.toString(),
+      status: json['status']?.toString() ?? 'Confirmed',
+      registrationDate: json['registrationDate'] != null
+          ? DateTime.tryParse(json['registrationDate'].toString())
+          : null,
+    );
+  }
+}
+
+/// DTO bảng tổng hợp hậu cần tức thời cho Ban tổ chức (US-42).
+class EventLogisticsSummaryModel {
+  final String eventId;
+  final String eventName;
+  final String? branchId;
+  final String? branchName;
+  final int totalRegistrations;
+  final int totalAttendees;
+  final int totalSavoryMeals;
+  final int totalVegetarianMeals;
+  final int totalShuttleSeats;
+  final List<LogisticsBranchOptionModel> availableBranches;
+  final List<HouseholdLogisticsItemModel> registrations;
+
+  const EventLogisticsSummaryModel({
+    required this.eventId,
+    required this.eventName,
+    this.branchId,
+    this.branchName,
+    required this.totalRegistrations,
+    required this.totalAttendees,
+    required this.totalSavoryMeals,
+    required this.totalVegetarianMeals,
+    required this.totalShuttleSeats,
+    this.availableBranches = const [],
+    this.registrations = const [],
+  });
+
+  factory EventLogisticsSummaryModel.fromJson(Map<String, dynamic> json) {
+    return EventLogisticsSummaryModel(
+      eventId: json['eventId']?.toString() ?? '',
+      eventName: json['eventName']?.toString() ?? '',
+      branchId: json['branchId']?.toString(),
+      branchName: json['branchName']?.toString(),
+      totalRegistrations: (json['totalRegistrations'] as num?)?.toInt() ?? 0,
+      totalAttendees: (json['totalAttendees'] as num?)?.toInt() ?? 0,
+      totalSavoryMeals: (json['totalSavoryMeals'] as num?)?.toInt() ?? 0,
+      totalVegetarianMeals: (json['totalVegetarianMeals'] as num?)?.toInt() ?? 0,
+      totalShuttleSeats: (json['totalShuttleSeats'] as num?)?.toInt() ?? 0,
+      availableBranches: (json['availableBranches'] as List<dynamic>?)
+              ?.map((e) =>
+                  LogisticsBranchOptionModel.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      registrations: (json['registrations'] as List<dynamic>?)
+              ?.map((e) => HouseholdLogisticsItemModel.fromJson(
+                  e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+    );
+  }
+}

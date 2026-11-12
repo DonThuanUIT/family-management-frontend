@@ -17,6 +17,7 @@ import '../../features/audit/presentation/screens/system_audit_log_screen.dart';
 import '../../features/contribution/presentation/screens/clan_asset_inventory_screen.dart';
 import '../../features/contribution/presentation/screens/receive_contribution_screen.dart';
 import '../../features/event/presentation/screens/event_list_screen.dart';
+import '../../features/event/presentation/screens/event_logistics_dashboard_screen.dart';
 import '../../features/genealogy/presentation/screens/edit_root_branch_screen.dart';
 import '../../features/genealogy/presentation/screens/privacy_settings_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
@@ -147,6 +148,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) {
               final eventId = state.pathParameters['eventId'] ?? '';
               return EventTaskListScreen(eventId: eventId);
+            },
+          ),
+          // 10.2. Dashboard Hậu Cần Sự Kiện cho BTC (US-42)
+          GoRoute(
+            path: ':eventId/logistics',
+            name: 'event-logistics',
+            builder: (context, state) {
+              final eventId = state.pathParameters['eventId'] ?? '';
+              return EventLogisticsDashboardScreen(eventId: eventId);
             },
           ),
         ],

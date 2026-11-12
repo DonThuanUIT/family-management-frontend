@@ -211,6 +211,25 @@ class EventDetailDialog extends StatelessWidget {
                   ),
                 ),
               ),
+              const SizedBox(height: 8),
+
+              // Nút mở Dashboard Hậu Cần Sự Kiện cho BTC (US-42)
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  context.push('/events/${event.eventId}/logistics');
+                },
+                icon: const Icon(Icons.analytics_outlined, size: 16),
+                label: const Text('Dashboard Hậu Cần & Chia Cỗ (US-42)'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1B5E20),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 11),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
               const SizedBox(height: 10),
 
               // Action Buttons
