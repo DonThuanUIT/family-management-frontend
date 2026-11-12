@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -476,6 +478,137 @@ class EventRemoteDataSource {
       }
       throw Exception('Không thể kết nối máy chủ để hủy đăng ký');
     }
+  }
+
+  /// Lấy bảng tổng hợp hậu cần tức thời cho BTC (US-42).
+  Future<EventLogisticsSummaryModel> getEventRegistrationSummary(
+    String eventId, {
+    String? branchId,
+  }) async {
+    try {
+      final response = await _dio.get(
+        'events/$eventId/registration-summary',
+        queryParameters: {
+          if (branchId != null && branchId.trim().isNotEmpty)
+            'branchId': branchId.trim(),
+        },
+      );
+      final apiResponse = ApiResponse<EventLogisticsSummaryModel>.fromJson(
+        response.data as Map<String, dynamic>,
+        (json) =>
+            EventLogisticsSummaryModel.fromJson(json as Map<String, dynamic>),
+      );
+      if (apiResponse.data != null) {
+        return apiResponse.data!;
+      }
+      throw Exception('Không nhận được dữ liệu tổng hợp hậu cần');
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final msg = e.response?.data?['message']?.toString() ??
+            'Không thể tải bảng tổng hợp hậu cần sự kiện';
+        throw Exception(msg);
+      }
+      return _buildMockLogisticsSummary(eventId, branchId: branchId);
+    }
+  }
+
+  /// Xuất file danh sách điểm danh & chia cỗ (.xlsx hoặc .csv) cho BTC (US-42).
+  Future<Uint8List> exportEventRegistrationSummary(
+    String eventId, {
+    String? branchId,
+    String format = 'xlsx',
+  }) async {
+    try {
+      final response = await _dio.get<List<int>>(
+        'events/$eventId/registration-summary/export',
+        queryParameters: {
+          if (branchId != null && branchId.trim().isNotEmpty)
+            'branchId': branchId.trim(),
+          'format': format,
+        },
+        options: Options(responseType: ResponseType.bytes),
+      );
+      final data = response.data;
+      if (data != null) {
+        return Uint8List.fromList(data);
+      }
+      throw Exception('Không nhận được nội dung file xuất danh sách');
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final msg = e.response?.data is Map
+            ? (e.response?.data['message']?.toString() ??
+                'Không thể xuất danh sách hậu cần')
+            : 'Không thể xuất danh sách hậu cần';
+        throw Exception(msg);
+      }
+      throw Exception('Không thể kết nối máy chủ để xuất file danh sách');
+    }
+  }
+
+  EventLogisticsSummaryModel _buildMockLogisticsSummary(
+    String eventId, {
+    String? branchId,
+  }) {
+    final event = _findMock(eventId);
+    const branches = [
+      LogisticsBranchOptionModel(branchId: 'BR_01', branchName: 'Chi Nhất'),
+      LogisticsBranchOptionModel(branchId: 'BR_02', branchName: 'Chi Nhì'),
+    ];
+    final allItems = [
+      HouseholdLogisticsItemModel(
+        registrationId: 'REG_DEMO_01',
+        representativeMemberId: 'MEM_01',
+        representativeName: 'Nguyễn Văn An',
+        branchId: 'BR_01',
+        branchName: 'Chi Nhất',
+        totalAttendees: 4,
+        savoryMeals: 3,
+        vegetarianMeals: 1,
+        shuttleSeats: 2,
+        dietaryRequirements: '1 suất chay trường',
+        transportationNotes: 'Xe đưa đón 2 chỗ',
+        status: 'Confirmed',
+        registrationDate: DateTime.now(),
+      ),
+      HouseholdLogisticsItemModel(
+        registrationId: 'REG_DEMO_02',
+        representativeMemberId: 'MEM_02',
+        representativeName: 'Nguyễn Thị Bình',
+        branchId: 'BR_02',
+        branchName: 'Chi Nhì',
+        totalAttendees: 3,
+        savoryMeals: 3,
+        vegetarianMeals: 0,
+        shuttleSeats: 3,
+        transportationNotes: 'Xe chung 3 chỗ',
+        status: 'Confirmed',
+        registrationDate: DateTime.now(),
+      ),
+    ];
+
+    final filtered = (branchId != null && branchId.isNotEmpty)
+        ? allItems.where((i) => i.branchId == branchId).toList()
+        : allItems;
+
+    return EventLogisticsSummaryModel(
+      eventId: eventId,
+      eventName: event.eventName,
+      branchId: branchId,
+      branchName: branchId == null
+          ? null
+          : branches
+              .where((b) => b.branchId == branchId)
+              .map((b) => b.branchName)
+              .firstOrNull,
+      totalRegistrations: filtered.length,
+      totalAttendees: filtered.fold(0, (sum, i) => sum + i.totalAttendees),
+      totalSavoryMeals: filtered.fold(0, (sum, i) => sum + i.savoryMeals),
+      totalVegetarianMeals:
+          filtered.fold(0, (sum, i) => sum + i.vegetarianMeals),
+      totalShuttleSeats: filtered.fold(0, (sum, i) => sum + i.shuttleSeats),
+      availableBranches: branches,
+      registrations: filtered,
+    );
   }
 }
 

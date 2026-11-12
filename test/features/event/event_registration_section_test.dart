@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -87,6 +89,21 @@ class _FakeEventRepository implements EventRepository {
 
   @override
   Future<EventModel> updateEventStatus(String eventId, String newStatus) =>
+      throw UnimplementedError();
+
+  @override
+  Future<EventLogisticsSummaryModel> getEventRegistrationSummary(
+    String eventId, {
+    String? branchId,
+  }) =>
+      throw UnimplementedError();
+
+  @override
+  Future<Uint8List> exportEventRegistrationSummary(
+    String eventId, {
+    String? branchId,
+    String format = 'xlsx',
+  }) =>
       throw UnimplementedError();
 }
 

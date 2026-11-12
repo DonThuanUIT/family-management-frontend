@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/repositories/event_repository.dart';
@@ -60,6 +62,25 @@ class EventRepositoryImpl implements EventRepository {
   @override
   Future<RegistrationModel> cancelRegistration(String registrationId) =>
       _remoteDataSource.cancelRegistration(registrationId);
+
+  @override
+  Future<EventLogisticsSummaryModel> getEventRegistrationSummary(
+    String eventId, {
+    String? branchId,
+  }) =>
+      _remoteDataSource.getEventRegistrationSummary(eventId, branchId: branchId);
+
+  @override
+  Future<Uint8List> exportEventRegistrationSummary(
+    String eventId, {
+    String? branchId,
+    String format = 'xlsx',
+  }) =>
+      _remoteDataSource.exportEventRegistrationSummary(
+        eventId,
+        branchId: branchId,
+        format: format,
+      );
 }
 
 final eventRepositoryProvider = Provider<EventRepository>((ref) {

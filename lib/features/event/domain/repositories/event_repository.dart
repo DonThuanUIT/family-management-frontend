@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../../data/models/event_models.dart';
 
 abstract class EventRepository {
@@ -15,4 +17,13 @@ abstract class EventRepository {
   Future<RegistrationModel> updateRegistration(
       String registrationId, UpdateRegistrationRequestDto request);
   Future<RegistrationModel> cancelRegistration(String registrationId);
+  Future<EventLogisticsSummaryModel> getEventRegistrationSummary(
+    String eventId, {
+    String? branchId,
+  });
+  Future<Uint8List> exportEventRegistrationSummary(
+    String eventId, {
+    String? branchId,
+    String format = 'xlsx',
+  });
 }

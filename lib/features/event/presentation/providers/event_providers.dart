@@ -243,3 +243,16 @@ final registrationActionProvider =
     NotifierProvider<RegistrationActionNotifier, AsyncValue<void>>(
   RegistrationActionNotifier.new,
 );
+
+/// Key lọc Dashboard Hậu Cần Sự Kiện (US-42).
+typedef LogisticsSummaryQuery = ({String eventId, String? branchId});
+
+/// Provider tải bảng tổng hợp hậu cần tức thời cho BTC theo sự kiện và chi/nhánh (US-42).
+final eventLogisticsSummaryProvider = FutureProvider.autoDispose
+    .family<EventLogisticsSummaryModel, LogisticsSummaryQuery>((ref, query) {
+  final repo = ref.watch(eventRepositoryProvider);
+  return repo.getEventRegistrationSummary(
+    query.eventId,
+    branchId: query.branchId,
+  );
+});
