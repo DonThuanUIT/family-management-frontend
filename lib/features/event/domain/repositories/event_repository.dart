@@ -9,4 +9,10 @@ abstract class EventRepository {
   Future<List<EventPersonnelModel>> assignPersonnel(
       String eventId, AssignPersonnelRequestDto request);
   Future<List<EventNotificationModel>> getEventNotifications(String eventId);
+  Future<RegistrationModel?> getMyRegistration(String eventId);
+  Future<RegistrationModel> registerAttendees(
+      String eventId, RegisterAttendeesRequestDto request);
+  Future<RegistrationModel> updateRegistration(
+      String registrationId, UpdateRegistrationRequestDto request);
+  Future<RegistrationModel> cancelRegistration(String registrationId);
 }

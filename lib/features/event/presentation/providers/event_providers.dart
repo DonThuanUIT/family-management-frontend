@@ -171,3 +171,75 @@ final eventNotificationsProvider =
   final repo = ref.watch(eventRepositoryProvider);
   return repo.getEventNotifications(eventId);
 });
+
+final myRegistrationProvider =
+    FutureProvider.family<RegistrationModel?, String>((ref, eventId) async {
+  final repo = ref.watch(eventRepositoryProvider);
+  return repo.getMyRegistration(eventId);
+});
+
+class RegistrationActionNotifier extends Notifier<AsyncValue<void>> {
+  @override
+  AsyncValue<void> build() => const AsyncValue.data(null);
+
+  Future<String?> registerAttendees({
+    required String eventId,
+    required RegisterAttendeesRequestDto request,
+  }) async {
+    state = const AsyncValue.loading();
+    try {
+      await ref.read(eventRepositoryProvider).registerAttendees(eventId, request);
+      state = const AsyncValue.data(null);
+      ref.invalidate(myRegistrationProvider(eventId));
+      return null;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return _cleanError(e);
+    }
+  }
+
+  Future<String?> updateRegistration({
+    required String eventId,
+    required String registrationId,
+    required UpdateRegistrationRequestDto request,
+  }) async {
+    state = const AsyncValue.loading();
+    try {
+      await ref
+          .read(eventRepositoryProvider)
+          .updateRegistration(registrationId, request);
+      state = const AsyncValue.data(null);
+      ref.invalidate(myRegistrationProvider(eventId));
+      return null;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return _cleanError(e);
+    }
+  }
+
+  Future<String?> cancelRegistration({
+    required String eventId,
+    required String registrationId,
+  }) async {
+    state = const AsyncValue.loading();
+    try {
+      await ref.read(eventRepositoryProvider).cancelRegistration(registrationId);
+      state = const AsyncValue.data(null);
+      ref.invalidate(myRegistrationProvider(eventId));
+      return null;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return _cleanError(e);
+    }
+  }
+
+  static String _cleanError(Object error) {
+    final raw = error.toString();
+    return raw.startsWith('Exception: ') ? raw.substring(11) : raw;
+  }
+}
+
+final registrationActionProvider =
+    NotifierProvider<RegistrationActionNotifier, AsyncValue<void>>(
+  RegistrationActionNotifier.new,
+);

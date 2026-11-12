@@ -41,6 +41,105 @@ class EventPersonnelModel {
       };
 }
 
+/// Thông tin đăng ký tham dự sự kiện của hộ gia đình (US-06 / US-41).
+class RegistrationModel {
+  final String registrationId;
+  final String eventId;
+  final String representativeMemberId;
+  final String representativeMemberName;
+  final int totalAttendees;
+  final int vegetarianMeals;
+  final int savoryMeals;
+  final String? dietaryRequirements;
+  final String? transportationNotes;
+  final String status;
+
+  const RegistrationModel({
+    required this.registrationId,
+    required this.eventId,
+    required this.representativeMemberId,
+    required this.representativeMemberName,
+    required this.totalAttendees,
+    required this.vegetarianMeals,
+    required this.savoryMeals,
+    this.dietaryRequirements,
+    this.transportationNotes,
+    required this.status,
+  });
+
+  bool get isCancelled => status == 'Cancelled';
+
+  factory RegistrationModel.fromJson(Map<String, dynamic> json) {
+    return RegistrationModel(
+      registrationId: json['registrationId']?.toString() ?? '',
+      eventId: json['eventId']?.toString() ?? '',
+      representativeMemberId: json['representativeMemberId']?.toString() ?? '',
+      representativeMemberName:
+          json['representativeMemberName']?.toString() ?? '',
+      totalAttendees: (json['totalAttendees'] as num?)?.toInt() ?? 1,
+      vegetarianMeals: (json['vegetarianMeals'] as num?)?.toInt() ?? 0,
+      savoryMeals: (json['savoryMeals'] as num?)?.toInt() ?? 0,
+      dietaryRequirements: json['dietaryRequirements']?.toString(),
+      transportationNotes: json['transportationNotes']?.toString(),
+      status: json['status']?.toString() ?? 'Confirmed',
+    );
+  }
+}
+
+/// DTO nộp đăng ký tham dự mới (`POST /api/v1/events/{eventId}/registrations`).
+class RegisterAttendeesRequestDto {
+  final int totalAttendees;
+  final int vegetarianMeals;
+  final int savoryMeals;
+  final String? dietaryRequirements;
+  final String? transportationNotes;
+
+  const RegisterAttendeesRequestDto({
+    required this.totalAttendees,
+    this.vegetarianMeals = 0,
+    this.savoryMeals = 0,
+    this.dietaryRequirements,
+    this.transportationNotes,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'totalAttendees': totalAttendees,
+        'vegetarianMeals': vegetarianMeals,
+        'savoryMeals': savoryMeals,
+        if (dietaryRequirements != null && dietaryRequirements!.trim().isNotEmpty)
+          'dietaryRequirements': dietaryRequirements!.trim(),
+        if (transportationNotes != null && transportationNotes!.trim().isNotEmpty)
+          'transportationNotes': transportationNotes!.trim(),
+      };
+}
+
+/// DTO cập nhật đăng ký tham dự trước khi chốt (`PUT /api/v1/registrations/{id}` - US-41).
+class UpdateRegistrationRequestDto {
+  final int totalAttendees;
+  final int vegetarianMeals;
+  final int savoryMeals;
+  final String? dietaryRequirements;
+  final String? transportationNotes;
+
+  const UpdateRegistrationRequestDto({
+    required this.totalAttendees,
+    this.vegetarianMeals = 0,
+    this.savoryMeals = 0,
+    this.dietaryRequirements,
+    this.transportationNotes,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'totalAttendees': totalAttendees,
+        'vegetarianMeals': vegetarianMeals,
+        'savoryMeals': savoryMeals,
+        if (dietaryRequirements != null && dietaryRequirements!.trim().isNotEmpty)
+          'dietaryRequirements': dietaryRequirements!.trim(),
+        if (transportationNotes != null && transportationNotes!.trim().isNotEmpty)
+          'transportationNotes': transportationNotes!.trim(),
+      };
+}
+
 /// Model bản ghi thông báo sự kiện (`event_notifications` - US-22).
 class EventNotificationModel {
   final String notificationId;
