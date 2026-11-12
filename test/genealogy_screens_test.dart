@@ -36,6 +36,11 @@ final kTestRootBranch = FamilyBranchDetail(
 );
 
 class FakeGenealogyRepository implements GenealogyRepository {
+  @override
+  Future<void> updateLifeStatus({required String memberId,
+      required UpdateLifeStatusRequestDto request}) async {
+    throw UnimplementedError('This fixture does not exercise life status updates.');
+  }
   MemberPrivacySettingDto _privacySettings = const MemberPrivacySettingDto(
     memberId: 'MEM_TRUONG_TOC',
     shareDateOfBirth: false,

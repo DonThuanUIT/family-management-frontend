@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../shared/presentation/widgets/heritage_nav_bar.dart';
@@ -175,6 +176,13 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                         _buildHeaderCard(context, state),
                         const SizedBox(height: 20),
                         _buildGenealogyImmutableCard(context, state),
+                        if (state.profile?.memberId != null)
+                          Padding(padding: const EdgeInsets.only(top: 16),
+                            child: OutlinedButton.icon(
+                              onPressed: () => context.push('/members/${Uri.encodeComponent(state.profile!.memberId!)}'),
+                              icon: const Icon(Icons.auto_stories_outlined),
+                              label: const Text('Ảnh chân dung, tiểu sử và tư liệu gia sử'),
+                            )),
                         const SizedBox(height: 20),
                         _buildContactEditableCard(context, state, notifier),
                         const SizedBox(height: 20),

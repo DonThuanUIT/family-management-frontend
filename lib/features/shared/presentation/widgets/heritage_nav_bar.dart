@@ -113,7 +113,11 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
             child: Row(
               children: [
                 // 1. Brand Logo & Name
-                InkWell(
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: isWide ? 280 : MediaQuery.sizeOf(context).width - 116,
+                  ),
+                  child: InkWell(
                   onTap: () => context.go('/home'),
                   borderRadius: BorderRadius.circular(8),
                   child: Padding(
@@ -143,7 +147,7 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        Column(
+                        Flexible(child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
                           mainAxisSize: MainAxisSize.min,
@@ -172,6 +176,8 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                                     : (fullName.startsWith('Lê')
                                         ? 'DÒNG HỌ LÊ VIỆT NAM'
                                         : 'GIA TỘC VIỆT NAM'),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   fontFamily: 'monospace',
                                   fontSize: 9.5,
@@ -182,11 +188,11 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                               ),
                             ),
                           ],
-                        ),
+                        )),
                       ],
                     ),
                   ),
-                ),
+                )),
 
                 const SizedBox(width: 12),
 

@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(
-    const ProviderScope(
-      child: FamilyFundApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: FamilyFundApp()));
 }
 
 /// Ứng dụng Đa nền tảng (Web App & Mobile App) Quản lý Sự kiện và Quỹ Đại Gia Đình.
@@ -29,6 +26,7 @@ class FamilyFundApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       routerConfig: router,
+      localizationsDelegates: const [FlutterQuillLocalizations.delegate],
     );
   }
 }
