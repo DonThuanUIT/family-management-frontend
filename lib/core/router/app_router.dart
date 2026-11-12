@@ -20,6 +20,7 @@ import '../../features/event/presentation/screens/event_list_screen.dart';
 import '../../features/genealogy/presentation/screens/edit_root_branch_screen.dart';
 import '../../features/genealogy/presentation/screens/privacy_settings_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/member_media/presentation/screens/member_detail_screen.dart';
 import '../../features/role/presentation/screens/role_management_screen.dart';
 import '../../features/shared/presentation/widgets/heritage_nav_bar.dart';
 import '../../features/task/presentation/screens/event_task_list_screen.dart';
@@ -37,6 +38,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     navigatorKey: _rootNavigatorKey,
     initialLocation: initialLocation,
     routes: [
+      GoRoute(
+        path: '/members/:memberId',
+        name: 'member-detail',
+        builder: (context, state) =>
+            MemberDetailScreen(memberId: state.pathParameters['memberId']!),
+      ),
       // 1. Màn hình Khởi động (Splash)
       GoRoute(
         path: '/',
@@ -173,7 +180,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const Scaffold(
           backgroundColor: Color(0xFFFAF6F0),
           appBar: HeritageNavBar(currentRoute: '/clan-invites'),
-          bottomNavigationBar: HeritageBottomNavBar(currentRoute: '/clan-invites'),
+          bottomNavigationBar: HeritageBottomNavBar(
+            currentRoute: '/clan-invites',
+          ),
           body: SizedBox.shrink(),
         ),
       ),

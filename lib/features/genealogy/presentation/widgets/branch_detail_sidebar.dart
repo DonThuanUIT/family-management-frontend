@@ -6,6 +6,7 @@ import '../../../../core/security/rbac_models.dart';
 import '../../data/models/branch_models.dart';
 import 'branch_action_dialogs.dart';
 import 'update_life_status_dialog.dart';
+import '../../../member_media/presentation/widgets/private_media_image.dart';
 
 /// Bảng hiển thị thông tin chi tiết và danh sách thành viên của một Chi/Nhánh.
 /// Có thể hiển thị ở dạng Sidebar bên phải (trên Web/Tablet) hoặc Modal Bottom Sheet (trên Mobile).
@@ -847,7 +848,11 @@ class _BranchDetailSidebarState extends ConsumerState<BranchDetailSidebar> {
                       child: Row(
                         children: [
                           // Avatar
-                          CircleAvatar(
+                          if (member.avatarUrl != null)
+                            PrivateMediaImage(contentKey: (memberId: member.memberId,
+                              attachmentId: null, version: member.avatarUrl.hashCode),
+                              label: 'Ảnh chân dung ${member.fullName}', size: 36)
+                          else CircleAvatar(
                             radius: 18,
                             backgroundColor: isDeceased
                                 ? const Color(0xFFEFE8E2)
@@ -1001,6 +1006,17 @@ class _BranchDetailSidebarState extends ConsumerState<BranchDetailSidebar> {
                                         : const Color(0xFF874E00)),
                               ),
                             ),
+                          ),
+                          IconButton(
+                            tooltip: 'Xem hồ sơ thành viên',
+                            icon: const Icon(Icons.person_search_outlined, size: 20),
+                            onPressed: () {
+                              final router = GoRouter.of(context);
+                              if (widget.isMobileSheet) {
+                                Navigator.of(context).pop();
+                              }
+                              router.push('/members/${Uri.encodeComponent(member.memberId)}');
+                            },
                           ),
                           // Nút cập nhật tình trạng sinh/tử cho quản lý
                           if (canManage) ...[

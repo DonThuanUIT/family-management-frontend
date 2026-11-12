@@ -157,6 +157,7 @@ class BranchTreeNodeDto {
 
 /// Model thông tin thành viên hiển thị trong bảng sidebar chi nhánh
 class BranchMemberItem {
+  final String? avatarUrl;
   final String memberId;
   final String fullName;
   final int generation;
@@ -178,6 +179,7 @@ class BranchMemberItem {
   bool get isDeceased => status.toLowerCase() == 'deceased';
 
   const BranchMemberItem({
+    this.avatarUrl,
     required this.memberId,
     required this.fullName,
     required this.generation,
@@ -232,6 +234,7 @@ class BranchMemberItem {
     final burialPlace = json['burialPlace']?.toString();
 
     return BranchMemberItem(
+      avatarUrl: json['avatarUrl'] as String?,
       memberId: json['memberId']?.toString() ?? '',
       fullName: json['fullName']?.toString() ?? '',
       generation: gen,
