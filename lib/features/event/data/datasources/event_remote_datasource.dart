@@ -352,6 +352,131 @@ class EventRemoteDataSource {
       _mockEvents[idx] = updated;
     }
   }
+
+  static final Map<String, RegistrationModel> _mockMyRegistrations = {
+    'EVT_2026_GIOTO': const RegistrationModel(
+      registrationId: 'REG_MOCK_01',
+      eventId: 'EVT_2026_GIOTO',
+      representativeMemberId: 'MEM_001',
+      representativeMemberName: 'Đại diện hộ gia đình',
+      totalAttendees: 4,
+      vegetarianMeals: 1,
+      savoryMeals: 3,
+      transportationNotes: 'Xe 7 chỗ',
+      status: 'Confirmed',
+    ),
+  };
+
+  Future<RegistrationModel?> getMyRegistration(String eventId) async {
+    try {
+      final response = await _dio.get('events/$eventId/registrations/me');
+      final apiResponse = ApiResponse<RegistrationModel>.fromJson(
+        response.data as Map<String, dynamic>,
+        (json) => RegistrationModel.fromJson(json as Map<String, dynamic>),
+      );
+      if (apiResponse.data != null) {
+        _mockMyRegistrations[eventId] = apiResponse.data!;
+        return apiResponse.data;
+      }
+      return null;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return null;
+      }
+      return _mockMyRegistrations[eventId];
+    }
+  }
+
+  Future<RegistrationModel> registerAttendees(
+    String eventId,
+    RegisterAttendeesRequestDto request,
+  ) async {
+    try {
+      final response = await _dio.post(
+        'events/$eventId/registrations',
+        data: request.toJson(),
+      );
+      final apiResponse = ApiResponse<RegistrationModel>.fromJson(
+        response.data as Map<String, dynamic>,
+        (json) => RegistrationModel.fromJson(json as Map<String, dynamic>),
+      );
+      if (apiResponse.data != null) {
+        _mockMyRegistrations[eventId] = apiResponse.data!;
+        return apiResponse.data!;
+      }
+      throw Exception('Không nhận được phản hồi đăng ký từ máy chủ');
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final msg = e.response?.data?['message']?.toString() ??
+            'Không thể đăng ký tham dự sự kiện';
+        throw Exception(msg);
+      }
+      final mock = RegistrationModel(
+        registrationId: 'REG_${DateTime.now().millisecondsSinceEpoch}',
+        eventId: eventId,
+        representativeMemberId: 'MEM_CURRENT',
+        representativeMemberName: 'Đại diện hộ gia đình',
+        totalAttendees: request.totalAttendees,
+        vegetarianMeals: request.vegetarianMeals,
+        savoryMeals: request.savoryMeals,
+        dietaryRequirements: request.dietaryRequirements,
+        transportationNotes: request.transportationNotes,
+        status: 'Confirmed',
+      );
+      _mockMyRegistrations[eventId] = mock;
+      return mock;
+    }
+  }
+
+  Future<RegistrationModel> updateRegistration(
+    String registrationId,
+    UpdateRegistrationRequestDto request,
+  ) async {
+    try {
+      final response = await _dio.put(
+        'registrations/$registrationId',
+        data: request.toJson(),
+      );
+      final apiResponse = ApiResponse<RegistrationModel>.fromJson(
+        response.data as Map<String, dynamic>,
+        (json) => RegistrationModel.fromJson(json as Map<String, dynamic>),
+      );
+      if (apiResponse.data != null) {
+        _mockMyRegistrations[apiResponse.data!.eventId] = apiResponse.data!;
+        return apiResponse.data!;
+      }
+      throw Exception('Không nhận được phản hồi cập nhật đăng ký');
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final msg = e.response?.data?['message']?.toString() ??
+            'Không thể cập nhật đăng ký tham dự';
+        throw Exception(msg);
+      }
+      throw Exception('Không thể kết nối máy chủ để cập nhật đăng ký');
+    }
+  }
+
+  Future<RegistrationModel> cancelRegistration(String registrationId) async {
+    try {
+      final response = await _dio.delete('registrations/$registrationId');
+      final apiResponse = ApiResponse<RegistrationModel>.fromJson(
+        response.data as Map<String, dynamic>,
+        (json) => RegistrationModel.fromJson(json as Map<String, dynamic>),
+      );
+      if (apiResponse.data != null) {
+        _mockMyRegistrations[apiResponse.data!.eventId] = apiResponse.data!;
+        return apiResponse.data!;
+      }
+      throw Exception('Không nhận được phản hồi hủy đăng ký');
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final msg = e.response?.data?['message']?.toString() ??
+            'Không thể hủy đăng ký tham dự';
+        throw Exception(msg);
+      }
+      throw Exception('Không thể kết nối máy chủ để hủy đăng ký');
+    }
+  }
 }
 
 final eventRemoteDataSourceProvider = Provider<EventRemoteDataSource>((ref) {
