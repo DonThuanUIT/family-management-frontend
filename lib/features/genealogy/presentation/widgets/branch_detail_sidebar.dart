@@ -567,6 +567,18 @@ class _BranchDetailSidebarState extends ConsumerState<BranchDetailSidebar> {
           ),
           const SizedBox(height: 8),
 
+          // 1b. NÚT NHẬP HÀNG LOẠT: Nhập thành viên từ Excel/CSV (US-31)
+          _buildActionButton(
+            context: context,
+            label: 'Nhập Hàng Loạt (Excel/CSV)',
+            icon: Icons.upload_file,
+            isEnabled: canManage,
+            isPrimary: false,
+            disabledReason: deniedReason ?? 'Không có quyền nhập thành viên vào chi này',
+            onPressed: () => context.push('/members/import'),
+          ),
+          const SizedBox(height: 8),
+
           // 2. NÚT SỬA: Chỉnh sửa thông tin chi (US-02 / US-04 / US-23)
           _buildActionButton(
             context: context,
