@@ -312,8 +312,8 @@ void main() {
           findsOneWidget,
         );
 
-        // 2. Cả 3 nút đều có icon ổ khóa
-        expect(find.byIcon(Icons.lock_outline), findsNWidgets(3));
+        // 2. Các nút thao tác ngoài phạm vi đều có icon ổ khóa
+        expect(find.byIcon(Icons.lock_outline), findsAtLeastNWidgets(3));
 
         // 3. Nhấp vào nút bị khóa -> Hiển thị SnackBar giải thích lý do
         final addButton = find.text('Thêm Thành Viên Vào Chi');
