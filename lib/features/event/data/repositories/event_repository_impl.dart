@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/repositories/event_repository.dart';
 import '../datasources/event_remote_datasource.dart';
+import '../models/event_budget_models.dart';
 import '../models/event_models.dart';
 
 class EventRepositoryImpl implements EventRepository {
@@ -81,6 +82,10 @@ class EventRepositoryImpl implements EventRepository {
         branchId: branchId,
         format: format,
       );
+
+  @override
+  Future<EventBudgetSummaryModel> getEventBudgetSummary(String eventId) =>
+      _remoteDataSource.getEventBudgetSummary(eventId);
 }
 
 final eventRepositoryProvider = Provider<EventRepository>((ref) {

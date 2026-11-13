@@ -267,12 +267,14 @@ class PrivacySettingsScreen extends ConsumerWidget {
             children: [
               Icon(Icons.visibility_outlined, size: 18, color: Color(0xFF54433E)),
               SizedBox(width: 8),
-              Text(
-                'Xem trước: Hiển thị với thành viên thông thường',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF54433E),
+              Expanded(
+                child: Text(
+                  'Xem trước: Hiển thị với thành viên thông thường',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF54433E),
+                  ),
                 ),
               ),
             ],

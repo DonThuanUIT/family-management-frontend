@@ -1,10 +1,9 @@
-import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/utils/vietnamese_money_converter.dart';
 import '../../data/models/contribution_models.dart';
 import '../../data/repositories/contribution_repository_impl.dart';
 import '../../domain/repositories/contribution_repository.dart';
+import 'branch_recursive_contribution_providers.dart';
 
 /// Trạng thái dữ liệu giao diện Tiếp nhận đóng góp và Quản lý tài sản.
 class ContributionUiState {
@@ -163,6 +162,7 @@ class ContributionUiNotifier extends Notifier<ContributionUiState> {
       allocations: effectiveAllocations,
     );
     await fetchFromBackend(eventId: eventId);
+    ref.invalidate(branchRecursiveContributionProvider);
     return remoteReceipt;
   }
 
@@ -205,6 +205,7 @@ class ContributionUiNotifier extends Notifier<ContributionUiState> {
       allocations: effectiveAllocations,
     );
     await fetchFromBackend(eventId: eventId);
+    ref.invalidate(branchRecursiveContributionProvider);
     return remoteReceipt;
   }
 
@@ -249,14 +250,6 @@ class ContributionUiNotifier extends Notifier<ContributionUiState> {
 
   void setSearchQuery(String query) {
     state = state.copyWith(searchQuery: query);
-  }
-
-  String _formatDate(DateTime dt) {
-    return '${dt.year}${dt.month.toString().padLeft(2, '0')}${dt.day.toString().padLeft(2, '0')}';
-  }
-
-  String _numberToVietnameseWords(double amount) {
-    return VietnameseMoneyConverter.toWords(amount);
   }
 }
 

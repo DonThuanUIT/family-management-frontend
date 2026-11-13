@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import '../../data/models/event_budget_models.dart';
 import '../../data/models/event_models.dart';
 
 abstract class EventRepository {
@@ -26,4 +27,5 @@ abstract class EventRepository {
     String? branchId,
     String format = 'xlsx',
   });
+  Future<EventBudgetSummaryModel> getEventBudgetSummary(String eventId);
 }

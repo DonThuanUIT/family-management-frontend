@@ -213,6 +213,25 @@ class EventDetailDialog extends StatelessWidget {
               ),
               const SizedBox(height: 8),
 
+              // Nút mở Bảng Điều Khiển Ngân Sách Sự Kiện (US-37)
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  context.push('/events/${event.eventId}/budget');
+                },
+                icon: const Icon(Icons.account_balance_wallet_outlined, size: 16),
+                label: const Text('Bảng Điều Khiển Ngân Sách (US-37)'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF8B1E1E),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 11),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+
               // Nút mở Dashboard Hậu Cần Sự Kiện cho BTC (US-42)
               ElevatedButton.icon(
                 onPressed: () {

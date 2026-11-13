@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:intl/intl.dart';
 import '../../../../core/security/rbac_models.dart';
 import '../../data/models/branch_models.dart';
 import 'branch_action_dialogs.dart';
 import 'update_life_status_dialog.dart';
 import '../../../member_media/presentation/widgets/private_media_image.dart';
+import '../../../contribution/presentation/providers/branch_recursive_contribution_providers.dart';
+import '../../../contribution/presentation/widgets/branch_contribution_breakdown_bottom_sheet.dart';
 
 /// Bảng hiển thị thông tin chi tiết và danh sách thành viên của một Chi/Nhánh.
 /// Có thể hiển thị ở dạng Sidebar bên phải (trên Web/Tablet) hoặc Modal Bottom Sheet (trên Mobile).
@@ -130,7 +133,7 @@ class _BranchDetailSidebarState extends ConsumerState<BranchDetailSidebar> {
             ),
           ),
 
-          // Tab Selector (Tổng quan vs Danh sách thành viên)
+          // Tab Selector (Tổng quan vs Danh sách thành viên vs Công đức đệ quy)
           Container(
             padding: const EdgeInsets.all(8),
             color: Colors.white,
@@ -139,17 +142,26 @@ class _BranchDetailSidebarState extends ConsumerState<BranchDetailSidebar> {
                 Expanded(
                   child: _buildTabButton(
                     index: 0,
-                    title: 'Tổng Quan Chi',
+                    title: 'Tổng Quan',
                     icon: Icons.info_outline,
                     activeColor: primaryColor,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
                 Expanded(
                   child: _buildTabButton(
                     index: 1,
-                    title: 'Thành Viên (${widget.branch.memberCount})',
+                    title: 'Thành Viên',
                     icon: Icons.group_outlined,
+                    activeColor: primaryColor,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: _buildTabButton(
+                    index: 2,
+                    title: 'Công Đức',
+                    icon: Icons.stars_outlined,
                     activeColor: primaryColor,
                   ),
                 ),
@@ -162,7 +174,9 @@ class _BranchDetailSidebarState extends ConsumerState<BranchDetailSidebar> {
           Expanded(
             child: _selectedTab == 0
                 ? _buildOverviewTab(context)
-                : _buildMembersListTab(context, filteredMembers),
+                : (_selectedTab == 1
+                    ? _buildMembersListTab(context, filteredMembers)
+                    : _buildContributionTab(context)),
           ),
         ],
       ),
@@ -644,6 +658,277 @@ class _BranchDetailSidebarState extends ConsumerState<BranchDetailSidebar> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildContributionTab(BuildContext context) {
+    final currencyFormatter = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
+    final filterState = ref.watch(treeContributionFilterProvider);
+    final queryParam = BranchContributionQueryParam(
+      branchId: widget.branch.id,
+      eventId: filterState.selectedEventId,
+      year: filterState.selectedYear,
+    );
+    final contributionAsync = ref.watch(branchRecursiveContributionProvider(queryParam));
+
+    return contributionAsync.when(
+      loading: () => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(40),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(strokeWidth: 2, color: primaryColor),
+              SizedBox(height: 12),
+              Text(
+                'Đang tổng hợp công đức đệ quy...',
+                style: TextStyle(fontFamily: 'Be Vietnam Pro', fontSize: 13, color: subtextColor),
+              ),
+            ],
+          ),
+        ),
+      ),
+      error: (err, stack) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, color: Color(0xFFBA1A1A), size: 36),
+              const SizedBox(height: 8),
+              Text('Không thể tải số liệu đóng góp: $err',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontFamily: 'Be Vietnam Pro', fontSize: 12, color: Color(0xFFBA1A1A))),
+            ],
+          ),
+        ),
+      ),
+      data: (summary) {
+        final directPercent = summary.directPercentage;
+        final descendantsPercent = summary.descendantsPercentage;
+        final eventLabel = filterState.selectedEventName ??
+            (filterState.selectedYear != null ? 'Năm ${filterState.selectedYear}' : 'Toàn bộ thời gian');
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Banner tóm tắt tổng mức đóng góp
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: borderColor),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'TỔNG CÔNG ĐỨC ĐỆ QUY',
+                          style: TextStyle(
+                            fontFamily: 'Be Vietnam Pro',
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF8B1E1E),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFED65B).withValues(alpha: 0.25),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            eventLabel,
+                            style: const TextStyle(
+                              fontFamily: 'Be Vietnam Pro',
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF735C00),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      currencyFormatter.format(summary.totalRecursiveAmount),
+                      style: const TextStyle(
+                        fontFamily: 'JetBrains Mono',
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF8B1E1E),
+                      ),
+                    ),
+                    if (summary.totalRecursiveAmountInWords != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        '(${summary.totalRecursiveAmountInWords})',
+                        style: const TextStyle(
+                          fontFamily: 'Be Vietnam Pro',
+                          fontSize: 11,
+                          fontStyle: FontStyle.italic,
+                          color: subtextColor,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    // Phân bổ thanh mini
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: SizedBox(
+                        height: 6,
+                        child: Row(
+                          children: [
+                            if (directPercent > 0)
+                              Expanded(
+                                flex: (directPercent * 10).round().clamp(1, 1000),
+                                child: Container(color: const Color(0xFF8B1E1E)),
+                              ),
+                            if (descendantsPercent > 0)
+                              Expanded(
+                                flex: (descendantsPercent * 10).round().clamp(1, 1000),
+                                child: Container(color: const Color(0xFFD4AF37)),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Tự thân: ${currencyFormatter.format(summary.directTotalAmount)} (${directPercent.toStringAsFixed(1)}%)',
+                          style: const TextStyle(
+                            fontFamily: 'Be Vietnam Pro',
+                            fontSize: 11,
+                            color: textColor,
+                          ),
+                        ),
+                        Text(
+                          'Nhánh con: ${currencyFormatter.format(summary.descendantsTotalAmount)} (${descendantsPercent.toStringAsFixed(1)}%)',
+                          style: const TextStyle(
+                            fontFamily: 'Be Vietnam Pro',
+                            fontSize: 11,
+                            color: textColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Nút xem phân rã chi tiết (Bottom Sheet)
+              ElevatedButton.icon(
+                onPressed: () {
+                  BranchContributionBreakdownBottomSheet.show(
+                    context,
+                    summary: summary,
+                    eventId: filterState.selectedEventId,
+                    year: filterState.selectedYear,
+                  );
+                },
+                icon: const Icon(Icons.analytics_outlined, size: 18),
+                label: const Text(
+                  'Mở Bảng Phân Rã Cơ Cấu Đệ Quy',
+                  style: TextStyle(
+                    fontFamily: 'Be Vietnam Pro',
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF8B1E1E),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Danh sách nhánh con tóm tắt
+              if (summary.hasChildBranches) ...[
+                const Text(
+                  'CÁC NHÁNH CON TRỰC THUỘC:',
+                  style: TextStyle(
+                    fontFamily: 'Be Vietnam Pro',
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.bold,
+                    color: subtextColor,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...summary.childBranches.map((child) => Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: borderColor),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  child.branchName,
+                                  style: const TextStyle(
+                                    fontFamily: 'Be Vietnam Pro',
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: textColor,
+                                  ),
+                                ),
+                                Text(
+                                  'Đại diện: ${child.representativeName ?? 'Chưa chỉ định'} • Đời ${child.generationLevel ?? '?'}',
+                                  style: const TextStyle(
+                                    fontFamily: 'Be Vietnam Pro',
+                                    fontSize: 11,
+                                    color: subtextColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            currencyFormatter.format(child.totalRecursiveAmount),
+                            style: const TextStyle(
+                              fontFamily: 'JetBrains Mono',
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF8B1E1E),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 

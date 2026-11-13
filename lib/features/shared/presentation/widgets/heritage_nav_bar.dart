@@ -152,9 +152,11 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text(
-                              'FamilyFund',
-                              style: TextStyle(
+                            Text(
+                              customTitle ?? 'FamilyFund',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFF2B1810),

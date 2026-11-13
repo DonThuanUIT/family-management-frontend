@@ -44,6 +44,9 @@ class FakeGenealogyRepository implements GenealogyRepository {
   Future<MemberPrivacySettingDto> updateMyPrivacySettings(
           UpdateMemberPrivacySettingRequestDto request) =>
       throw UnimplementedError();
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 void main() {

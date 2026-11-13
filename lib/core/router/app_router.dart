@@ -16,6 +16,7 @@ import '../../features/auth/presentation/screens/welcome_screen.dart';
 import '../../features/audit/presentation/screens/system_audit_log_screen.dart';
 import '../../features/contribution/presentation/screens/clan_asset_inventory_screen.dart';
 import '../../features/contribution/presentation/screens/receive_contribution_screen.dart';
+import '../../features/event/presentation/screens/event_budget_dashboard_screen.dart';
 import '../../features/event/presentation/screens/event_list_screen.dart';
 import '../../features/event/presentation/screens/event_logistics_dashboard_screen.dart';
 import '../../features/genealogy/presentation/screens/edit_root_branch_screen.dart';
@@ -158,6 +159,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) {
               final eventId = state.pathParameters['eventId'] ?? '';
               return EventLogisticsDashboardScreen(eventId: eventId);
+            },
+          ),
+          // 10.3. Bảng Điều Khiển Ngân Sách Sự Kiện (US-37)
+          GoRoute(
+            path: ':eventId/budget',
+            name: 'event-budget',
+            builder: (context, state) {
+              final eventId = state.pathParameters['eventId'] ?? '';
+              return EventBudgetDashboardScreen(eventId: eventId);
             },
           ),
         ],

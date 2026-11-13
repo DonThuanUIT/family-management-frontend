@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/datasources/event_remote_datasource.dart';
+import '../../data/models/event_budget_models.dart';
 import '../../data/models/event_models.dart';
 import '../../data/repositories/event_repository_impl.dart';
 import '../../domain/repositories/event_repository.dart';
@@ -255,4 +256,26 @@ final eventLogisticsSummaryProvider = FutureProvider.autoDispose
     query.eventId,
     branchId: query.branchId,
   );
+});
+
+/// [US-37] Bộ lọc danh mục công việc trên Bảng điều khiển Ngân sách
+enum TaskBudgetFilterCategory { all, warning, safe }
+
+class TaskBudgetFilterNotifier extends Notifier<TaskBudgetFilterCategory> {
+  @override
+  TaskBudgetFilterCategory build() => TaskBudgetFilterCategory.all;
+
+  void setFilter(TaskBudgetFilterCategory category) => state = category;
+}
+
+final taskBudgetFilterProvider =
+    NotifierProvider<TaskBudgetFilterNotifier, TaskBudgetFilterCategory>(
+  TaskBudgetFilterNotifier.new,
+);
+
+/// [US-37] Provider truy vấn tổng hợp ngân sách và cờ cảnh báo vượt trần dự toán sự kiện
+final eventBudgetSummaryProvider = FutureProvider.autoDispose
+    .family<EventBudgetSummaryModel, String>((ref, eventId) {
+  final repo = ref.watch(eventRepositoryProvider);
+  return repo.getEventBudgetSummary(eventId);
 });
