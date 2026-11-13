@@ -105,6 +105,9 @@ class _FakeEventRepository implements EventRepository {
     String format = 'xlsx',
   }) =>
       throw UnimplementedError();
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 EventModel _buildEvent(String status) {
