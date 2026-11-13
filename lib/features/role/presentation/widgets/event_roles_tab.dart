@@ -105,7 +105,7 @@ class EventRolesTab extends ConsumerWidget {
               ),
               const SizedBox(height: 6),
               DropdownButtonFormField<String>(
-                value: selectedEventId,
+                initialValue: selectedEventId,
                 isExpanded: true,
                 style: const TextStyle(
                   fontSize: 12.5,
@@ -326,7 +326,7 @@ class EventRolesTab extends ConsumerWidget {
                   ),
                 ],
               ),
-              if (actionWidget != null) actionWidget,
+              ?actionWidget,
             ],
           ),
           const SizedBox(height: 10),

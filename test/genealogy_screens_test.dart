@@ -76,6 +76,9 @@ class FakeGenealogyRepository implements GenealogyRepository {
     );
     return _privacySettings;
   }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 const kTestBranchTree = BranchTreeNodeDto(

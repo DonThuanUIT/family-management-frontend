@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../event/data/models/event_models.dart';
 import '../../../event/presentation/providers/event_providers.dart';
 import '../../data/models/role_models.dart';
 import '../providers/role_providers.dart';
@@ -277,7 +276,7 @@ class _AssignRoleBottomSheetState extends ConsumerState<AssignRoleBottomSheet> {
               ),
               const SizedBox(height: 4),
               DropdownButtonFormField<String>(
-                value: _selectedBranchId,
+                initialValue: _selectedBranchId,
                 isExpanded: true,
                 style: const TextStyle(fontSize: 12, color: Color(0xFF1A1C1A)),
                 decoration: _inputDecoration(),
@@ -311,7 +310,7 @@ class _AssignRoleBottomSheetState extends ConsumerState<AssignRoleBottomSheet> {
               ),
               const SizedBox(height: 4),
               DropdownButtonFormField<String>(
-                value: _selectedEventId,
+                initialValue: _selectedEventId,
                 isExpanded: true,
                 style: const TextStyle(fontSize: 12, color: Color(0xFF1A1C1A)),
                 decoration: _inputDecoration(),

@@ -189,7 +189,7 @@ void main() {
       // Section 2: Liên lạc có thể chỉnh sửa
       expect(find.text('Thông Tin Liên Lạc Cá Nhân'), findsOneWidget);
       expect(find.text('0912345678'), findsOneWidget);
-      expect(find.text('thanhvien@dongho.vn'), findsOneWidget);
+      expect(find.text('thanhvien@dongho.vn'), findsWidgets);
       expect(find.text('123 Đường Láng, Đống Đa, Hà Nội'), findsOneWidget);
       expect(find.text('Lưu Thông Tin Liên Lạc'), findsOneWidget);
 

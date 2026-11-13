@@ -194,7 +194,7 @@ class _RevokeRoleDialogState extends ConsumerState<RevokeRoleDialog> {
                   ),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
-                    value: _selectedReason,
+                    initialValue: _selectedReason,
                     isExpanded: true,
                     style: const TextStyle(
                       fontSize: 12,
