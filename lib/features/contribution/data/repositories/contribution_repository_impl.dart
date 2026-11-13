@@ -2,6 +2,7 @@
 
 import '../../domain/repositories/contribution_repository.dart';
 import '../datasources/contribution_remote_data_source.dart';
+import '../models/branch_recursive_contribution_models.dart';
 import '../models/contribution_models.dart';
 
 class ContributionRepositoryImpl implements ContributionRepository {
@@ -116,6 +117,32 @@ class ContributionRepositoryImpl implements ContributionRepository {
   Future<InKindElectronicReceiptDto> getInKindReceiptByNumber(
       String receiptNumber) {
     return _remoteDataSource.getInKindReceiptByNumber(receiptNumber);
+  }
+
+  @override
+  Future<BranchRecursiveContributionDto> getRecursiveBranchContributionSummary({
+    required String branchId,
+    String? eventId,
+    int? year,
+  }) {
+    return _remoteDataSource.getRecursiveBranchContributionSummary(
+      branchId: branchId,
+      eventId: eventId,
+      year: year,
+    );
+  }
+
+  @override
+  Future<double> getRecursiveBranchContributionTotal({
+    required String branchId,
+    String? eventId,
+    int? year,
+  }) {
+    return _remoteDataSource.getRecursiveBranchContributionTotal(
+      branchId: branchId,
+      eventId: eventId,
+      year: year,
+    );
   }
 }
 
