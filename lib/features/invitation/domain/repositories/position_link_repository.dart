@@ -7,4 +7,11 @@ abstract class PositionLinkRepository {
   });
 
   Future<List<PositionLinkItemModel>> getIssuedPositionLinks();
+
+  Future<PositionLinkPreviewDto> getPositionLinkPreview(String inviteCode);
+
+  Future<ClaimPositionResponseDto> claimPosition({
+    required String inviteCode,
+    required ClaimPositionRequestDto request,
+  });
 }

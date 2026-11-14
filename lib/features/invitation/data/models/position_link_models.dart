@@ -217,3 +217,130 @@ class PositionLinkItemModel {
     );
   }
 }
+
+/// DTO xem trước vị trí phả hệ từ GET /api/v1/position-links/{inviteCode} (US-19)
+class PositionLinkPreviewDto {
+  final String inviteCode;
+  final String clanId;
+  final String clanName;
+  final String branchId;
+  final String branchName;
+  final String memberId;
+  final String fullName;
+  final String? expiresAt;
+  final String? issuedBy;
+  final int? generation;
+
+  const PositionLinkPreviewDto({
+    required this.inviteCode,
+    required this.clanId,
+    required this.clanName,
+    required this.branchId,
+    required this.branchName,
+    required this.memberId,
+    required this.fullName,
+    this.expiresAt,
+    this.issuedBy,
+    this.generation,
+  });
+
+  factory PositionLinkPreviewDto.fromJson(Map<String, dynamic> json) {
+    return PositionLinkPreviewDto(
+      inviteCode: (json['inviteCode'] as String?) ?? '',
+      clanId: (json['clanId'] as String?) ?? '',
+      clanName: (json['clanName'] as String?) ?? '',
+      branchId: (json['branchId'] as String?) ?? '',
+      branchName: (json['branchName'] as String?) ?? '',
+      memberId: (json['memberId'] as String?) ?? '',
+      fullName: (json['fullName'] as String?) ?? '',
+      expiresAt: json['expiresAt'] as String?,
+      issuedBy: json['issuedBy'] as String?,
+      generation: (json['generation'] as num?)?.toInt(),
+    );
+  }
+}
+
+/// Request DTO để gọi POST /api/v1/position-links/{inviteCode}/claim (US-19)
+class ClaimPositionRequestDto {
+  final String phoneNumber;
+  final String password;
+  final String? email;
+
+  const ClaimPositionRequestDto({
+    required this.phoneNumber,
+    required this.password,
+    this.email,
+  });
+
+  Map<String, dynamic> toJson() {
+    final map = <String, dynamic>{
+      'phoneNumber': phoneNumber,
+      'password': password,
+    };
+    if (email != null && email!.trim().isNotEmpty) {
+      map['email'] = email!.trim();
+    }
+    return map;
+  }
+}
+
+/// Response DTO sau khi nhận vị trí thành công từ POST /api/v1/position-links/{inviteCode}/claim (US-19)
+class ClaimPositionResponseDto {
+  final String accountId;
+  final String phoneNumber;
+  final String? email;
+  final String accountStatus;
+  final List<String> roles;
+  final String memberId;
+  final String fullName;
+  final int? generation;
+  final String branchId;
+  final String branchName;
+  final String clanId;
+  final String clanName;
+  final String inviteCode;
+  final String? linkedAt;
+
+  const ClaimPositionResponseDto({
+    required this.accountId,
+    required this.phoneNumber,
+    this.email,
+    required this.accountStatus,
+    required this.roles,
+    required this.memberId,
+    required this.fullName,
+    this.generation,
+    required this.branchId,
+    required this.branchName,
+    required this.clanId,
+    required this.clanName,
+    required this.inviteCode,
+    this.linkedAt,
+  });
+
+  factory ClaimPositionResponseDto.fromJson(Map<String, dynamic> json) {
+    List<String> parsedRoles = ['ROLE_MEMBER'];
+    if (json['roles'] is List) {
+      parsedRoles = (json['roles'] as List)
+          .map((e) => e.toString())
+          .toList();
+    }
+
+    return ClaimPositionResponseDto(
+      accountId: (json['accountId'] as String?) ?? '',
+      phoneNumber: (json['phoneNumber'] as String?) ?? '',
+      email: json['email'] as String?,
+      accountStatus: (json['accountStatus'] as String?) ?? 'Active',
+      roles: parsedRoles,
+      memberId: (json['memberId'] as String?) ?? '',
+      fullName: (json['fullName'] as String?) ?? '',
+      generation: (json['generation'] as num?)?.toInt(),
+      branchId: (json['branchId'] as String?) ?? '',
+      branchName: (json['branchName'] as String?) ?? '',
+      clanId: (json['clanId'] as String?) ?? '',
+      clanName: (json['clanName'] as String?) ?? '',
+      inviteCode: (json['inviteCode'] as String?) ?? '',
+      linkedAt: json['linkedAt'] as String?,
+    );
+  }
+}

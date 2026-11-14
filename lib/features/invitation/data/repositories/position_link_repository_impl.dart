@@ -29,4 +29,20 @@ class PositionLinkRepositoryImpl implements PositionLinkRepository {
   Future<List<PositionLinkItemModel>> getIssuedPositionLinks() {
     return _remoteDataSource.getIssuedPositionLinks();
   }
+
+  @override
+  Future<PositionLinkPreviewDto> getPositionLinkPreview(String inviteCode) {
+    return _remoteDataSource.getPositionLinkPreview(inviteCode);
+  }
+
+  @override
+  Future<ClaimPositionResponseDto> claimPosition({
+    required String inviteCode,
+    required ClaimPositionRequestDto request,
+  }) {
+    return _remoteDataSource.claimPosition(
+      inviteCode: inviteCode,
+      request: request,
+    );
+  }
 }

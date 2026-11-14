@@ -64,6 +64,42 @@ class MockPositionLinkRepository implements PositionLinkRepository {
   Future<List<PositionLinkItemModel>> getIssuedPositionLinks() async {
     return mockItems;
   }
+
+  @override
+  Future<PositionLinkPreviewDto> getPositionLinkPreview(
+      String inviteCode) async {
+    return PositionLinkPreviewDto(
+      inviteCode: inviteCode,
+      clanId: 'LE',
+      clanName: 'Dòng Họ Lê',
+      branchId: 'chi-2',
+      branchName: 'Chi 2',
+      memberId: 'MEM-002',
+      fullName: 'Lê Thu Trang',
+      generation: 5,
+    );
+  }
+
+  @override
+  Future<ClaimPositionResponseDto> claimPosition({
+    required String inviteCode,
+    required ClaimPositionRequestDto request,
+  }) async {
+    return ClaimPositionResponseDto(
+      accountId: 'ACC-002',
+      memberId: 'MEM-002',
+      clanId: 'LE',
+      clanName: 'Dòng Họ Lê',
+      branchId: 'chi-2',
+      branchName: 'Chi 2',
+      phoneNumber: request.phoneNumber,
+      fullName: 'Lê Thu Trang',
+      generation: 5,
+      roles: const ['ROLE_MEMBER'],
+      accountStatus: 'Active',
+      inviteCode: inviteCode,
+    );
+  }
 }
 
 void main() {
