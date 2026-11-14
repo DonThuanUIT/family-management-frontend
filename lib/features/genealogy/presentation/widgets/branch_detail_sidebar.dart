@@ -638,7 +638,7 @@ class _BranchDetailSidebarState extends ConsumerState<BranchDetailSidebar> {
           // 4. Nút Xuất Mã Mời Gia Phả Cho Chi Này
           OutlinedButton.icon(
             onPressed: () {
-              context.push('/clan-invites');
+              context.push('/clan-invites?branchId=${widget.branch.id}');
             },
             icon: const Icon(Icons.qr_code_2, size: 18, color: primaryColor),
             label: const Text(
@@ -652,6 +652,29 @@ class _BranchDetailSidebarState extends ConsumerState<BranchDetailSidebar> {
             ),
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: primaryColor),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // 5. Nút Duyệt Đơn Xin Gia Nhập (US-33)
+          OutlinedButton.icon(
+            onPressed: () {
+              context.push('/join-requests?branchId=${widget.branch.id}');
+            },
+            icon: const Icon(Icons.how_to_reg_outlined, size: 18, color: Color(0xFF006E2A)),
+            label: const Text(
+              'Duyệt Đơn Xin Gia Nhập',
+              style: TextStyle(
+                fontFamily: 'Plus Jakarta Sans',
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: Color(0xFF006E2A),
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Color(0xFF006E2A)),
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
@@ -1476,7 +1499,7 @@ class _BranchDetailSidebarState extends ConsumerState<BranchDetailSidebar> {
                   height: 40,
                   child: OutlinedButton.icon(
                     onPressed: () {
-                      context.push('/clan-invites');
+                      context.push('/clan-invites?branchId=${widget.branch.id}');
                     },
                     icon: const Icon(Icons.qr_code_2, size: 16, color: primaryColor),
                     label: const Text(
