@@ -1,4 +1,5 @@
 import 'package:familyfund_app/features/auth/presentation/screens/login_screen.dart';
+import 'package:familyfund_app/features/invitation/data/models/invitation_management_models.dart';
 import 'package:familyfund_app/features/invitation/data/models/position_link_models.dart';
 import 'package:familyfund_app/features/invitation/data/repositories/position_link_repository_impl.dart';
 import 'package:familyfund_app/features/invitation/domain/repositories/position_link_repository.dart';
@@ -69,6 +70,27 @@ class MockPositionLinkRepo implements PositionLinkRepository {
       inviteCode: inviteCode,
       linkedAt: '2026-03-14T10:00:00Z',
     );
+  }
+
+  @override
+  Future<PositionLinkItemModel> createGeneralInvite(
+      CreateGeneralInviteRequestDto request) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> deactivateInvite(String inviteCode) async {}
+
+  @override
+  Future<PositionLinkItemModel> updateInvite(
+      String inviteCode, UpdateInvitationRequestDto request) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<PositionLinkItemModel> regenerateInvite(String inviteCode,
+      {UpdateInvitationRequestDto? request}) async {
+    throw UnimplementedError();
   }
 }
 
