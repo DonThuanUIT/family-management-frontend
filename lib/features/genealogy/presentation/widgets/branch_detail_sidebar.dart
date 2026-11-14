@@ -610,7 +610,7 @@ class _BranchDetailSidebarState extends ConsumerState<BranchDetailSidebar> {
           // 4. Nút Xuất Mã Mời Gia Phả Cho Chi Này
           OutlinedButton.icon(
             onPressed: () {
-              context.push('/clan-invites');
+              context.push('/clan-invites?branchId=${widget.branch.id}');
             },
             icon: const Icon(Icons.qr_code_2, size: 18, color: primaryColor),
             label: const Text(
@@ -1058,7 +1058,7 @@ class _BranchDetailSidebarState extends ConsumerState<BranchDetailSidebar> {
                   height: 40,
                   child: OutlinedButton.icon(
                     onPressed: () {
-                      context.push('/clan-invites');
+                      context.push('/clan-invites?branchId=${widget.branch.id}');
                     },
                     icon: const Icon(Icons.qr_code_2, size: 16, color: primaryColor),
                     label: const Text(
