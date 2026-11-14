@@ -136,12 +136,26 @@ class AuthNotifier extends Notifier<AuthState> {
 
       // Synchronize Dual-RBAC session
       final roles = response.roles.map(SystemRole.fromCode).toSet();
+      final resolvedRoles = roles.isNotEmpty ? roles : {SystemRole.roleMember};
+      final String branchName;
+      final String? managedBranchId;
+      if (resolvedRoles.contains(SystemRole.roleClanHead)) {
+        branchName = 'Chi Gốc (Đại Tôn)';
+        managedBranchId = 'BR_ROOT';
+      } else if (resolvedRoles.contains(SystemRole.roleBranchHead)) {
+        branchName = 'Chi 2 - Nhánh Giáp';
+        managedBranchId = 'BR_CHI_2';
+      } else {
+        branchName = 'Chi 2 - Nhánh Giáp';
+        managedBranchId = '';
+      }
       ref.read(dualRbacSessionProvider.notifier).state = DualRbacSession(
         accountId: response.accountId,
         memberId: response.memberId ?? '',
         fullName: response.fullName,
-        branchName: response.clanId != null ? 'Dòng họ ${response.clanId}' : 'Chi nhánh gốc',
-        globalRoles: roles.isNotEmpty ? roles : {SystemRole.roleMember},
+        branchName: branchName,
+        managedBranchId: managedBranchId,
+        globalRoles: resolvedRoles,
       );
 
       state = state.copyWith(

@@ -277,13 +277,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     children: [
                                       const Icon(Icons.account_tree_outlined, color: kPrimaryColor, size: 20),
                                       const SizedBox(width: 8),
-                                      Text(
-                                        tree.clanName,
-                                        style: const TextStyle(
-                                          fontFamily: 'Merriweather',
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                          color: Color(0xFF1C1C1A),
+                                      Flexible(
+                                        child: Text(
+                                          tree.clanName,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontFamily: 'Merriweather',
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                            color: Color(0xFF1C1C1A),
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -868,15 +871,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               color: isCurrentUser ? Colors.white : const Color(0xFFFFB59D),
                             ),
                             const SizedBox(width: 6),
-                            Text(
-                              isCurrentUser
-                                  ? '★ VỊ TRÍ CỦA BẠN • TRƯỞNG TỘC'
-                                  : detail.badge,
-                              style: TextStyle(
-                                fontFamily: 'JetBrains Mono',
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: isCurrentUser ? Colors.white : const Color(0xFFFFB59D),
+                            Flexible(
+                              child: Text(
+                                isCurrentUser
+                                    ? '★ VỊ TRÍ CỦA BẠN • TRƯỞNG TỘC'
+                                    : detail.badge,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: 'JetBrains Mono',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: isCurrentUser ? Colors.white : const Color(0xFFFFB59D),
+                                ),
                               ),
                             ),
                           ],
@@ -1032,13 +1038,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       children: [
                         const Icon(Icons.group, size: 15, color: Color(0xFFFFB59D)),
                         const SizedBox(width: 6),
-                        Text(
-                          '${detail.memberCount} Thành viên (Xem chi tiết →)',
-                          style: const TextStyle(
-                            fontFamily: 'Plus Jakarta Sans',
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFFFFB59D),
+                        Flexible(
+                          child: Text(
+                            '${detail.memberCount} Thành viên (Xem chi tiết →)',
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontFamily: 'Plus Jakarta Sans',
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFFFB59D),
+                            ),
                           ),
                         ),
                       ],

@@ -135,6 +135,133 @@ class EventBudgetDashboardScreen extends ConsumerWidget {
           ),
         ),
         data: (budget) {
+          final isDesktop = MediaQuery.sizeOf(context).width >= 960;
+
+          final manageTasksButton = ElevatedButton.icon(
+            onPressed: () {
+              context.push('/events/$eventId/tasks');
+            },
+            icon: const Icon(Icons.assignment_outlined, size: 16),
+            label: const Text(
+              'Quản Lý Phiếu Chi (US-07)',
+              style: TextStyle(
+                fontFamily: 'Be Vietnam Pro',
+                fontSize: 12.5,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              elevation: 0,
+            ),
+          );
+
+          final exportButton = OutlinedButton.icon(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Đang chuẩn bị file xuất báo cáo chi tiết...'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+            icon: const Icon(Icons.download_rounded, size: 16, color: primaryColor),
+            label: const Text(
+              'Xuất Báo Cáo',
+              style: TextStyle(
+                fontFamily: 'Be Vietnam Pro',
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: primaryColor,
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: primaryColor),
+              padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+
+          if (isDesktop) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1240),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Cột trái (5 phần): Thẻ Hero tổng quan & tác vụ nhanh
+                      Expanded(
+                        flex: 5,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            EventBudgetHeroCard(budget: budget),
+                            const SizedBox(height: 16),
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: const Color(0xFFE5DDD5)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withAlpha(6),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  const Text(
+                                    'Tác Vụ Điều Hành Ngân Sách',
+                                    style: TextStyle(
+                                      fontFamily: 'Be Vietnam Pro',
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF1A1C1A),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      Expanded(child: manageTasksButton),
+                                      const SizedBox(width: 10),
+                                      exportButton,
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                      // Cột phải (7 phần): Phân rã chi tiết hạng mục chi tiêu
+                      Expanded(
+                        flex: 7,
+                        child: TaskBudgetBreakdownSection(
+                          eventId: eventId,
+                          tasks: budget.taskBreakdowns,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
+
           return Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 800),
@@ -179,59 +306,9 @@ class EventBudgetDashboardScreen extends ConsumerWidget {
                     ),
                     child: Row(
                       children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              context.push('/events/$eventId/tasks');
-                            },
-                            icon: const Icon(Icons.assignment_outlined, size: 16),
-                            label: const Text(
-                              'Quản Lý Phiếu Chi (US-07)',
-                              style: TextStyle(
-                                fontFamily: 'Be Vietnam Pro',
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryColor,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              elevation: 0,
-                            ),
-                          ),
-                        ),
+                        Expanded(child: manageTasksButton),
                         const SizedBox(width: 10),
-                        OutlinedButton.icon(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Đang chuẩn bị file xuất báo cáo chi tiết...'),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.download_rounded, size: 16, color: primaryColor),
-                          label: const Text(
-                            'Xuất Báo Cáo',
-                            style: TextStyle(
-                              fontFamily: 'Be Vietnam Pro',
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                              color: primaryColor,
-                            ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: primaryColor),
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
+                        exportButton,
                       ],
                     ),
                   ),

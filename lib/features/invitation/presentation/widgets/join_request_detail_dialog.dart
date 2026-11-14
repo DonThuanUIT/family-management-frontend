@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/data/models/auth_models.dart';
-import '../../data/models/join_request_management_models.dart';
 import '../providers/join_requests_provider.dart';
 import 'reject_join_request_dialog.dart';
 
@@ -315,7 +314,7 @@ class _JoinRequestDetailDialogState extends ConsumerState<JoinRequestDetailDialo
                                 if (_isPending)
                                   DropdownButtonFormField<String>(
                                     key: const ValueKey('branch_override_dropdown'),
-                                    value: _selectedTargetBranchId,
+                                    initialValue: _selectedTargetBranchId,
                                     isExpanded: true,
                                     decoration: InputDecoration(
                                       filled: true,

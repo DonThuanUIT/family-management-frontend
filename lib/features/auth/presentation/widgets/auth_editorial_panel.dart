@@ -86,7 +86,7 @@ class AuthEditorialPanel extends StatelessWidget {
                         size: 15, color: Color(0xFF8F482F)),
                     SizedBox(width: 6),
                     Text(
-                      'Di Sản & Cội Nguồn Dòng Họ',
+                      'CỔNG ĐĂNG NHẬP GIA PHẢ',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,

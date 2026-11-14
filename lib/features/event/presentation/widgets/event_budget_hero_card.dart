@@ -175,22 +175,30 @@ class EventBudgetHeroCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Tiến độ tiêu dùng',
-                style: TextStyle(
-                  fontFamily: 'Be Vietnam Pro',
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w600,
-                  color: subtextColor,
+              const Expanded(
+                child: Text(
+                  'Tiến độ tiêu dùng',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Be Vietnam Pro',
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: subtextColor,
+                  ),
                 ),
               ),
-              Text(
-                '${percent.toStringAsFixed(1)}%${isOver ? ' (Vượt trần ${(percent - 100).toStringAsFixed(1)}%)' : ''}',
-                style: TextStyle(
-                  fontFamily: 'JetBrains Mono',
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: isOver ? criticalRed : safeGreen,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  '${percent.toStringAsFixed(1)}%${isOver ? ' (Vượt trần ${(percent - 100).toStringAsFixed(1)}%)' : ''}',
+                  textAlign: TextAlign.end,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'JetBrains Mono',
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: isOver ? criticalRed : safeGreen,
+                  ),
                 ),
               ),
             ],

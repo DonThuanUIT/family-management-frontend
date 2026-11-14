@@ -24,7 +24,7 @@ class JoinRequestsMobileList extends ConsumerWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: requests.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final item = requests[index];
         final isPending = item.approvalStatus == JoinRequestApprovalStatus.pending;

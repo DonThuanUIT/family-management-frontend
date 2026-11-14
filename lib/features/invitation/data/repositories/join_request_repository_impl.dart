@@ -17,14 +17,13 @@ final joinRequestRepositoryProvider = Provider<JoinRequestRepository>((ref) {
 });
 
 class JoinRequestRepositoryImpl implements JoinRequestRepository {
-  final JoinRequestRemoteDataSource _remoteDataSource;
-  final GenealogyRemoteDataSource _genealogyRemoteDataSource;
+  final JoinRequestRemoteDataSource remoteDataSource;
+  final GenealogyRemoteDataSource genealogyRemoteDataSource;
 
   JoinRequestRepositoryImpl({
-    required JoinRequestRemoteDataSource remoteDataSource,
-    required GenealogyRemoteDataSource genealogyRemoteDataSource,
-  })  : _remoteDataSource = remoteDataSource,
-        _genealogyRemoteDataSource = genealogyRemoteDataSource;
+    required this.remoteDataSource,
+    required this.genealogyRemoteDataSource,
+  });
 
   @override
   Future<JoinRequestPageDto> getJoinRequests({
@@ -33,7 +32,7 @@ class JoinRequestRepositoryImpl implements JoinRequestRepository {
     int page = 0,
     int size = 20,
   }) {
-    return _remoteDataSource.getJoinRequests(
+    return remoteDataSource.getJoinRequests(
       status: status,
       branchId: branchId,
       page: page,
@@ -46,7 +45,7 @@ class JoinRequestRepositoryImpl implements JoinRequestRepository {
     String requestId, {
     ApproveJoinRequestDto? request,
   }) {
-    return _remoteDataSource.approveJoinRequest(requestId, request: request);
+    return remoteDataSource.approveJoinRequest(requestId, request: request);
   }
 
   @override
@@ -54,11 +53,11 @@ class JoinRequestRepositoryImpl implements JoinRequestRepository {
     String requestId,
     RejectJoinRequestDto request,
   ) {
-    return _remoteDataSource.rejectJoinRequest(requestId, request);
+    return remoteDataSource.rejectJoinRequest(requestId, request);
   }
 
   @override
   Future<BranchTreeNodeDto> getBranchTree() {
-    return _genealogyRemoteDataSource.getBranchTree();
+    return genealogyRemoteDataSource.getBranchTree();
   }
 }

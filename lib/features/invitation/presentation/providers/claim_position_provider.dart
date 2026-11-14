@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../data/models/position_link_models.dart';
 import '../../data/repositories/position_link_repository_impl.dart';
-import '../../domain/repositories/position_link_repository.dart';
 
 @immutable
 class ClaimPositionState {

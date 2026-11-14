@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/widgets/adaptive_modal.dart';
 import '../../data/models/role_models.dart';
 import '../providers/role_providers.dart';
 
@@ -11,29 +12,45 @@ class AuditLogTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final roleState = ref.watch(roleManagementProvider);
     final logs = roleState.auditLogs;
+    final isDesktop = isDesktopViewport(context);
 
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      children: [
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 24 : 16,
+        vertical: isDesktop ? 16 : 12,
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1160),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
         // Header
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Row(
-              children: [
-                Icon(Icons.history, size: 16, color: Color(0xFF735C00)),
-                SizedBox(width: 6),
-                Text(
-                  'SỔ BỘ KIỂM TOÁN TÁC NGHIỆP',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                    color: Color(0xFF735C00),
+            const Expanded(
+              child: Row(
+                children: [
+                  Icon(Icons.history, size: 16, color: Color(0xFF735C00)),
+                  SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      'SỔ BỘ KIỂM TOÁN TÁC NGHIỆP',
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                        color: Color(0xFF735C00),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
+            const SizedBox(width: 8),
             Row(
               children: [
                 Container(
@@ -93,7 +110,10 @@ class AuditLogTab extends ConsumerWidget {
               },
             ),
           ),
-      ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -139,26 +159,32 @@ class AuditLogTab extends ConsumerWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Icon(
-                          isAssign
-                              ? Icons.add_moderator
-                              : Icons.remove_moderator,
-                          size: 13,
-                          color: dotColor,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          isAssign ? 'Chỉ Định Vai Trò' : 'Thu Hồi Vai Trò',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Icon(
+                            isAssign
+                                ? Icons.add_moderator
+                                : Icons.remove_moderator,
+                            size: 13,
                             color: dotColor,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              isAssign ? 'Chỉ Định Vai Trò' : 'Thu Hồi Vai Trò',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: dotColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     Text(
                       log.formattedCreatedAt,
                       style: const TextStyle(

@@ -76,11 +76,32 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
+            child: Builder(
+              builder: (context) {
+                final isDesktop = MediaQuery.sizeOf(context).width >= 960;
+                return ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: isDesktop ? 520 : 440),
+                  child: Container(
+                    padding: isDesktop
+                        ? const EdgeInsets.all(28)
+                        : EdgeInsets.zero,
+                    decoration: isDesktop
+                        ? BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: const Color(0xFFE8DFD8)),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x0D2A2A2A),
+                                blurRadius: 12,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
+                          )
+                        : null,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
                   // Progress indicator
                   Row(
                     children: [
@@ -226,6 +247,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ),
                 ],
               ),
+            ),
+          );
+              },
             ),
           ),
         ),

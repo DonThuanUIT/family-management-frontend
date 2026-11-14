@@ -79,29 +79,34 @@ class _TaskBudgetBreakdownSectionState
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                const Icon(Icons.account_tree_outlined, size: 16, color: primaryColor),
-                const SizedBox(width: 6),
-                const Text(
-                  'Phân Rã Hạng Mục Chi Tiêu',
-                  style: TextStyle(
-                    fontFamily: 'Be Vietnam Pro',
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A1C1A),
+            Expanded(
+              child: Row(
+                children: [
+                  const Icon(Icons.account_tree_outlined, size: 16, color: primaryColor),
+                  const SizedBox(width: 6),
+                  const Flexible(
+                    child: Text(
+                      'Phân Rã Hạng Mục Chi Tiêu',
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: 'Be Vietnam Pro',
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1A1C1A),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  '(${widget.tasks.length} hạng mục)',
-                  style: const TextStyle(
-                    fontFamily: 'Be Vietnam Pro',
-                    fontSize: 11.5,
-                    color: subtextColor,
+                  const SizedBox(width: 6),
+                  Text(
+                    '(${widget.tasks.length} hạng mục)',
+                    style: const TextStyle(
+                      fontFamily: 'Be Vietnam Pro',
+                      fontSize: 11.5,
+                      color: subtextColor,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
@@ -278,7 +283,10 @@ class _TaskBudgetBreakdownSectionState
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 6,
+                            runSpacing: 4,
                             children: [
                               Container(
                                 padding: const EdgeInsets.symmetric(
@@ -297,9 +305,9 @@ class _TaskBudgetBreakdownSectionState
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 6),
                               Text(
                                 task.taskId,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   fontFamily: 'JetBrains Mono',
                                   fontSize: 10,
@@ -447,13 +455,18 @@ class _TaskBudgetBreakdownSectionState
             color: subtextColor,
           ),
         ),
-        Text(
-          value,
-          style: TextStyle(
-            fontFamily: 'JetBrains Mono',
-            fontSize: 11,
-            fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-            color: valueColor,
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: 'JetBrains Mono',
+              fontSize: 11,
+              fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+              color: valueColor,
+            ),
           ),
         ),
       ],

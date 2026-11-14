@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/widgets/adaptive_modal.dart';
 import '../../../event/presentation/providers/event_providers.dart';
 import '../providers/role_providers.dart';
 import '../widgets/assign_role_bottom_sheet.dart';
@@ -27,10 +28,9 @@ class _RoleManagementScreenState extends ConsumerState<RoleManagementScreen> {
   }
 
   void _openAssignBottomSheet() {
-    showModalBottomSheet(
+    showAdaptiveSheetOrDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      maxDesktopWidth: 600,
       builder: (_) => const AssignRoleBottomSheet(),
     );
   }
@@ -69,27 +69,31 @@ class _RoleManagementScreenState extends ConsumerState<RoleManagementScreen> {
               ),
             ),
             const SizedBox(width: 10),
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'BAN TRỊ SỰ TÔNG MÔN',
-                  style: TextStyle(
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                    color: Color(0xFF735C00),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'BAN TRỊ SỰ TÔNG MÔN',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                      color: Color(0xFF735C00),
+                    ),
                   ),
-                ),
-                Text(
-                  'Phân Quyền & Chức Sự',
-                  style: TextStyle(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF6A020A),
+                  Text(
+                    'Phân Quyền & Chức Sự',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF6A020A),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
@@ -105,46 +109,52 @@ class _RoleManagementScreenState extends ConsumerState<RoleManagementScreen> {
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(52),
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
-            child: Container(
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEFEEEB),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildSegmentTab(
-                      tab: RoleManagementTab.branches,
-                      label: 'Trưởng Chi',
-                      count: branchCount,
-                      icon: Icons.account_tree_outlined,
-                      currentTab: roleState.selectedTab,
-                    ),
+          child: Center(
+            heightFactor: 1.0,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 640),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+                child: Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFEEEB),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: _buildSegmentTab(
-                      tab: RoleManagementTab.events,
-                      label: 'BTC Sự Kiện',
-                      count: totalPersonnelCount,
-                      icon: Icons.festival_outlined,
-                      currentTab: roleState.selectedTab,
-                    ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _buildSegmentTab(
+                          tab: RoleManagementTab.branches,
+                          label: 'Trưởng Chi',
+                          count: branchCount,
+                          icon: Icons.account_tree_outlined,
+                          currentTab: roleState.selectedTab,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: _buildSegmentTab(
+                          tab: RoleManagementTab.events,
+                          label: 'BTC Sự Kiện',
+                          count: totalPersonnelCount,
+                          icon: Icons.festival_outlined,
+                          currentTab: roleState.selectedTab,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: _buildSegmentTab(
+                          tab: RoleManagementTab.audit,
+                          label: 'Nhật Ký',
+                          count: auditCount,
+                          icon: Icons.receipt_long_outlined,
+                          currentTab: roleState.selectedTab,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: _buildSegmentTab(
-                      tab: RoleManagementTab.audit,
-                      label: 'Nhật Ký',
-                      count: auditCount,
-                      icon: Icons.receipt_long_outlined,
-                      currentTab: roleState.selectedTab,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -177,31 +187,41 @@ class _RoleManagementScreenState extends ConsumerState<RoleManagementScreen> {
           ],
         ),
         child: SafeArea(
-          child: Row(
+          child: Center(
+            heightFactor: 1.0,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1200),
+              child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
-                children: [
-                  SizedBox(
-                    width: 8,
-                    height: 8,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Color(0xFF1B873F),
-                        shape: BoxShape.circle,
+              const Expanded(
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 8,
+                      height: 8,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Color(0xFF1B873F),
+                          shape: BoxShape.circle,
+                        ),
                       ),
                     ),
-                  ),
-                  SizedBox(width: 6),
-                  Text(
-                    'RBAC 2.0 • Ghi log tự động',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF58413F),
+                    SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        'RBAC 2.0 • Ghi log tự động',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF58413F),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               ElevatedButton.icon(
                 onPressed: _openAssignBottomSheet,
                 icon: const Icon(Icons.person_add, size: 16),
@@ -224,6 +244,8 @@ class _RoleManagementScreenState extends ConsumerState<RoleManagementScreen> {
                 ),
               ),
             ],
+              ),
+            ),
           ),
         ),
       ),
@@ -269,14 +291,17 @@ class _RoleManagementScreenState extends ConsumerState<RoleManagementScreen> {
                   : const Color(0xFF58413F),
             ),
             const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected
-                    ? const Color(0xFF6A020A)
-                    : const Color(0xFF58413F),
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                  color: isSelected
+                      ? const Color(0xFF6A020A)
+                      : const Color(0xFF58413F),
+                ),
               ),
             ),
             if (count > 0) ...[

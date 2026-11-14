@@ -511,7 +511,7 @@ class _JoinRequestsManagementScreenState
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 260),
                   child: DropdownButtonFormField<String?>(
-                    value: state.branchFilter,
+                    initialValue: state.branchFilter,
                     isDense: true,
                     isExpanded: true,
                     decoration: InputDecoration(

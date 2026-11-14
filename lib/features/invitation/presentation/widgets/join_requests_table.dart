@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/data/models/auth_models.dart';
-import '../providers/join_requests_provider.dart';
 import 'join_request_detail_dialog.dart';
 import 'reject_join_request_dialog.dart';
 

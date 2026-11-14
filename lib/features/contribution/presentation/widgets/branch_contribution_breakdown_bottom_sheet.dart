@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/widgets/adaptive_modal.dart';
 import '../../data/models/branch_recursive_contribution_models.dart';
 import '../services/contribution_pdf_service.dart';
 
@@ -29,10 +30,9 @@ class BranchContributionBreakdownBottomSheet extends ConsumerStatefulWidget {
     String? eventId,
     int? year,
   }) {
-    return showModalBottomSheet(
+    return showAdaptiveSheetOrDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      maxDesktopWidth: 740,
       builder: (context) => BranchContributionBreakdownBottomSheet(
         initialSummary: summary,
         eventId: eventId,
@@ -91,6 +91,7 @@ class _BranchContributionBreakdownBottomSheetState
 
     return Container(
       constraints: BoxConstraints(
+        maxWidth: 740,
         maxHeight: MediaQuery.of(context).size.height * 0.88,
       ),
       decoration: const BoxDecoration(
@@ -252,14 +253,17 @@ class _BranchContributionBreakdownBottomSheetState
                     children: [
                       Icon(Icons.pie_chart_outline, size: 18, color: kPrimaryMaroon),
                       const SizedBox(width: 8),
-                      const Text(
-                        'Phân Rã Đóng Góp Thành Phần',
-                        style: TextStyle(
-                          fontFamily: 'Be Vietnam Pro',
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A1C1A),
-                          letterSpacing: 0.2,
+                      const Expanded(
+                        child: Text(
+                          'Phân Rã Đóng Góp Thành Phần',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'Be Vietnam Pro',
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1A1C1A),
+                            letterSpacing: 0.2,
+                          ),
                         ),
                       ),
                     ],
@@ -377,28 +381,35 @@ class _BranchContributionBreakdownBottomSheetState
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Công thức tính tổng nhánh:',
-                style: TextStyle(
-                  fontFamily: 'Be Vietnam Pro',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF58413F),
+              const Expanded(
+                child: Text(
+                  'Công thức tính tổng nhánh:',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Be Vietnam Pro',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF58413F),
+                  ),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFED65B).withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  eventName,
-                  style: const TextStyle(
-                    fontFamily: 'Be Vietnam Pro',
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF735C00),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFED65B).withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    eventName,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'Be Vietnam Pro',
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF735C00),
+                    ),
                   ),
                 ),
               ),
@@ -407,7 +418,10 @@ class _BranchContributionBreakdownBottomSheetState
           const SizedBox(height: 10),
 
           // Dòng Tự Thân
-          Row(
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 4,
+            runSpacing: 4,
             children: [
               Text(
                 '∑ Nhánh = ',
@@ -427,7 +441,6 @@ class _BranchContributionBreakdownBottomSheetState
                   color: Color(0xFF1A1C1A),
                 ),
               ),
-              const SizedBox(width: 4),
               const Text(
                 '(Tự thân)',
                 style: TextStyle(
@@ -517,28 +530,33 @@ class _BranchContributionBreakdownBottomSheetState
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: borderColor),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '💵 Tiền mặt: ${_currencyFormatter.format(summary.totalRecursiveCashAmount)}',
-                  style: const TextStyle(
-                    fontFamily: 'Be Vietnam Pro',
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1A1C1A),
+            child: SizedBox(
+              width: double.infinity,
+              child: Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  Text(
+                    '💵 Tiền mặt: ${_currencyFormatter.format(summary.totalRecursiveCashAmount)}',
+                    style: const TextStyle(
+                      fontFamily: 'Be Vietnam Pro',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1A1C1A),
+                    ),
                   ),
-                ),
-                Text(
-                  '🎁 Hiện vật: ${_currencyFormatter.format(summary.totalRecursiveInKindAmount)}',
-                  style: const TextStyle(
-                    fontFamily: 'Be Vietnam Pro',
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1A1C1A),
+                  Text(
+                    '🎁 Hiện vật: ${_currencyFormatter.format(summary.totalRecursiveInKindAmount)}',
+                    style: const TextStyle(
+                      fontFamily: 'Be Vietnam Pro',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1A1C1A),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
