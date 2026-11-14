@@ -207,13 +207,18 @@ class EventCard extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Tiến độ chuẩn bị hậu cần',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Color(0xFF7A6A60),
+                          const Expanded(
+                            child: Text(
+                              'Tiến độ chuẩn bị hậu cần',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF7A6A60),
+                              ),
                             ),
                           ),
+                          const SizedBox(width: 8),
                           Text(
                             '${event.completedTasks}/${event.totalTasks} việc (${(event.taskProgress * 100).toInt()}%)',
                             style: const TextStyle(

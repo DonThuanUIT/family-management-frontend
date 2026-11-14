@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/widgets/adaptive_modal.dart';
 import '../../data/models/event_models.dart';
 import 'assign_personnel_dialog.dart';
 import 'edit_event_sheet.dart';
@@ -278,10 +279,9 @@ class EventDetailDialog extends StatelessWidget {
                     child: ElevatedButton.icon(
                       onPressed: () {
                         Navigator.pop(context);
-                        showModalBottomSheet(
+                        showAdaptiveSheetOrDialog(
                           context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
+                          maxDesktopWidth: 680,
                           builder: (_) => EditEventSheet(event: event),
                         );
                       },

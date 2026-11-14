@@ -156,6 +156,7 @@ class _CreateEventSheetState extends ConsumerState<CreateEventSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      constraints: const BoxConstraints(maxWidth: 680),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -434,6 +435,7 @@ class _CreateEventSheetState extends ConsumerState<CreateEventSheet> {
                     const SizedBox(height: 10),
                     DropdownButtonFormField<String>(
                       initialValue: _selectedHeadOfOrganizer,
+                      isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Trưởng Ban Tổ Chức (Max 1)',
                         isDense: true,
@@ -454,6 +456,7 @@ class _CreateEventSheetState extends ConsumerState<CreateEventSheet> {
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
                       initialValue: _selectedTreasurer,
+                      isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Thủ Quỹ Sự Kiện (Max 1)',
                         isDense: true,

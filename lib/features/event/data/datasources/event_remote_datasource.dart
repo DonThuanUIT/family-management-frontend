@@ -615,7 +615,7 @@ class EventRemoteDataSource {
   /// [US-37] Lấy báo cáo tổng hợp ngân sách sự kiện và cờ cảnh báo vượt trần dự toán
   Future<EventBudgetSummaryModel> getEventBudgetSummary(String eventId) async {
     try {
-      final response = await _dio.get('/api/v1/events/$eventId/budget-summary');
+      final response = await _dio.get('events/$eventId/budget-summary');
       if (response.statusCode == 200 && response.data != null) {
         final data = response.data;
         if (data is Map<String, dynamic>) {
