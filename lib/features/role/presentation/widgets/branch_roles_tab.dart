@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/widgets/adaptive_modal.dart';
 import '../../data/models/role_models.dart';
 import '../providers/role_providers.dart';
 import 'assign_role_bottom_sheet.dart';
@@ -10,10 +11,9 @@ class BranchRolesTab extends ConsumerWidget {
   const BranchRolesTab({super.key});
 
   void _openAssign(BuildContext context, String branchId) {
-    showModalBottomSheet(
+    showAdaptiveSheetOrDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      maxDesktopWidth: 600,
       builder: (_) => AssignRoleBottomSheet(
         initialScope: RoleScopeType.branch,
         initialTargetId: branchId,
@@ -43,80 +43,127 @@ class BranchRolesTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final roleState = ref.watch(roleManagementProvider);
     final branches = roleState.overview?.branches ?? [];
+    final isDesktop = isDesktopViewport(context);
 
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      children: [
-        // Rule info box
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFEFEEEB)),
-          ),
-          child: const Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 24 : 16,
+        vertical: isDesktop ? 16 : 12,
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1160),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Icon(Icons.info_outline, color: Color(0xFF6A020A), size: 18),
-              SizedBox(width: 10),
-              Expanded(
-                child: Column(
+              // Rule info box
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFEFEEEB)),
+                ),
+                child: const Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Quy Ước Bổ Nhiệm Trưởng Chi',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1A1C1A),
-                      ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Trưởng Chi (ROLE_BRANCH_HEAD) đại diện cho nhánh phụ trách phả hệ và thu chi nội bộ chi. Bắt buộc thành viên phải có tài khoản đã kích hoạt (Active).',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF58413F),
-                        height: 1.4,
+                    Icon(Icons.info_outline, color: Color(0xFF6A020A), size: 18),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Quy Ước Bổ Nhiệm Trưởng Chi',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1A1C1A),
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Trưởng Chi (ROLE_BRANCH_HEAD) đại diện cho nhánh phụ trách phả hệ và thu chi nội bộ chi. Bắt buộc thành viên phải có tài khoản đã kích hoạt (Active).',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF58413F),
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(height: 12),
+
+              if (roleState.isLoading)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32),
+                    child: CircularProgressIndicator(color: Color(0xFF6A020A)),
+                  ),
+                )
+              else if (branches.isEmpty)
+                Container(
+                  padding: const EdgeInsets.all(32),
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'Chưa có dữ liệu chi nhánh dòng họ.',
+                    style: TextStyle(fontSize: 13, color: Color(0xFF8B716E)),
+                  ),
+                )
+              else if (!isDesktop)
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: branches.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final branch = branches[index];
+                    return _buildBranchCard(context, branch, index + 1);
+                  },
+                )
+              else
+                _buildDesktopBranchGrid(context, branches),
             ],
           ),
         ),
-        const SizedBox(height: 12),
+      ),
+    );
+  }
 
-        if (roleState.isLoading)
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.all(32),
-              child: CircularProgressIndicator(color: Color(0xFF6A020A)),
+  Widget _buildDesktopBranchGrid(
+    BuildContext context,
+    List<BranchRoleOverviewModel> branches,
+  ) {
+    final rows = <Widget>[];
+    for (int i = 0; i < branches.length; i += 2) {
+      final first = branches[i];
+      final second = (i + 1 < branches.length) ? branches[i + 1] : null;
+      rows.add(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: _buildBranchCard(context, first, i + 1)),
+            const SizedBox(width: 14),
+            Expanded(
+              child: second != null
+                  ? _buildBranchCard(context, second, i + 2)
+                  : const SizedBox.shrink(),
             ),
-          )
-        else if (branches.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(32),
-            alignment: Alignment.center,
-            child: const Text(
-              'Chưa có dữ liệu chi nhánh dòng họ.',
-              style: TextStyle(fontSize: 13, color: Color(0xFF8B716E)),
-            ),
-          )
-        else
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: branches.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 10),
-            itemBuilder: (context, index) {
-              final branch = branches[index];
-              return _buildBranchCard(context, branch, index + 1);
-            },
-          ),
-      ],
+          ],
+        ),
+      );
+      if (i + 2 < branches.length) {
+        rows.add(const SizedBox(height: 12));
+      }
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: rows,
     );
   }
 
@@ -151,36 +198,43 @@ class BranchRolesTab extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFED65B).withAlpha(50),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      '$index',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF735C00),
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFED65B).withAlpha(50),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        '$index',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF735C00),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    branch.branchName,
-                    style: const TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A1C1A),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        branch.branchName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1A1C1A),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
@@ -240,11 +294,14 @@ class BranchRolesTab extends ConsumerWidget {
                       Row(
                         children: [
                           if (branch.generationLevel != null)
-                            Text(
-                              'Đời ${branch.generationLevel}  •  ',
-                              style: const TextStyle(
-                                fontSize: 10.5,
-                                color: Color(0xFF58413F),
+                            Flexible(
+                              child: Text(
+                                'Đời ${branch.generationLevel}  •  ',
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 10.5,
+                                  color: Color(0xFF58413F),
+                                ),
                               ),
                             ),
                           const Icon(
@@ -253,12 +310,15 @@ class BranchRolesTab extends ConsumerWidget {
                             color: Color(0xFF1B873F),
                           ),
                           const SizedBox(width: 2),
-                          const Text(
-                            'TK Active',
-                            style: TextStyle(
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1B873F),
+                          const Flexible(
+                            child: Text(
+                              'TK Active',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1B873F),
+                              ),
                             ),
                           ),
                         ],
@@ -309,14 +369,17 @@ class BranchRolesTab extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Chưa bổ nhiệm người đại diện quản lý chi nhánh',
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    fontStyle: FontStyle.italic,
-                    color: Color(0xFF8B716E),
+                const Expanded(
+                  child: Text(
+                    'Chưa bổ nhiệm người đại diện quản lý chi nhánh',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontStyle: FontStyle.italic,
+                      color: Color(0xFF8B716E),
+                    ),
                   ),
                 ),
+                const SizedBox(width: 8),
                 ElevatedButton.icon(
                   onPressed: () => _openAssign(context, branch.branchId),
                   icon: const Icon(Icons.add, size: 14),

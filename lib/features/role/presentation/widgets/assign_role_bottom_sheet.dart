@@ -153,6 +153,7 @@ class _AssignRoleBottomSheetState extends ConsumerState<AssignRoleBottomSheet> {
     }).toList();
 
     return Container(
+      constraints: const BoxConstraints(maxWidth: 600),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -233,12 +234,15 @@ class _AssignRoleBottomSheetState extends ConsumerState<AssignRoleBottomSheet> {
               children: [
                 _buildStepBadge(1),
                 const SizedBox(width: 8),
-                const Text(
-                  'Chọn Phạm Vi Đảm Trách:',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A1C1A),
+                const Expanded(
+                  child: Text(
+                    'Chọn Phạm Vi Đảm Trách:',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1A1C1A),
+                    ),
                   ),
                 ),
               ],
@@ -367,20 +371,26 @@ class _AssignRoleBottomSheetState extends ConsumerState<AssignRoleBottomSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    _buildStepBadge(2),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Chọn Thành Viên Thụ Hưởng:',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1A1C1A),
+                Expanded(
+                  child: Row(
+                    children: [
+                      _buildStepBadge(2),
+                      const SizedBox(width: 8),
+                      const Flexible(
+                        child: Text(
+                          'Chọn Thành Viên Thụ Hưởng:',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1A1C1A),
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 const Row(
                   children: [
                     Icon(Icons.verified_user,
@@ -569,12 +579,15 @@ class _AssignRoleBottomSheetState extends ConsumerState<AssignRoleBottomSheet> {
               children: [
                 _buildStepBadge(3),
                 const SizedBox(width: 8),
-                const Text(
-                  'Lý Do Chỉ Định (Ghi vào Sổ Bộ):',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A1C1A),
+                const Expanded(
+                  child: Text(
+                    'Lý Do Chỉ Định (Ghi vào Sổ Bộ):',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1A1C1A),
+                    ),
                   ),
                 ),
               ],

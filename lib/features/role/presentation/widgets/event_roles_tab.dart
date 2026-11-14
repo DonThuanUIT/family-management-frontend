@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/widgets/adaptive_modal.dart';
 import '../../../event/data/models/event_models.dart';
 import '../../../event/presentation/providers/event_providers.dart';
 import '../../data/models/role_models.dart';
@@ -16,10 +17,9 @@ class EventRolesTab extends ConsumerWidget {
     String eventId,
     AssignableRoleCode role,
   ) {
-    showModalBottomSheet(
+    showAdaptiveSheetOrDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      maxDesktopWidth: 600,
       builder: (_) => AssignRoleBottomSheet(
         initialScope: RoleScopeType.event,
         initialTargetId: eventId,
@@ -80,9 +80,20 @@ class EventRolesTab extends ConsumerWidget {
             p.eventRole != 'HeadOfOrganizer' && p.eventRole != 'EventTreasurer')
         .toList();
 
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      children: [
+    final isDesktop = isDesktopViewport(context);
+
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 24 : 16,
+        vertical: isDesktop ? 16 : 12,
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1160),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
         // Event Picker Selector Card
         Container(
           padding: const EdgeInsets.all(12),
@@ -287,7 +298,10 @@ class EventRolesTab extends ConsumerWidget {
                   },
                 ),
         ),
-      ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -312,20 +326,26 @@ class EventRolesTab extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(icon, size: 18, color: iconColor),
-                  const SizedBox(width: 8),
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A1C1A),
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(icon, size: 18, color: iconColor),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        title,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1A1C1A),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               ?actionWidget,
             ],
           ),
