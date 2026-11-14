@@ -23,9 +23,9 @@ import '../../features/genealogy/presentation/screens/edit_root_branch_screen.da
 import '../../features/genealogy/presentation/screens/member_import_screen.dart';
 import '../../features/genealogy/presentation/screens/privacy_settings_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/invitation/presentation/screens/clan_invites_screen.dart';
 import '../../features/member_media/presentation/screens/member_detail_screen.dart';
 import '../../features/role/presentation/screens/role_management_screen.dart';
-import '../../features/shared/presentation/widgets/heritage_nav_bar.dart';
 import '../../features/task/presentation/screens/event_task_list_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -194,18 +194,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ClanAssetInventoryScreen(),
       ),
 
-      // 14. Phân hệ Cấp Mã Mời Gia Tộc (Chưa triển khai - để trống theo yêu cầu)
+      // 14. Phân hệ Cấp Mã Mời & Khởi Tạo Hồ Sơ Gia Phả (US-18)
       GoRoute(
         path: '/clan-invites',
         name: 'clan-invites',
-        builder: (context, state) => const Scaffold(
-          backgroundColor: Color(0xFFFAF6F0),
-          appBar: HeritageNavBar(currentRoute: '/clan-invites'),
-          bottomNavigationBar: HeritageBottomNavBar(
-            currentRoute: '/clan-invites',
-          ),
-          body: SizedBox.shrink(),
-        ),
+        builder: (context, state) {
+          final branchId = state.uri.queryParameters['branchId'];
+          return ClanInvitesScreen(initialBranchId: branchId);
+        },
       ),
 
       // 15. Nhật Ký Thao Tác Hệ Thống & So Sánh Diff (Audit Log Viewer)
