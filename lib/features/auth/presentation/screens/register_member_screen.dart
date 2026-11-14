@@ -277,6 +277,10 @@ class _RegisterMemberScreenState extends ConsumerState<RegisterMemberScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _buildHeaderCard(),
+                    if (_invitePreview?.inviteType == 'PositionLinkCode') ...[
+                      const SizedBox(height: 12),
+                      _buildPositionLinkInstantBanner(),
+                    ],
                     if (_isInitLoading) ...[
                       const SizedBox(height: 8),
                       const LinearProgressIndicator(
@@ -422,6 +426,79 @@ class _RegisterMemberScreenState extends ConsumerState<RegisterMemberScreen> {
             style: TextStyle(
               color: Color(0xFFE5D5D0),
               fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPositionLinkInstantBanner() {
+    final code = _inviteCodeController.text.trim();
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3FBF5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF006E2A).withValues(alpha: 0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF006E2A).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.verified,
+                  color: Color(0xFF006E2A),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'Mã liên kết vị trí cá nhân đã xác thực',
+                  style: TextStyle(
+                    color: Color(0xFF006E2A),
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Mã này đã được gán sẵn tên và vị trí phả hệ. Bạn có thể kích hoạt tài khoản trực tiếp ngay lập tức mà không cần gửi đơn chờ Trưởng tộc phê duyệt.',
+            style: TextStyle(
+              color: Color(0xFF2C241E),
+              fontSize: 13,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                context.go('/claim-position?code=$code');
+              },
+              icon: const Icon(Icons.bolt, size: 18),
+              label: const Text('Kích hoạt vị trí ngay tức thì'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF006E2A),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
             ),
           ),
         ],

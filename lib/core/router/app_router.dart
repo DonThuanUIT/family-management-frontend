@@ -61,11 +61,46 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const WelcomeScreen(),
       ),
 
-      // 3. Màn hình Đăng Nhập (Login)
+      // 3. Màn hình Đăng Nhập (Login) & Liên kết nhanh mã vị trí (US-19)
       GoRoute(
         path: '/login',
         name: 'login',
-        builder: (context, state) => const LoginScreen(),
+        builder: (context, state) {
+          final code = state.uri.queryParameters['code'] ??
+              state.uri.queryParameters['inviteCode'];
+          final tabStr = state.uri.queryParameters['tab'];
+          final tab = tabStr != null ? int.tryParse(tabStr) : null;
+          return LoginScreen(
+            initialInviteCode: code,
+            initialTabIndex: tab ?? (code != null ? 0 : 1),
+          );
+        },
+      ),
+
+      // Route nhanh cho việc nhận link vị trí / nhập mã liên kết nhanh (US-19)
+      GoRoute(
+        path: '/claim-position',
+        name: 'claim-position',
+        builder: (context, state) {
+          final code = state.uri.queryParameters['code'] ??
+              state.uri.queryParameters['inviteCode'];
+          return LoginScreen(
+            initialInviteCode: code,
+            initialTabIndex: 0,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/join',
+        name: 'join',
+        builder: (context, state) {
+          final code = state.uri.queryParameters['code'] ??
+              state.uri.queryParameters['inviteCode'];
+          return LoginScreen(
+            initialInviteCode: code,
+            initialTabIndex: 0,
+          );
+        },
       ),
 
       // 4. Màn hình Đăng Ký Trưởng Tộc (Register Clan Creator)

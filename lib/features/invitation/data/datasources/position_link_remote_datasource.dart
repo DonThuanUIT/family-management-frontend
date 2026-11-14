@@ -17,6 +17,13 @@ abstract class PositionLinkRemoteDataSource {
   });
 
   Future<List<PositionLinkItemModel>> getIssuedPositionLinks();
+
+  Future<PositionLinkPreviewDto> getPositionLinkPreview(String inviteCode);
+
+  Future<ClaimPositionResponseDto> claimPosition({
+    required String inviteCode,
+    required ClaimPositionRequestDto request,
+  });
 }
 
 class PositionLinkRemoteDataSourceImpl implements PositionLinkRemoteDataSource {
@@ -132,5 +139,75 @@ class PositionLinkRemoteDataSourceImpl implements PositionLinkRemoteDataSource {
         shareableUrl: 'https://familyfund.app/join?clan=LE&code=CHI3-DOI4-0199',
       ),
     ];
+  }
+
+  @override
+  Future<PositionLinkPreviewDto> getPositionLinkPreview(String inviteCode) async {
+    try {
+      final cleanCode = inviteCode.trim();
+      final response = await _dio.get('position-links/$cleanCode');
+      final data = response.data;
+      if (data != null) {
+        final payload = (data is Map && data['data'] != null)
+            ? data['data'] as Map<String, dynamic>
+            : data as Map<String, dynamic>;
+        return PositionLinkPreviewDto.fromJson(payload);
+      }
+      throw Exception('Không nhận được thông tin vị trí phả hệ');
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      String defaultMsg = 'Lỗi khi tra cứu mã liên kết';
+      if (status == 404) {
+        defaultMsg = 'Mã liên kết không tồn tại hoặc không phải mã vị trí hợp lệ';
+      } else if (status == 400) {
+        defaultMsg = 'Mã liên kết đã hết hạn hoặc đã được sử dụng';
+      }
+      final msg = e.response?.data?['message'] ??
+          e.response?.data?['error'] ??
+          defaultMsg;
+      throw Exception(msg);
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  @override
+  Future<ClaimPositionResponseDto> claimPosition({
+    required String inviteCode,
+    required ClaimPositionRequestDto request,
+  }) async {
+    try {
+      final cleanCode = inviteCode.trim();
+      final response = await _dio.post(
+        'position-links/$cleanCode/claim',
+        data: request.toJson(),
+      );
+      final data = response.data;
+      if (data != null) {
+        final payload = (data is Map && data['data'] != null)
+            ? data['data'] as Map<String, dynamic>
+            : data as Map<String, dynamic>;
+        return ClaimPositionResponseDto.fromJson(payload);
+      }
+      throw Exception('Không nhận được dữ liệu phản hồi sau khi nhận vị trí');
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      String defaultMsg = 'Lỗi khi xác nhận gia nhập vị trí';
+      if (status == 400) {
+        defaultMsg = 'Mã liên kết không hợp lệ, đã hết hạn hoặc sai mật khẩu';
+      } else if (status == 403) {
+        defaultMsg = 'Tài khoản đang bị tạm khóa hoặc vô hiệu hóa';
+      } else if (status == 404) {
+        defaultMsg = 'Không tìm thấy vị trí phả hệ tương ứng với mã này';
+      } else if (status == 409) {
+        defaultMsg = 'Tài khoản đã liên kết hồ sơ khác hoặc vị trí đã có người nhận';
+      }
+      final msg = e.response?.data?['message'] ??
+          e.response?.data?['error'] ??
+          defaultMsg;
+      throw Exception(msg);
+    } catch (e) {
+      throw Exception(e.toString());
+    }
   }
 }

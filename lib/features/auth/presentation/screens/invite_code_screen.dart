@@ -2,21 +2,36 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../invitation/data/models/position_link_models.dart';
+import '../../../invitation/data/repositories/position_link_repository_impl.dart';
+import '../../../invitation/presentation/widgets/position_link_quick_claim_card.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
 import '../../data/models/auth_models.dart';
 
 class InviteCodeScreen extends ConsumerStatefulWidget {
-  const InviteCodeScreen({super.key});
+  final String? initialCode;
+
+  const InviteCodeScreen({super.key, this.initialCode});
 
   @override
   ConsumerState<InviteCodeScreen> createState() => _InviteCodeScreenState();
 }
 
 class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
-  final _codeController = TextEditingController();
+  late final TextEditingController _codeController;
   bool _isLoading = false;
   String? _errorMessage;
   InviteCodePreviewDto? _previewData;
+  PositionLinkPreviewDto? _positionLinkPreview;
+
+  @override
+  void initState() {
+    super.initState();
+    _codeController = TextEditingController(text: widget.initialCode ?? '');
+    if (_codeController.text.trim().isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _checkInviteCode());
+    }
+  }
 
   @override
   void dispose() {
@@ -35,9 +50,26 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
       _isLoading = true;
       _errorMessage = null;
       _previewData = null;
+      _positionLinkPreview = null;
     });
 
     try {
+      // 1. Check if this is a single-use PositionLinkCode (US-19)
+      try {
+        final positionRepo = ref.read(positionLinkRepositoryProvider);
+        final posPreview = await positionRepo.getPositionLinkPreview(code);
+        if (mounted) {
+          setState(() {
+            _positionLinkPreview = posPreview;
+            _isLoading = false;
+          });
+          return;
+        }
+      } catch (_) {
+        // Fall back to general clan invite lookup
+      }
+
+      // 2. Check GeneralClanInvite (US-17)
       final dataSource = ref.read(authRemoteDataSourceProvider);
       final preview = await dataSource.previewInvite(code);
       if (mounted) {
@@ -286,8 +318,54 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                     ),
                   ),
 
-                  // Preview Card (Khi đã có thông tin mã mời)
-                  if (_previewData != null) ...[
+                  // 1. Position Link Quick Claim Card (US-19: Kích hoạt vị trí ngay không cần duyệt)
+                  if (_positionLinkPreview != null) ...[
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: const Color(0xFF006E2A),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF006E2A).withAlpha(20),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.verified,
+                                  color: Color(0xFF006E2A), size: 22),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Mã Vị Trí Hợp Lệ: Khớp ${_positionLinkPreview!.branchName}',
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF006E2A),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Divider(height: 20),
+                          PositionLinkQuickClaimCard(
+                            initialCode: _positionLinkPreview!.inviteCode,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else if (_previewData != null) ...[
                     const SizedBox(height: 20),
                     Container(
                       padding: const EdgeInsets.all(18),
@@ -355,11 +433,8 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                               onPressed: () {
                                 if (_previewData!.inviteType ==
                                     'PositionLinkCode') {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                          'Mã liên kết vị trí cá nhân: Vui lòng chuyển sang tính năng liên kết thành viên.'),
-                                    ),
+                                  context.push(
+                                    '/claim-position?code=${_previewData!.inviteCode}',
                                   );
                                   return;
                                 }
