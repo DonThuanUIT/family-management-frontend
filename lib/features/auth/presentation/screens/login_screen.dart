@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/auth_state_provider.dart';
+import '../widgets/heritage_auth_split_shell.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -96,17 +97,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ],
       ),
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
+        child: HeritageAuthSplitShell(
+          maxMobileWidth: 440,
+          badgeLabel: 'CỔNG ĐĂNG NHẬP GIA PHẢ',
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
                     // Small logo header
                     Center(
                       child: Container(
@@ -308,6 +308,80 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: 16),
 
+                    // Quick Demo Account Picker (V6 seed accounts)
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFAF6F0),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE8DFD8)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Chọn nhanh tài khoản kiểm thử (Mật khẩu chung):',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF6B584E),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: kDemoAccounts.map((account) {
+                              final isSelected =
+                                  _identifierController.text.trim() ==
+                                      account.identifier;
+                              return ActionChip(
+                                avatar: Icon(
+                                  account.roles.contains('ROLE_CLAN_HEAD')
+                                      ? Icons.workspace_premium_outlined
+                                      : account.roles
+                                              .contains('ROLE_BRANCH_HEAD')
+                                          ? Icons.account_tree_outlined
+                                          : Icons.person_outline,
+                                  size: 16,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : const Color(0xFF7A1518),
+                                ),
+                                label: Text(
+                                  account.roleName,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : const Color(0xFF2B1810),
+                                  ),
+                                ),
+                                backgroundColor: isSelected
+                                    ? const Color(0xFF7A1518)
+                                    : Colors.white,
+                                side: BorderSide(
+                                  color: isSelected
+                                      ? const Color(0xFF7A1518)
+                                      : const Color(0xFFD6C8BF),
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _identifierController.text =
+                                        account.identifier;
+                                    _passwordController.text = account.password;
+                                  });
+                                },
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
                     // Biometrics Mockup Option
                     OutlinedButton.icon(
                       onPressed: () {
@@ -347,15 +421,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             color: const Color(0xFFD6C8BF).withValues(alpha: 0.8),
                           ),
                         ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 12),
-                          child: Text(
-                            'CHƯA CÓ TÀI KHOẢN GIA TỘC?',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.8,
-                              color: Color(0xFF8C7A70),
+                        const Flexible(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 8),
+                            child: Text(
+                              'CHƯA CÓ TÀI KHOẢN GIA TỘC?',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
+                                color: Color(0xFF8C7A70),
+                              ),
                             ),
                           ),
                         ),
@@ -442,8 +520,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ],
                 ),
               ),
-            ),
-          ),
         ),
       ),
     );
