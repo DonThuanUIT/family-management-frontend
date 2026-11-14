@@ -198,6 +198,9 @@ class FakeContributionRepository implements ContributionRepository {
       String receiptNumber) async {
     throw UnimplementedError();
   }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 void main() {

@@ -274,6 +274,21 @@ class EventCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     IconButton(
+                      tooltip: 'Bảng điều khiển ngân sách (US-37)',
+                      onPressed: () =>
+                          context.push('/events/${event.eventId}/budget'),
+                      icon: const Icon(Icons.account_balance_wallet_outlined, size: 18),
+                      color: const Color(0xFF8B1E1E),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(color: Color(0xFFD4C8BE)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
                       tooltip: 'Công việc chuẩn bị (US-07)',
                       onPressed: () =>
                           context.push('/events/${event.eventId}/tasks'),

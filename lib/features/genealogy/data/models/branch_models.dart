@@ -157,6 +157,7 @@ class BranchTreeNodeDto {
 
 /// Model thông tin thành viên hiển thị trong bảng sidebar chi nhánh
 class BranchMemberItem {
+  final String? avatarUrl;
   final String memberId;
   final String fullName;
   final int generation;
@@ -165,8 +166,20 @@ class BranchMemberItem {
   final String gender;
   final bool isActivated;
   final String? phone;
+  final String? email;
+  final bool isDateOfBirthRestricted;
+  final bool isPhoneRestricted;
+  final bool isEmailRestricted;
+  final String status;
+  final DateTime? dateOfBirth;
+  final DateTime? deathDate;
+  final String? deathDateLunar;
+  final String? burialPlace;
+
+  bool get isDeceased => status.toLowerCase() == 'deceased';
 
   const BranchMemberItem({
+    this.avatarUrl,
     required this.memberId,
     required this.fullName,
     required this.generation,
@@ -175,6 +188,15 @@ class BranchMemberItem {
     this.gender = 'male',
     this.isActivated = true,
     this.phone,
+    this.email,
+    this.isDateOfBirthRestricted = false,
+    this.isPhoneRestricted = false,
+    this.isEmailRestricted = false,
+    this.status = 'Living',
+    this.dateOfBirth,
+    this.deathDate,
+    this.deathDateLunar,
+    this.burialPlace,
   });
 
   factory BranchMemberItem.fromJson(Map<String, dynamic> json) {
@@ -183,8 +205,18 @@ class BranchMemberItem {
     final deathLunar = json['deathDateLunar']?.toString();
     final isLiving = status != 'Deceased';
 
+    final fieldVisibility = json['fieldVisibility'] as Map<String, dynamic>?;
+    final isDobRestricted = fieldVisibility != null &&
+        fieldVisibility['dateOfBirth']?.toString() == 'RESTRICTED';
+    final isPhoneRestricted = fieldVisibility != null &&
+        fieldVisibility['phoneNumber']?.toString() == 'RESTRICTED';
+    final isEmailRestricted = fieldVisibility != null &&
+        fieldVisibility['email']?.toString() == 'RESTRICTED';
+
     String? birthDeath;
-    if (dob != null && dob.isNotEmpty) {
+    if (isDobRestricted) {
+      birthDeath = 'Ngày sinh riêng tư';
+    } else if (dob != null && dob.isNotEmpty) {
       final year = dob.split('-').first;
       if (isLiving) {
         birthDeath = 'Sinh $year';
@@ -195,8 +227,14 @@ class BranchMemberItem {
 
     final gen = (json['generation'] as num?)?.toInt() ?? 1;
     final isPlaceholder = json['isPlaceholder'] == true;
+    final phone = json['phoneNumber']?.toString();
+    final email = json['email']?.toString();
+    final deathDate = json['deathDate'] != null ? DateTime.tryParse(json['deathDate'].toString()) : null;
+    final dateOfBirth = dob != null ? DateTime.tryParse(dob) : null;
+    final burialPlace = json['burialPlace']?.toString();
 
     return BranchMemberItem(
+      avatarUrl: json['avatarUrl'] as String?,
       memberId: json['memberId']?.toString() ?? '',
       fullName: json['fullName']?.toString() ?? '',
       generation: gen,
@@ -204,7 +242,16 @@ class BranchMemberItem {
       roleInBranch: gen == 1 ? 'Khởi Tổ / Trưởng Tộc' : 'Đời $gen',
       gender: (json['gender']?.toString().toLowerCase() == 'female') ? 'female' : 'male',
       isActivated: !isPlaceholder,
-      phone: null,
+      phone: phone,
+      email: email,
+      isDateOfBirthRestricted: isDobRestricted,
+      isPhoneRestricted: isPhoneRestricted,
+      isEmailRestricted: isEmailRestricted,
+      status: status ?? 'Living',
+      dateOfBirth: dateOfBirth,
+      deathDate: deathDate,
+      deathDateLunar: deathLunar,
+      burialPlace: burialPlace,
     );
   }
 }
@@ -310,5 +357,30 @@ class BranchUiDetail {
       members: members,
       isRoot: isRoot,
     );
+  }
+}
+
+/// Payload yêu cầu cập nhật tình trạng sinh/tử (US-27)
+class UpdateLifeStatusRequestDto {
+  final String status;
+  final DateTime? deathDate;
+  final String? burialPlace;
+
+  const UpdateLifeStatusRequestDto({
+    required this.status,
+    this.deathDate,
+    this.burialPlace,
+  });
+
+  bool get isDeceased => status.toLowerCase() == 'deceased';
+
+  Map<String, dynamic> toJson() {
+    return {
+      'status': status,
+      'deathDate': deathDate != null
+          ? '${deathDate!.year.toString().padLeft(4, '0')}-${deathDate!.month.toString().padLeft(2, '0')}-${deathDate!.day.toString().padLeft(2, '0')}'
+          : null,
+      'burialPlace': burialPlace,
+    };
   }
 }

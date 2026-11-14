@@ -22,9 +22,11 @@ class _EditEventSheetState extends ConsumerState<EditEventSheet> {
   late final TextEditingController _lunarController;
   late final TextEditingController _budgetController;
   late final TextEditingController _descController;
+  late final TextEditingController _maxCapacityController;
 
   late DateTime _selectedDate;
   late TimeOfDay _selectedTime;
+  DateTime? _registrationDeadline;
   bool _isSubmitting = false;
 
   @override
@@ -38,9 +40,12 @@ class _EditEventSheetState extends ConsumerState<EditEventSheet> {
         text: widget.event.estimatedBudget.toStringAsFixed(0));
     _descController =
         TextEditingController(text: widget.event.description ?? '');
+    _maxCapacityController = TextEditingController(
+        text: widget.event.maxCapacity?.toString() ?? '');
 
     _selectedDate = widget.event.eventDatetime;
     _selectedTime = TimeOfDay.fromDateTime(widget.event.eventDatetime);
+    _registrationDeadline = widget.event.registrationDeadline;
   }
 
   @override
@@ -50,6 +55,7 @@ class _EditEventSheetState extends ConsumerState<EditEventSheet> {
     _lunarController.dispose();
     _budgetController.dispose();
     _descController.dispose();
+    _maxCapacityController.dispose();
     super.dispose();
   }
 
@@ -75,6 +81,34 @@ class _EditEventSheetState extends ConsumerState<EditEventSheet> {
     }
   }
 
+  Future<void> _pickDeadline() async {
+    final now = DateTime.now();
+    final initialDate = _registrationDeadline ?? now.add(const Duration(days: 7));
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(2020),
+      lastDate: now.add(const Duration(days: 365 * 2)),
+    );
+    if (pickedDate == null || !mounted) return;
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: _registrationDeadline != null
+          ? TimeOfDay.fromDateTime(_registrationDeadline!)
+          : const TimeOfDay(hour: 23, minute: 59),
+    );
+    if (pickedTime == null || !mounted) return;
+    setState(() {
+      _registrationDeadline = DateTime(
+        pickedDate.year,
+        pickedDate.month,
+        pickedDate.day,
+        pickedTime.hour,
+        pickedTime.minute,
+      );
+    });
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -93,6 +127,10 @@ class _EditEventSheetState extends ConsumerState<EditEventSheet> {
         ) ??
         0.0;
 
+    final maxCapacityText = _maxCapacityController.text.trim();
+    final maxCapacity =
+        maxCapacityText.isNotEmpty ? int.tryParse(maxCapacityText) : null;
+
     final request = UpdateEventRequestDto(
       eventName: _nameController.text.trim(),
       description: _descController.text.trim(),
@@ -102,6 +140,8 @@ class _EditEventSheetState extends ConsumerState<EditEventSheet> {
           : null,
       location: _locationController.text.trim(),
       estimatedBudget: budget,
+      registrationDeadline: _registrationDeadline,
+      maxCapacity: maxCapacity,
     );
 
     final success = await ref
@@ -278,6 +318,67 @@ class _EditEventSheetState extends ConsumerState<EditEventSheet> {
                   labelText: 'Dự Toán Ngân Sách (VND)',
                   prefixIcon: Icon(Icons.payments_outlined, size: 20),
                 ),
+              ),
+              const SizedBox(height: 14),
+
+              Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: InkWell(
+                      key: const Key('edit_event_deadline_picker'),
+                      onTap: _pickDeadline,
+                      borderRadius: BorderRadius.circular(10),
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: 'Hạn Chót Đăng Ký',
+                          prefixIcon: const Icon(Icons.timer_outlined, size: 18),
+                          suffixIcon: _registrationDeadline != null
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear, size: 16),
+                                  onPressed: () => setState(
+                                      () => _registrationDeadline = null),
+                                )
+                              : null,
+                        ),
+                        child: Text(
+                          _registrationDeadline != null
+                              ? DateFormat('dd/MM/yyyy HH:mm')
+                                  .format(_registrationDeadline!)
+                              : 'Không giới hạn',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            color: _registrationDeadline != null
+                                ? const Color(0xFF2B1810)
+                                : const Color(0xFF8A7A70),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 2,
+                    child: TextFormField(
+                      key: const Key('edit_event_max_capacity_input'),
+                      controller: _maxCapacityController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Sức Chứa Tối Đa',
+                        hintText: 'VD: 150',
+                        prefixIcon: Icon(Icons.groups_outlined, size: 18),
+                      ),
+                      validator: (val) {
+                        if (val == null || val.trim().isEmpty) return null;
+                        final parsed = int.tryParse(val.trim());
+                        if (parsed == null || parsed < 1) {
+                          return 'Phải >= 1';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 14),
 

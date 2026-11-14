@@ -3,6 +3,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
+import '../../data/models/branch_recursive_contribution_models.dart';
 import '../../data/models/contribution_models.dart';
 
 /// Dịch vụ xuất file PDF Sổ Cái và Biên Lai Điện Tử chuẩn Di Sản & In Ấn.
@@ -454,6 +455,327 @@ class ContributionPdfService {
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdf.save(),
       name: 'Phieu_Thu_$receiptNumber.pdf',
+    );
+  }
+
+  /// Xuất file PDF Trích Lục Sổ Vàng Công Đức Nhánh Chi (kèm mộc đỏ gia tộc)
+  static Future<void> exportBranchGoldBookPdf({
+    required BranchRecursiveContributionDto summary,
+    String? clanName,
+  }) async {
+    final pdf = pw.Document();
+    final font = await PdfGoogleFonts.robotoRegular();
+    final boldFont = await PdfGoogleFonts.robotoBold();
+    final italicFont = await PdfGoogleFonts.robotoItalic();
+
+    final cName = clanName ?? 'DÒNG HỌ NGUYỄN TỘC (ĐẠI TÔN)';
+    final eventText = summary.eventName != null && summary.eventName!.isNotEmpty
+        ? summary.eventName!
+        : (summary.year != null ? 'Niên khóa ${summary.year}' : 'Toàn bộ thời gian');
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(36),
+        theme: pw.ThemeData.withFont(
+          base: font,
+          bold: boldFont,
+          italic: italicFont,
+        ),
+        build: (context) => pw.Container(
+          padding: const pw.EdgeInsets.all(20),
+          decoration: pw.BoxDecoration(
+            border: pw.Border.all(color: PdfColors.brown900, width: 2.5),
+          ),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              // Header Quốc hiệu & Dòng tộc
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(cName,
+                          style: pw.TextStyle(
+                              font: boldFont,
+                              fontSize: 10,
+                              color: PdfColors.brown900)),
+                      pw.Text('BAN KHÁNH TIẾT & TỪ ĐƯỜNG TỔ',
+                          style: pw.TextStyle(font: boldFont, fontSize: 8.5)),
+                      pw.Text('Sổ Vàng Công Đức Lưu Niên',
+                          style: pw.TextStyle(
+                              font: italicFont,
+                              fontSize: 8,
+                              color: PdfColors.grey700)),
+                    ],
+                  ),
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.center,
+                    children: [
+                      pw.Text('CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM',
+                          style: pw.TextStyle(font: boldFont, fontSize: 8.5)),
+                      pw.Text('Độc lập - Tự do - Hạnh phúc',
+                          style: pw.TextStyle(font: italicFont, fontSize: 8)),
+                      pw.Container(
+                          width: 80, height: 0.5, color: PdfColors.grey700),
+                    ],
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 16),
+
+              // Tiêu đề
+              pw.Center(
+                child: pw.Column(
+                  children: [
+                    pw.Text('GIẤY TRÍCH LỤC SỔ VÀNG CÔNG ĐỨC',
+                        style: pw.TextStyle(
+                            font: boldFont,
+                            fontSize: 15,
+                            color: PdfColors.brown900)),
+                    pw.SizedBox(height: 3),
+                    pw.Text(
+                      'NHÁNH: ${summary.branchName.toUpperCase()} (ĐỜI ${summary.generationLevel ?? '?'})',
+                      style: pw.TextStyle(
+                          font: boldFont,
+                          fontSize: 11,
+                          color: PdfColors.amber900),
+                    ),
+                    pw.SizedBox(height: 2),
+                    pw.Text('Thuộc sự kiện: $eventText',
+                        style: pw.TextStyle(font: italicFont, fontSize: 9)),
+                  ],
+                ),
+              ),
+              pw.SizedBox(height: 16),
+
+              // Bảng thông tin chính
+              pw.Container(
+                padding: const pw.EdgeInsets.all(10),
+                decoration: pw.BoxDecoration(
+                  color: PdfColors.grey100,
+                  borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
+                  border: pw.Border.all(color: PdfColors.grey300),
+                ),
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text('Người đại diện chi nhánh:',
+                            style: pw.TextStyle(font: boldFont, fontSize: 9.5)),
+                        pw.Text(summary.representativeName ?? 'Chưa chỉ định',
+                            style: pw.TextStyle(font: boldFont, fontSize: 9.5)),
+                      ],
+                    ),
+                    pw.SizedBox(height: 4),
+                    pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text('Tổng số nhân khẩu nhánh & con cháu:',
+                            style: pw.TextStyle(fontSize: 9)),
+                        pw.Text(
+                            '${summary.totalRecursiveMemberCount} người (${summary.totalRecursiveContributingMemberCount} người đã dâng cúng)',
+                            style: pw.TextStyle(fontSize: 9)),
+                      ],
+                    ),
+                    pw.SizedBox(height: 4),
+                    pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text('TỔNG MỨC ĐÓNG GÓP ĐỆ QUY (∑):',
+                            style: pw.TextStyle(
+                                font: boldFont,
+                                fontSize: 11,
+                                color: PdfColors.brown900)),
+                        pw.Text(
+                            currencyFormatter.format(summary.totalRecursiveAmount),
+                            style: pw.TextStyle(
+                                font: boldFont,
+                                fontSize: 13,
+                                color: PdfColors.brown900)),
+                      ],
+                    ),
+                    if (summary.totalRecursiveAmountInWords != null &&
+                        summary.totalRecursiveAmountInWords!.isNotEmpty) ...[
+                      pw.SizedBox(height: 2),
+                      pw.Text(
+                          'Bằng chữ: ${summary.totalRecursiveAmountInWords}',
+                          style: pw.TextStyle(
+                              font: italicFont,
+                              fontSize: 8.5,
+                              color: PdfColors.brown800)),
+                    ],
+                  ],
+                ),
+              ),
+              pw.SizedBox(height: 14),
+
+              // Bảng phân rã cơ cấu
+              pw.Text('CƠ CẤU ĐỆ QUY CÔNG ĐỨC CHI TIẾT:',
+                  style: pw.TextStyle(font: boldFont, fontSize: 9.5)),
+              pw.SizedBox(height: 6),
+              pw.Table(
+                border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
+                children: [
+                  pw.TableRow(
+                    decoration: const pw.BoxDecoration(color: PdfColors.grey200),
+                    children: [
+                      pw.Padding(
+                          padding: const pw.EdgeInsets.all(5),
+                          child: pw.Text('Hạng Mục Thành Phần',
+                              style: pw.TextStyle(font: boldFont, fontSize: 8.5))),
+                      pw.Padding(
+                          padding: const pw.EdgeInsets.all(5),
+                          child: pw.Text('Chi Tiết Quy Đổi',
+                              style: pw.TextStyle(font: boldFont, fontSize: 8.5))),
+                      pw.Padding(
+                          padding: const pw.EdgeInsets.all(5),
+                          child: pw.Text('Số Tiền (VNĐ)',
+                              textAlign: pw.TextAlign.right,
+                              style: pw.TextStyle(font: boldFont, fontSize: 8.5))),
+                      pw.Padding(
+                          padding: const pw.EdgeInsets.all(5),
+                          child: pw.Text('Tỷ Lệ',
+                              textAlign: pw.TextAlign.center,
+                              style: pw.TextStyle(font: boldFont, fontSize: 8.5))),
+                    ],
+                  ),
+                  // Dòng tự thân
+                  pw.TableRow(
+                    children: [
+                      pw.Padding(
+                          padding: const pw.EdgeInsets.all(5),
+                          child: pw.Text(
+                              'Đóng góp trực tiếp (Tự thân chi)\n${summary.directMemberCount} nhân khẩu',
+                              style: pw.TextStyle(font: boldFont, fontSize: 8))),
+                      pw.Padding(
+                          padding: const pw.EdgeInsets.all(5),
+                          child: pw.Text(
+                              'Tiền mặt: ${currencyFormatter.format(summary.directCashAmount)}\nHiện vật: ${currencyFormatter.format(summary.directInKindAmount)}',
+                              style: pw.TextStyle(fontSize: 7.5))),
+                      pw.Padding(
+                          padding: const pw.EdgeInsets.all(5),
+                          child: pw.Text(
+                              currencyFormatter.format(summary.directTotalAmount),
+                              textAlign: pw.TextAlign.right,
+                              style: pw.TextStyle(font: boldFont, fontSize: 8.5))),
+                      pw.Padding(
+                          padding: const pw.EdgeInsets.all(5),
+                          child: pw.Text(
+                              '${summary.directPercentage.toStringAsFixed(1)}%',
+                              textAlign: pw.TextAlign.center,
+                              style: pw.TextStyle(fontSize: 8))),
+                    ],
+                  ),
+                  // Các nhánh con
+                  ...summary.childBranches.map((child) => pw.TableRow(
+                        children: [
+                          pw.Padding(
+                              padding: const pw.EdgeInsets.all(5),
+                              child: pw.Text(
+                                  '${child.branchName} (Đời ${child.generationLevel ?? '?'})\nĐại diện: ${child.representativeName ?? '—'}',
+                                  style: pw.TextStyle(fontSize: 8))),
+                          pw.Padding(
+                              padding: const pw.EdgeInsets.all(5),
+                              child: pw.Text(
+                                  'Tự thân: ${currencyFormatter.format(child.directTotalAmount)}\nCộng dồn con: ${currencyFormatter.format(child.descendantsTotalAmount)}',
+                                  style: pw.TextStyle(fontSize: 7.5))),
+                          pw.Padding(
+                              padding: const pw.EdgeInsets.all(5),
+                              child: pw.Text(
+                                  currencyFormatter.format(child.totalRecursiveAmount),
+                                  textAlign: pw.TextAlign.right,
+                                  style: pw.TextStyle(font: boldFont, fontSize: 8.5))),
+                          pw.Padding(
+                              padding: const pw.EdgeInsets.all(5),
+                              child: pw.Text(
+                                  summary.totalRecursiveAmount > 0
+                                      ? '${((child.totalRecursiveAmount / summary.totalRecursiveAmount) * 100).toStringAsFixed(1)}%'
+                                      : '0.0%',
+                                  textAlign: pw.TextAlign.center,
+                                  style: pw.TextStyle(fontSize: 8))),
+                        ],
+                      )),
+                ],
+              ),
+              pw.Spacer(),
+
+              // Chữ ký & Mộc đỏ gia tộc
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.center,
+                    children: [
+                      pw.Text('ĐẠI DIỆN CHI NHÁNH',
+                          style: pw.TextStyle(font: boldFont, fontSize: 9)),
+                      pw.Text('(Ký & ghi rõ họ tên)',
+                          style: pw.TextStyle(font: italicFont, fontSize: 7.5)),
+                      pw.SizedBox(height: 35),
+                      pw.Text(summary.representativeName ?? summary.branchName,
+                          style: pw.TextStyle(font: boldFont, fontSize: 8.5)),
+                    ],
+                  ),
+                  pw.Stack(
+                    alignment: pw.Alignment.center,
+                    children: [
+                      pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.center,
+                        children: [
+                          pw.Text('TM. HỘI ĐỒNG GIA TỘC',
+                              style: pw.TextStyle(font: boldFont, fontSize: 9)),
+                          pw.Text('TRƯỞNG TỘC & THỦ QUỸ',
+                              style: pw.TextStyle(font: boldFont, fontSize: 8.5)),
+                          pw.SizedBox(height: 35),
+                          pw.Text('Ban Khánh Tiết Từ Đường',
+                              style: pw.TextStyle(font: boldFont, fontSize: 8.5)),
+                        ],
+                      ),
+                      // Con dấu tròn đỏ
+                      pw.Container(
+                        width: 65,
+                        height: 65,
+                        decoration: pw.BoxDecoration(
+                          shape: pw.BoxShape.circle,
+                          border: pw.Border.all(color: PdfColors.red800, width: 1.5),
+                        ),
+                        child: pw.Center(
+                          child: pw.Text(
+                            'NGUYỄN TỘC\nĐẠI TÔN\n★ DẤU ĐỎ ★',
+                            textAlign: pw.TextAlign.center,
+                            style: pw.TextStyle(
+                                font: boldFont,
+                                fontSize: 6.5,
+                                color: PdfColors.red800),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 10),
+              pw.Center(
+                child: pw.Text(
+                  'Văn bản trích lục từ Hệ thống Quản trị Gia phả & Sổ vàng công đức dòng họ',
+                  style: pw.TextStyle(
+                      font: italicFont, fontSize: 7.5, color: PdfColors.grey600),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => pdf.save(),
+      name: 'Trich_Luc_So_Vang_${summary.branchId}.pdf',
     );
   }
 }

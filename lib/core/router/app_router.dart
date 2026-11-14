@@ -7,6 +7,7 @@ import '../../features/auth/presentation/screens/auth_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/invite_code_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/auth/presentation/screens/my_profile_screen.dart';
 import '../../features/auth/presentation/screens/pending_approval_screen.dart';
 import '../../features/auth/presentation/screens/register_creator_screen.dart';
 import '../../features/auth/presentation/screens/register_member_screen.dart';
@@ -15,10 +16,15 @@ import '../../features/auth/presentation/screens/welcome_screen.dart';
 import '../../features/audit/presentation/screens/system_audit_log_screen.dart';
 import '../../features/contribution/presentation/screens/clan_asset_inventory_screen.dart';
 import '../../features/contribution/presentation/screens/receive_contribution_screen.dart';
+import '../../features/event/presentation/screens/event_budget_dashboard_screen.dart';
 import '../../features/event/presentation/screens/event_list_screen.dart';
+import '../../features/event/presentation/screens/event_logistics_dashboard_screen.dart';
 import '../../features/genealogy/presentation/screens/edit_root_branch_screen.dart';
+import '../../features/genealogy/presentation/screens/member_import_screen.dart';
+import '../../features/genealogy/presentation/screens/privacy_settings_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/invitation/presentation/screens/clan_invites_screen.dart';
+import '../../features/member_media/presentation/screens/member_detail_screen.dart';
 import '../../features/role/presentation/screens/role_management_screen.dart';
 import '../../features/task/presentation/screens/event_task_list_screen.dart';
 
@@ -35,6 +41,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     navigatorKey: _rootNavigatorKey,
     initialLocation: initialLocation,
     routes: [
+      GoRoute(
+        path: '/members/:memberId',
+        name: 'member-detail',
+        builder: (context, state) =>
+            MemberDetailScreen(memberId: state.pathParameters['memberId']!),
+      ),
       // 1. Màn hình Khởi động (Splash)
       GoRoute(
         path: '/',
@@ -140,6 +152,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               return EventTaskListScreen(eventId: eventId);
             },
           ),
+          // 10.2. Dashboard Hậu Cần Sự Kiện cho BTC (US-42)
+          GoRoute(
+            path: ':eventId/logistics',
+            name: 'event-logistics',
+            builder: (context, state) {
+              final eventId = state.pathParameters['eventId'] ?? '';
+              return EventLogisticsDashboardScreen(eventId: eventId);
+            },
+          ),
+          // 10.3. Bảng Điều Khiển Ngân Sách Sự Kiện (US-37)
+          GoRoute(
+            path: ':eventId/budget',
+            name: 'event-budget',
+            builder: (context, state) {
+              final eventId = state.pathParameters['eventId'] ?? '';
+              return EventBudgetDashboardScreen(eventId: eventId);
+            },
+          ),
         ],
       ),
 
@@ -179,6 +209,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/audit-logs',
         name: 'audit-logs',
         builder: (context, state) => const SystemAuditLogScreen(),
+      ),
+
+      // 16. Cài đặt Quyền riêng tư Cá nhân (US-25)
+      GoRoute(
+        path: '/privacy-settings',
+        name: 'privacy-settings',
+        builder: (context, state) => const PrivacySettingsScreen(),
+      ),
+
+      // 17. Hồ sơ cá nhân và đổi mật khẩu (US-22)
+      GoRoute(
+        path: '/profile',
+        name: 'profile',
+        builder: (context, state) => const MyProfileScreen(),
+      ),
+
+      // 18. Nhập hàng loạt thành viên từ file Excel/CSV (US-31)
+      GoRoute(
+        path: '/members/import',
+        name: 'members-import',
+        builder: (context, state) => const MemberImportScreen(),
       ),
     ],
   );

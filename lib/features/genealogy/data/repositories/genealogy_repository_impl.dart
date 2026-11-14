@@ -1,9 +1,13 @@
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/family_branch.dart';
 import '../../domain/repositories/genealogy_repository.dart';
 import '../datasources/genealogy_remote_datasource.dart';
 import '../models/branch_models.dart';
+import '../models/member_import_models.dart';
+import '../models/privacy_setting_models.dart';
 
 class GenealogyRepositoryImpl implements GenealogyRepository {
   final GenealogyRemoteDataSource _remoteDataSource;
@@ -35,6 +39,51 @@ class GenealogyRepositoryImpl implements GenealogyRepository {
   @override
   Future<List<BranchMemberItem>> getClanMembers() {
     return _remoteDataSource.getClanMembers();
+  }
+
+  @override
+  Future<MemberPrivacySettingDto> getMyPrivacySettings() {
+    return _remoteDataSource.getMyPrivacySettings();
+  }
+
+  @override
+  Future<MemberPrivacySettingDto> updateMyPrivacySettings(
+      UpdateMemberPrivacySettingRequestDto request) {
+    return _remoteDataSource.updateMyPrivacySettings(request);
+  }
+
+  @override
+  Future<void> updateLifeStatus({
+    required String memberId,
+    required UpdateLifeStatusRequestDto request,
+  }) {
+    return _remoteDataSource.updateLifeStatus(
+      memberId: memberId,
+      request: request,
+    );
+  }
+
+  @override
+  Future<Uint8List> downloadImportTemplate() {
+    return _remoteDataSource.downloadImportTemplate();
+  }
+
+  @override
+  Future<ImportMembersPreviewResponseDto> previewMemberImport({
+    required Uint8List bytes,
+    required String fileName,
+  }) {
+    return _remoteDataSource.previewMemberImport(
+      bytes: bytes,
+      fileName: fileName,
+    );
+  }
+
+  @override
+  Future<ImportMembersConfirmResponseDto> confirmMemberImport(
+    ConfirmMemberImportRequestDto request,
+  ) {
+    return _remoteDataSource.confirmMemberImport(request);
   }
 
   FamilyBranchDetail _toEntity(BranchDetailDto dto) {

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/datasources/event_remote_datasource.dart';
+import '../../data/models/event_budget_models.dart';
 import '../../data/models/event_models.dart';
 import '../../data/repositories/event_repository_impl.dart';
 import '../../domain/repositories/event_repository.dart';
@@ -170,4 +171,111 @@ final eventNotificationsProvider =
     FutureProvider.family<List<EventNotificationModel>, String>((ref, eventId) async {
   final repo = ref.watch(eventRepositoryProvider);
   return repo.getEventNotifications(eventId);
+});
+
+final myRegistrationProvider =
+    FutureProvider.family<RegistrationModel?, String>((ref, eventId) async {
+  final repo = ref.watch(eventRepositoryProvider);
+  return repo.getMyRegistration(eventId);
+});
+
+class RegistrationActionNotifier extends Notifier<AsyncValue<void>> {
+  @override
+  AsyncValue<void> build() => const AsyncValue.data(null);
+
+  Future<String?> registerAttendees({
+    required String eventId,
+    required RegisterAttendeesRequestDto request,
+  }) async {
+    state = const AsyncValue.loading();
+    try {
+      await ref.read(eventRepositoryProvider).registerAttendees(eventId, request);
+      state = const AsyncValue.data(null);
+      ref.invalidate(myRegistrationProvider(eventId));
+      return null;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return _cleanError(e);
+    }
+  }
+
+  Future<String?> updateRegistration({
+    required String eventId,
+    required String registrationId,
+    required UpdateRegistrationRequestDto request,
+  }) async {
+    state = const AsyncValue.loading();
+    try {
+      await ref
+          .read(eventRepositoryProvider)
+          .updateRegistration(registrationId, request);
+      state = const AsyncValue.data(null);
+      ref.invalidate(myRegistrationProvider(eventId));
+      return null;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return _cleanError(e);
+    }
+  }
+
+  Future<String?> cancelRegistration({
+    required String eventId,
+    required String registrationId,
+  }) async {
+    state = const AsyncValue.loading();
+    try {
+      await ref.read(eventRepositoryProvider).cancelRegistration(registrationId);
+      state = const AsyncValue.data(null);
+      ref.invalidate(myRegistrationProvider(eventId));
+      return null;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return _cleanError(e);
+    }
+  }
+
+  static String _cleanError(Object error) {
+    final raw = error.toString();
+    return raw.startsWith('Exception: ') ? raw.substring(11) : raw;
+  }
+}
+
+final registrationActionProvider =
+    NotifierProvider<RegistrationActionNotifier, AsyncValue<void>>(
+  RegistrationActionNotifier.new,
+);
+
+/// Key lọc Dashboard Hậu Cần Sự Kiện (US-42).
+typedef LogisticsSummaryQuery = ({String eventId, String? branchId});
+
+/// Provider tải bảng tổng hợp hậu cần tức thời cho BTC theo sự kiện và chi/nhánh (US-42).
+final eventLogisticsSummaryProvider = FutureProvider.autoDispose
+    .family<EventLogisticsSummaryModel, LogisticsSummaryQuery>((ref, query) {
+  final repo = ref.watch(eventRepositoryProvider);
+  return repo.getEventRegistrationSummary(
+    query.eventId,
+    branchId: query.branchId,
+  );
+});
+
+/// [US-37] Bộ lọc danh mục công việc trên Bảng điều khiển Ngân sách
+enum TaskBudgetFilterCategory { all, warning, safe }
+
+class TaskBudgetFilterNotifier extends Notifier<TaskBudgetFilterCategory> {
+  @override
+  TaskBudgetFilterCategory build() => TaskBudgetFilterCategory.all;
+
+  void setFilter(TaskBudgetFilterCategory category) => state = category;
+}
+
+final taskBudgetFilterProvider =
+    NotifierProvider<TaskBudgetFilterNotifier, TaskBudgetFilterCategory>(
+  TaskBudgetFilterNotifier.new,
+);
+
+/// [US-37] Provider truy vấn tổng hợp ngân sách và cờ cảnh báo vượt trần dự toán sự kiện
+final eventBudgetSummaryProvider = FutureProvider.autoDispose
+    .family<EventBudgetSummaryModel, String>((ref, eventId) {
+  final repo = ref.watch(eventRepositoryProvider);
+  return repo.getEventBudgetSummary(eventId);
 });

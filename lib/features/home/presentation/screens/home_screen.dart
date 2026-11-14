@@ -8,6 +8,9 @@ import '../../../shared/presentation/widgets/heritage_nav_bar.dart';
 import '../../../genealogy/presentation/providers/genealogy_providers.dart';
 import '../../../genealogy/presentation/widgets/branch_detail_sidebar.dart';
 import '../../../genealogy/data/models/branch_models.dart';
+import '../../../contribution/presentation/providers/branch_recursive_contribution_providers.dart';
+import '../../../contribution/presentation/widgets/branch_contribution_pill.dart';
+import '../../../event/presentation/providers/event_providers.dart';
 
 /// Họa sĩ vẽ nhánh chẽ chữ T chuẩn hình học phả hệ (pixel-perfect)
 class TreeForkPainter extends CustomPainter {
@@ -285,8 +288,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       ),
                                     ],
                                   ),
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
+                                  Wrap(
+                                    crossAxisAlignment: WrapCrossAlignment.center,
+                                    spacing: 8,
+                                    runSpacing: 8,
                                     children: [
                                       // NÚT CHUYỂN ĐỔI: THU GỌN / HIỆN ĐẦY ĐỦ CÂY
                                       OutlinedButton.icon(
@@ -317,6 +322,106 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                         ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      // [US-11] NÚT CHUYỂN ĐỔI CHẾ ĐỘ XEM CÔNG ĐỨC ĐỆ QUY
+                                      Builder(
+                                        builder: (context) {
+                                          final treeContribFilter = ref.watch(treeContributionFilterProvider);
+                                          final treeContribNotifier = ref.read(treeContributionFilterProvider.notifier);
+                                          final isEnabled = treeContribFilter.isContributionViewEnabled;
+
+                                          return Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              OutlinedButton.icon(
+                                                onPressed: () => treeContribNotifier.toggleContributionView(),
+                                                icon: Icon(
+                                                  isEnabled ? Icons.visibility_off : Icons.stars,
+                                                  size: 16,
+                                                  color: isEnabled ? const Color(0xFFD4AF37) : const Color(0xFF8B1E1E),
+                                                ),
+                                                label: Text(
+                                                  isEnabled ? 'Ẩn Công Đức' : 'Xem Công Đức Đệ Quy',
+                                                  style: TextStyle(
+                                                    fontFamily: 'Be Vietnam Pro',
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: isEnabled ? Colors.white : const Color(0xFF8B1E1E),
+                                                  ),
+                                                ),
+                                                style: OutlinedButton.styleFrom(
+                                                  backgroundColor: isEnabled
+                                                      ? const Color(0xFF8B1E1E)
+                                                      : Colors.white,
+                                                  side: BorderSide(
+                                                    color: isEnabled
+                                                        ? const Color(0xFF8B1E1E)
+                                                        : const Color(0xFF8B1E1E),
+                                                  ),
+                                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                                ),
+                                              ),
+                                              if (isEnabled) ...[
+                                                const SizedBox(width: 8),
+                                                Consumer(
+                                                  builder: (context, ref, _) {
+                                                    final eventList = ref.watch(eventListProvider);
+                                                    return Container(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                                                      decoration: BoxDecoration(
+                                                        color: const Color(0xFFFAF9F6),
+                                                        borderRadius: BorderRadius.circular(20),
+                                                        border: Border.all(color: const Color(0xFFE5E5E5)),
+                                                      ),
+                                                      child: DropdownButtonHideUnderline(
+                                                        child: DropdownButton<String?>(
+                                                          value: treeContribFilter.selectedEventId,
+                                                          isDense: true,
+                                                          hint: const Text(
+                                                            'Tất cả sự kiện',
+                                                            style: TextStyle(
+                                                              fontFamily: 'Be Vietnam Pro',
+                                                              fontSize: 11,
+                                                              color: Color(0xFF58413F),
+                                                            ),
+                                                          ),
+                                                          items: [
+                                                            const DropdownMenuItem<String?>(
+                                                              value: null,
+                                                              child: Text(
+                                                                'Tất cả sự kiện',
+                                                                style: TextStyle(
+                                                                  fontFamily: 'Be Vietnam Pro',
+                                                                  fontSize: 11,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            ...eventList.events.map((e) => DropdownMenuItem<String?>(
+                                                                  value: e.eventId,
+                                                                  child: Text(
+                                                                    e.eventName,
+                                                                    style: const TextStyle(
+                                                                      fontFamily: 'Be Vietnam Pro',
+                                                                      fontSize: 11,
+                                                                    ),
+                                                                  ),
+                                                                )),
+                                                          ],
+                                                          onChanged: (val) {
+                                                            final ev = eventList.events.where((e) => e.eventId == val).firstOrNull;
+                                                            treeContribNotifier.setEventFilter(eventId: val, eventName: ev?.eventName);
+                                                          },
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              ],
+                                            ],
+                                          );
+                                        },
                                       ),
                                       const SizedBox(width: 8),
                                       // Badge trạng thái kết nối API
@@ -899,6 +1004,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ],
               ),
             ),
+            // [US-11] Thống kê đóng góp đệ quy trên Nhánh Gốc (Thủy Tổ)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: BranchContributionPill(
+                branchId: detail.id,
+                branchName: detail.name,
+                isRootBranch: true,
+              ),
+            ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
@@ -1163,6 +1277,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
 
             const SizedBox(height: 10),
+
+            // [US-11] Thống kê đóng góp đệ quy trên Nút Nhánh Chi
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: BranchContributionPill(
+                branchId: detail.id,
+                branchName: detail.name,
+                isRootBranch: false,
+              ),
+            ),
 
             // Footer Button
             Container(

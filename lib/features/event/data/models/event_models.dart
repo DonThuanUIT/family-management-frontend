@@ -41,6 +41,105 @@ class EventPersonnelModel {
       };
 }
 
+/// Thông tin đăng ký tham dự sự kiện của hộ gia đình (US-06 / US-41).
+class RegistrationModel {
+  final String registrationId;
+  final String eventId;
+  final String representativeMemberId;
+  final String representativeMemberName;
+  final int totalAttendees;
+  final int vegetarianMeals;
+  final int savoryMeals;
+  final String? dietaryRequirements;
+  final String? transportationNotes;
+  final String status;
+
+  const RegistrationModel({
+    required this.registrationId,
+    required this.eventId,
+    required this.representativeMemberId,
+    required this.representativeMemberName,
+    required this.totalAttendees,
+    required this.vegetarianMeals,
+    required this.savoryMeals,
+    this.dietaryRequirements,
+    this.transportationNotes,
+    required this.status,
+  });
+
+  bool get isCancelled => status == 'Cancelled';
+
+  factory RegistrationModel.fromJson(Map<String, dynamic> json) {
+    return RegistrationModel(
+      registrationId: json['registrationId']?.toString() ?? '',
+      eventId: json['eventId']?.toString() ?? '',
+      representativeMemberId: json['representativeMemberId']?.toString() ?? '',
+      representativeMemberName:
+          json['representativeMemberName']?.toString() ?? '',
+      totalAttendees: (json['totalAttendees'] as num?)?.toInt() ?? 1,
+      vegetarianMeals: (json['vegetarianMeals'] as num?)?.toInt() ?? 0,
+      savoryMeals: (json['savoryMeals'] as num?)?.toInt() ?? 0,
+      dietaryRequirements: json['dietaryRequirements']?.toString(),
+      transportationNotes: json['transportationNotes']?.toString(),
+      status: json['status']?.toString() ?? 'Confirmed',
+    );
+  }
+}
+
+/// DTO nộp đăng ký tham dự mới (`POST /api/v1/events/{eventId}/registrations`).
+class RegisterAttendeesRequestDto {
+  final int totalAttendees;
+  final int vegetarianMeals;
+  final int savoryMeals;
+  final String? dietaryRequirements;
+  final String? transportationNotes;
+
+  const RegisterAttendeesRequestDto({
+    required this.totalAttendees,
+    this.vegetarianMeals = 0,
+    this.savoryMeals = 0,
+    this.dietaryRequirements,
+    this.transportationNotes,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'totalAttendees': totalAttendees,
+        'vegetarianMeals': vegetarianMeals,
+        'savoryMeals': savoryMeals,
+        if (dietaryRequirements != null && dietaryRequirements!.trim().isNotEmpty)
+          'dietaryRequirements': dietaryRequirements!.trim(),
+        if (transportationNotes != null && transportationNotes!.trim().isNotEmpty)
+          'transportationNotes': transportationNotes!.trim(),
+      };
+}
+
+/// DTO cập nhật đăng ký tham dự trước khi chốt (`PUT /api/v1/registrations/{id}` - US-41).
+class UpdateRegistrationRequestDto {
+  final int totalAttendees;
+  final int vegetarianMeals;
+  final int savoryMeals;
+  final String? dietaryRequirements;
+  final String? transportationNotes;
+
+  const UpdateRegistrationRequestDto({
+    required this.totalAttendees,
+    this.vegetarianMeals = 0,
+    this.savoryMeals = 0,
+    this.dietaryRequirements,
+    this.transportationNotes,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'totalAttendees': totalAttendees,
+        'vegetarianMeals': vegetarianMeals,
+        'savoryMeals': savoryMeals,
+        if (dietaryRequirements != null && dietaryRequirements!.trim().isNotEmpty)
+          'dietaryRequirements': dietaryRequirements!.trim(),
+        if (transportationNotes != null && transportationNotes!.trim().isNotEmpty)
+          'transportationNotes': transportationNotes!.trim(),
+      };
+}
+
 /// Model bản ghi thông báo sự kiện (`event_notifications` - US-22).
 class EventNotificationModel {
   final String notificationId;
@@ -99,6 +198,12 @@ class EventModel {
   final int totalTasks;
   final double donatedAmount;
 
+  // Cấu hình hạn chót đăng ký & sức chứa tối đa (US-43)
+  final DateTime? registrationDeadline;
+  final int? maxCapacity;
+  final int currentAttendees;
+  final int? remainingSlots;
+
   const EventModel({
     required this.eventId,
     required this.eventName,
@@ -117,7 +222,24 @@ class EventModel {
     this.completedTasks = 0,
     this.totalTasks = 0,
     this.donatedAmount = 0.0,
+    this.registrationDeadline,
+    this.maxCapacity,
+    this.currentAttendees = 0,
+    this.remainingSlots,
   });
+
+  bool get isRegistrationDeadlinePassed =>
+      registrationDeadline != null && DateTime.now().isAfter(registrationDeadline!);
+
+  int? get effectiveRemainingSlots {
+    if (remainingSlots != null) return remainingSlots;
+    if (maxCapacity == null) return null;
+    final left = maxCapacity! - currentAttendees;
+    return left < 0 ? 0 : left;
+  }
+
+  bool get isCapacityFull =>
+      maxCapacity != null && (effectiveRemainingSlots ?? 0) <= 0;
 
   EventLifecycleStatus get lifecycleStatus =>
       EventLifecycleStatus.fromCode(status);
@@ -206,6 +328,12 @@ class EventModel {
       completedTasks: (json['completedTasks'] as num?)?.toInt() ?? 0,
       totalTasks: (json['totalTasks'] as num?)?.toInt() ?? 0,
       donatedAmount: (json['donatedAmount'] as num?)?.toDouble() ?? 0.0,
+      registrationDeadline: json['registrationDeadline'] != null
+          ? DateTime.tryParse(json['registrationDeadline'].toString())?.toLocal()
+          : null,
+      maxCapacity: (json['maxCapacity'] as num?)?.toInt(),
+      currentAttendees: (json['currentAttendees'] as num?)?.toInt() ?? 0,
+      remainingSlots: (json['remainingSlots'] as num?)?.toInt(),
     );
   }
 
@@ -234,6 +362,10 @@ class EventModel {
     int? completedTasks,
     int? totalTasks,
     double? donatedAmount,
+    DateTime? registrationDeadline,
+    int? maxCapacity,
+    int? currentAttendees,
+    int? remainingSlots,
   }) {
     return EventModel(
       eventId: eventId,
@@ -253,6 +385,10 @@ class EventModel {
       completedTasks: completedTasks ?? this.completedTasks,
       totalTasks: totalTasks ?? this.totalTasks,
       donatedAmount: donatedAmount ?? this.donatedAmount,
+      registrationDeadline: registrationDeadline ?? this.registrationDeadline,
+      maxCapacity: maxCapacity ?? this.maxCapacity,
+      currentAttendees: currentAttendees ?? this.currentAttendees,
+      remainingSlots: remainingSlots ?? this.remainingSlots,
     );
   }
 }
@@ -267,6 +403,8 @@ class CreateEventRequestDto {
   final double estimatedBudget;
   final String? headOfOrganizerMemberId;
   final String? treasurerMemberId;
+  final DateTime? registrationDeadline;
+  final int? maxCapacity;
 
   const CreateEventRequestDto({
     required this.eventName,
@@ -277,6 +415,8 @@ class CreateEventRequestDto {
     this.estimatedBudget = 0.0,
     this.headOfOrganizerMemberId,
     this.treasurerMemberId,
+    this.registrationDeadline,
+    this.maxCapacity,
   });
 
   Map<String, dynamic> toJson() => {
@@ -288,6 +428,9 @@ class CreateEventRequestDto {
           'eventDateLunar': eventDateLunar!.trim(),
         'location': location.trim(),
         'estimatedBudget': estimatedBudget,
+        if (registrationDeadline != null)
+          'registrationDeadline': registrationDeadline!.toUtc().toIso8601String(),
+        if (maxCapacity != null) 'maxCapacity': maxCapacity,
       };
 }
 
@@ -299,6 +442,8 @@ class UpdateEventRequestDto {
   final String? eventDateLunar;
   final String location;
   final double estimatedBudget;
+  final DateTime? registrationDeadline;
+  final int? maxCapacity;
 
   const UpdateEventRequestDto({
     required this.eventName,
@@ -307,6 +452,8 @@ class UpdateEventRequestDto {
     this.eventDateLunar,
     required this.location,
     this.estimatedBudget = 0.0,
+    this.registrationDeadline,
+    this.maxCapacity,
   });
 
   Map<String, dynamic> toJson() => {
@@ -318,6 +465,8 @@ class UpdateEventRequestDto {
           'eventDateLunar': eventDateLunar!.trim(),
         'location': location.trim(),
         'estimatedBudget': estimatedBudget,
+        'registrationDeadline': registrationDeadline?.toUtc().toIso8601String(),
+        'maxCapacity': maxCapacity,
       };
 }
 
@@ -346,4 +495,128 @@ class AssignPersonnelRequestDto {
         'memberId': memberId,
         'eventRole': eventRole,
       };
+}
+
+/// Tùy chọn chi/nhánh trong bộ lọc Dashboard Hậu Cần (US-42).
+class LogisticsBranchOptionModel {
+  final String branchId;
+  final String branchName;
+
+  const LogisticsBranchOptionModel({
+    required this.branchId,
+    required this.branchName,
+  });
+
+  factory LogisticsBranchOptionModel.fromJson(Map<String, dynamic> json) {
+    return LogisticsBranchOptionModel(
+      branchId: json['branchId']?.toString() ?? '',
+      branchName: json['branchName']?.toString() ?? '',
+    );
+  }
+}
+
+/// Chi tiết từng hộ đăng ký trong Dashboard Hậu Cần (US-42).
+class HouseholdLogisticsItemModel {
+  final String registrationId;
+  final String representativeMemberId;
+  final String representativeName;
+  final String? branchId;
+  final String? branchName;
+  final int totalAttendees;
+  final int savoryMeals;
+  final int vegetarianMeals;
+  final int shuttleSeats;
+  final String? dietaryRequirements;
+  final String? transportationNotes;
+  final String status;
+  final DateTime? registrationDate;
+
+  const HouseholdLogisticsItemModel({
+    required this.registrationId,
+    required this.representativeMemberId,
+    required this.representativeName,
+    this.branchId,
+    this.branchName,
+    required this.totalAttendees,
+    required this.savoryMeals,
+    required this.vegetarianMeals,
+    required this.shuttleSeats,
+    this.dietaryRequirements,
+    this.transportationNotes,
+    required this.status,
+    this.registrationDate,
+  });
+
+  factory HouseholdLogisticsItemModel.fromJson(Map<String, dynamic> json) {
+    return HouseholdLogisticsItemModel(
+      registrationId: json['registrationId']?.toString() ?? '',
+      representativeMemberId: json['representativeMemberId']?.toString() ?? '',
+      representativeName: json['representativeName']?.toString() ?? '',
+      branchId: json['branchId']?.toString(),
+      branchName: json['branchName']?.toString(),
+      totalAttendees: (json['totalAttendees'] as num?)?.toInt() ?? 0,
+      savoryMeals: (json['savoryMeals'] as num?)?.toInt() ?? 0,
+      vegetarianMeals: (json['vegetarianMeals'] as num?)?.toInt() ?? 0,
+      shuttleSeats: (json['shuttleSeats'] as num?)?.toInt() ?? 0,
+      dietaryRequirements: json['dietaryRequirements']?.toString(),
+      transportationNotes: json['transportationNotes']?.toString(),
+      status: json['status']?.toString() ?? 'Confirmed',
+      registrationDate: json['registrationDate'] != null
+          ? DateTime.tryParse(json['registrationDate'].toString())
+          : null,
+    );
+  }
+}
+
+/// DTO bảng tổng hợp hậu cần tức thời cho Ban tổ chức (US-42).
+class EventLogisticsSummaryModel {
+  final String eventId;
+  final String eventName;
+  final String? branchId;
+  final String? branchName;
+  final int totalRegistrations;
+  final int totalAttendees;
+  final int totalSavoryMeals;
+  final int totalVegetarianMeals;
+  final int totalShuttleSeats;
+  final List<LogisticsBranchOptionModel> availableBranches;
+  final List<HouseholdLogisticsItemModel> registrations;
+
+  const EventLogisticsSummaryModel({
+    required this.eventId,
+    required this.eventName,
+    this.branchId,
+    this.branchName,
+    required this.totalRegistrations,
+    required this.totalAttendees,
+    required this.totalSavoryMeals,
+    required this.totalVegetarianMeals,
+    required this.totalShuttleSeats,
+    this.availableBranches = const [],
+    this.registrations = const [],
+  });
+
+  factory EventLogisticsSummaryModel.fromJson(Map<String, dynamic> json) {
+    return EventLogisticsSummaryModel(
+      eventId: json['eventId']?.toString() ?? '',
+      eventName: json['eventName']?.toString() ?? '',
+      branchId: json['branchId']?.toString(),
+      branchName: json['branchName']?.toString(),
+      totalRegistrations: (json['totalRegistrations'] as num?)?.toInt() ?? 0,
+      totalAttendees: (json['totalAttendees'] as num?)?.toInt() ?? 0,
+      totalSavoryMeals: (json['totalSavoryMeals'] as num?)?.toInt() ?? 0,
+      totalVegetarianMeals: (json['totalVegetarianMeals'] as num?)?.toInt() ?? 0,
+      totalShuttleSeats: (json['totalShuttleSeats'] as num?)?.toInt() ?? 0,
+      availableBranches: (json['availableBranches'] as List<dynamic>?)
+              ?.map((e) =>
+                  LogisticsBranchOptionModel.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      registrations: (json['registrations'] as List<dynamic>?)
+              ?.map((e) => HouseholdLogisticsItemModel.fromJson(
+                  e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+    );
+  }
 }

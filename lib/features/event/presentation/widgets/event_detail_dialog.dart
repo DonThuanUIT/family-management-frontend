@@ -5,6 +5,7 @@ import '../../data/models/event_models.dart';
 import 'assign_personnel_dialog.dart';
 import 'edit_event_sheet.dart';
 import 'event_notifications_dialog.dart';
+import 'event_registration_section.dart';
 
 class EventDetailDialog extends StatelessWidget {
   final EventModel event;
@@ -186,7 +187,12 @@ class EventDetailDialog extends StatelessWidget {
                   ),
                 ),
 
-              const SizedBox(height: 18),
+              const SizedBox(height: 14),
+
+              // Khu vực đăng ký tham dự của hộ gia đình (US-41)
+              EventRegistrationSection(event: event),
+
+              const SizedBox(height: 14),
 
               // Nút xem danh sách công việc chuẩn bị (US-07)
               ElevatedButton.icon(
@@ -198,6 +204,44 @@ class EventDetailDialog extends StatelessWidget {
                 label: const Text('Xem & Phân Công Công Việc (US-07)'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF7A1518),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 11),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Nút mở Bảng Điều Khiển Ngân Sách Sự Kiện (US-37)
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  context.push('/events/${event.eventId}/budget');
+                },
+                icon: const Icon(Icons.account_balance_wallet_outlined, size: 16),
+                label: const Text('Bảng Điều Khiển Ngân Sách (US-37)'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF8B1E1E),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 11),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Nút mở Dashboard Hậu Cần Sự Kiện cho BTC (US-42)
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  context.push('/events/${event.eventId}/logistics');
+                },
+                icon: const Icon(Icons.analytics_outlined, size: 16),
+                label: const Text('Dashboard Hậu Cần & Chia Cỗ (US-42)'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1B5E20),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 11),
                   shape: RoundedRectangleBorder(
