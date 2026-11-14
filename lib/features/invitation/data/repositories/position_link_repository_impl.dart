@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/repositories/position_link_repository.dart';
 import '../datasources/position_link_remote_datasource.dart';
+import '../models/invitation_management_models.dart';
 import '../models/position_link_models.dart';
 
 final positionLinkRepositoryProvider = Provider<PositionLinkRepository>((ref) {
@@ -44,5 +45,31 @@ class PositionLinkRepositoryImpl implements PositionLinkRepository {
       inviteCode: inviteCode,
       request: request,
     );
+  }
+
+  @override
+  Future<PositionLinkItemModel> createGeneralInvite(CreateGeneralInviteRequestDto request) {
+    return _remoteDataSource.createGeneralInvite(request);
+  }
+
+  @override
+  Future<void> deactivateInvite(String inviteCode) {
+    return _remoteDataSource.deactivateInvite(inviteCode);
+  }
+
+  @override
+  Future<PositionLinkItemModel> updateInvite(
+    String inviteCode,
+    UpdateInvitationRequestDto request,
+  ) {
+    return _remoteDataSource.updateInvite(inviteCode, request);
+  }
+
+  @override
+  Future<PositionLinkItemModel> regenerateInvite(
+    String inviteCode, {
+    UpdateInvitationRequestDto? request,
+  }) {
+    return _remoteDataSource.regenerateInvite(inviteCode, request: request);
   }
 }

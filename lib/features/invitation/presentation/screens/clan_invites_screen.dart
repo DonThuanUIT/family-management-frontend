@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/presentation/widgets/heritage_nav_bar.dart';
+import '../../data/models/invitation_management_models.dart';
 import '../providers/position_link_providers.dart';
+import '../widgets/create_general_invite_dialog.dart';
 import '../widgets/invitation_generator_card.dart';
 import '../widgets/issued_codes_mobile_list.dart';
 import '../widgets/issued_codes_table.dart';
@@ -370,22 +372,29 @@ class _ClanInvitesScreenState extends ConsumerState<ClanInvitesScreen> {
           // 1. Table Toolbar
           Padding(
             padding: const EdgeInsets.all(18),
-            child: isDesktop
-                ? Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _tableTitleBadge(state),
-                      _tableActions(notifier, state),
-                    ],
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _tableTitleBadge(state),
-                      const SizedBox(height: 12),
-                      _tableActions(notifier, state),
-                    ],
-                  ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                isDesktop
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _tableTitleBadge(state),
+                          _tableActions(notifier, state),
+                        ],
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _tableTitleBadge(state),
+                          const SizedBox(height: 12),
+                          _tableActions(notifier, state),
+                        ],
+                      ),
+                const SizedBox(height: 14),
+                _statusFilterChips(notifier, state),
+              ],
+            ),
           ),
           const Divider(height: 1, color: Color(0xFFEBE6E0)),
 
@@ -523,14 +532,133 @@ class _ClanInvitesScreenState extends ConsumerState<ClanInvitesScreen> {
     );
   }
 
+  Widget _statusFilterChips(ClanInvitesNotifier notifier, ClanInvitesState state) {
+    final current = state.codeStatusFilter;
+
+    Widget chip({
+      required String label,
+      required int count,
+      required bool isSelected,
+      required VoidCallback onTap,
+      Color? activeColor,
+    }) {
+      final color = activeColor ?? const Color(0xFF8F482F);
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: isSelected ? color : const Color(0xFFF0EDEB),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected ? color : const Color(0xFFE5E0DA),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                  color: isSelected ? Colors.white : const Color(0xFF54433E),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.white.withAlpha(50) : Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$count',
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: isSelected ? Colors.white : const Color(0xFF54433E),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 6,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        chip(
+          label: 'Tất cả',
+          count: state.issuedCodes.length,
+          isSelected: current == null,
+          onTap: () => notifier.setCodeStatusFilter(null),
+        ),
+        chip(
+          label: 'Hoạt Động',
+          count: state.activeCount,
+          isSelected: current == InvitationCodeStatus.active,
+          activeColor: const Color(0xFF006E2A),
+          onTap: () => notifier.setCodeStatusFilter(InvitationCodeStatus.active),
+        ),
+        chip(
+          label: 'Đã Dùng Hết',
+          count: state.usedUpCount,
+          isSelected: current == InvitationCodeStatus.usedUp,
+          activeColor: const Color(0xFF4A148C),
+          onTap: () => notifier.setCodeStatusFilter(InvitationCodeStatus.usedUp),
+        ),
+        chip(
+          label: 'Hết Hạn',
+          count: state.expiredCount,
+          isSelected: current == InvitationCodeStatus.expired,
+          activeColor: const Color(0xFF7A5900),
+          onTap: () => notifier.setCodeStatusFilter(InvitationCodeStatus.expired),
+        ),
+        chip(
+          label: 'Đã Thu Hồi',
+          count: state.revokedCount,
+          isSelected: current == InvitationCodeStatus.revoked,
+          activeColor: const Color(0xFFBA1A1A),
+          onTap: () => notifier.setCodeStatusFilter(InvitationCodeStatus.revoked),
+        ),
+      ],
+    );
+  }
+
   Widget _tableActions(ClanInvitesNotifier notifier, ClanInvitesState state) {
     return Wrap(
       crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: 6,
-      runSpacing: 6,
+      spacing: 8,
+      runSpacing: 8,
       children: [
+        // Nút Tạo Mã Mới (US-34 & US-16)
+        ElevatedButton.icon(
+          onPressed: () => CreateGeneralInviteDialog.show(context),
+          icon: const Icon(Icons.add_rounded, size: 16),
+          label: const Text(
+            'Tạo Mã Mới',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF8F482F),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+
+        // Ô tìm kiếm
         SizedBox(
-          width: 220,
+          width: 200,
           height: 36,
           child: TextField(
             controller: _searchController,
@@ -556,15 +684,18 @@ class _ClanInvitesScreenState extends ConsumerState<ClanInvitesScreen> {
             onChanged: (val) => notifier.setSearchQuery(val),
           ),
         ),
-        const SizedBox(width: 8),
-        PopupMenuButton<bool?>(
-          tooltip: 'Lọc trạng thái',
-          initialValue: state.filterStatus,
-          onSelected: (val) => notifier.setStatusFilter(val),
+
+        // Popup filter trạng thái
+        PopupMenuButton<InvitationCodeStatus?>(
+          tooltip: 'Lọc trạng thái mã',
+          initialValue: state.codeStatusFilter,
+          onSelected: (val) => notifier.setCodeStatusFilter(val),
           itemBuilder: (context) => const [
             PopupMenuItem(value: null, child: Text('Tất cả trạng thái')),
-            PopupMenuItem(value: true, child: Text('✓ Đã Kích Hoạt')),
-            PopupMenuItem(value: false, child: Text('⏳ Chờ Kích Hoạt')),
+            PopupMenuItem(value: InvitationCodeStatus.active, child: Text('🟢 Hoạt Động')),
+            PopupMenuItem(value: InvitationCodeStatus.usedUp, child: Text('🟣 Đã Dùng Hết')),
+            PopupMenuItem(value: InvitationCodeStatus.expired, child: Text('🟡 Hết Hạn')),
+            PopupMenuItem(value: InvitationCodeStatus.revoked, child: Text('🔴 Đã Thu Hồi')),
           ],
           child: Container(
             padding: const EdgeInsets.all(7),
@@ -576,7 +707,8 @@ class _ClanInvitesScreenState extends ConsumerState<ClanInvitesScreen> {
                 size: 20, color: Color(0xFF54433E)),
           ),
         ),
-        const SizedBox(width: 6),
+
+        // Xuất file CSV
         InkWell(
           onTap: () {
             ScaffoldMessenger.of(context).showSnackBar(

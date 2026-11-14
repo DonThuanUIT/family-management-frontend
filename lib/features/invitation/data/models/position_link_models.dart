@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import 'invitation_management_models.dart';
+
 /// Request DTO để gọi POST /api/v1/branches/{branchId}/virtual-members (US-18).
 class CreateVirtualMemberRequestDto {
   final String fullName;
@@ -164,7 +166,7 @@ class CreateVirtualMemberResponseDto {
   }
 }
 
-/// Model hiển thị trên bảng/danh sách mã đã cấp phát (UI Model)
+/// Model hiển thị trên bảng/danh sách mã đã cấp phát (UI Model - US-18 & US-34)
 @immutable
 class PositionLinkItemModel {
   final String code;
@@ -177,6 +179,11 @@ class PositionLinkItemModel {
   final bool isActivated;
   final String shareableUrl;
   final String? targetMemberId;
+  final int maxUses;
+  final int usedCount;
+  final DateTime? expiresAt;
+  final bool isActive;
+  final String inviteType;
 
   const PositionLinkItemModel({
     required this.code,
@@ -189,7 +196,24 @@ class PositionLinkItemModel {
     required this.isActivated,
     required this.shareableUrl,
     this.targetMemberId,
+    this.maxUses = 1,
+    this.usedCount = 0,
+    this.expiresAt,
+    this.isActive = true,
+    this.inviteType = 'PositionLinkCode',
   });
+
+  bool get isRevoked => !isActive;
+  bool get isExpired => expiresAt != null && expiresAt!.isBefore(DateTime.now());
+  bool get isUsedUp => usedCount >= maxUses;
+
+  /// Phân loại trạng thái vòng đời của mã mời (US-34)
+  InvitationCodeStatus get status {
+    if (!isActive) return InvitationCodeStatus.revoked;
+    if (isUsedUp) return InvitationCodeStatus.usedUp;
+    if (isExpired) return InvitationCodeStatus.expired;
+    return InvitationCodeStatus.active;
+  }
 
   PositionLinkItemModel copyWith({
     String? code,
@@ -202,6 +226,11 @@ class PositionLinkItemModel {
     bool? isActivated,
     String? shareableUrl,
     String? targetMemberId,
+    int? maxUses,
+    int? usedCount,
+    DateTime? expiresAt,
+    bool? isActive,
+    String? inviteType,
   }) {
     return PositionLinkItemModel(
       code: code ?? this.code,
@@ -214,6 +243,11 @@ class PositionLinkItemModel {
       isActivated: isActivated ?? this.isActivated,
       shareableUrl: shareableUrl ?? this.shareableUrl,
       targetMemberId: targetMemberId ?? this.targetMemberId,
+      maxUses: maxUses ?? this.maxUses,
+      usedCount: usedCount ?? this.usedCount,
+      expiresAt: expiresAt ?? this.expiresAt,
+      isActive: isActive ?? this.isActive,
+      inviteType: inviteType ?? this.inviteType,
     );
   }
 }
