@@ -656,6 +656,29 @@ class _BranchDetailSidebarState extends ConsumerState<BranchDetailSidebar> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
           ),
+          const SizedBox(height: 12),
+
+          // 5. Nút Duyệt Đơn Xin Gia Nhập (US-33)
+          OutlinedButton.icon(
+            onPressed: () {
+              context.push('/join-requests?branchId=${widget.branch.id}');
+            },
+            icon: const Icon(Icons.how_to_reg_outlined, size: 18, color: Color(0xFF006E2A)),
+            label: const Text(
+              'Duyệt Đơn Xin Gia Nhập',
+              style: TextStyle(
+                fontFamily: 'Plus Jakarta Sans',
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: Color(0xFF006E2A),
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Color(0xFF006E2A)),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
         ],
       ),
     );

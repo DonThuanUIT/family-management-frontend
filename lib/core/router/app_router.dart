@@ -24,6 +24,7 @@ import '../../features/genealogy/presentation/screens/member_import_screen.dart'
 import '../../features/genealogy/presentation/screens/privacy_settings_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/invitation/presentation/screens/clan_invites_screen.dart';
+import '../../features/invitation/presentation/screens/join_requests_management_screen.dart';
 import '../../features/member_media/presentation/screens/member_detail_screen.dart';
 import '../../features/role/presentation/screens/role_management_screen.dart';
 import '../../features/task/presentation/screens/event_task_list_screen.dart';
@@ -265,6 +266,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/members/import',
         name: 'members-import',
         builder: (context, state) => const MemberImportScreen(),
+      ),
+
+      // 19. Màn hình Quản Lý Yêu Cầu Gia Nhập Cho Trưởng Tộc / Trưởng Chi (US-33)
+      GoRoute(
+        path: '/join-requests',
+        name: 'join-requests',
+        builder: (context, state) {
+          final branchId = state.uri.queryParameters['branchId'];
+          return JoinRequestsManagementScreen(initialBranchId: branchId);
+        },
       ),
     ],
   );

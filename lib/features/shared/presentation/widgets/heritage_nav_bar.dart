@@ -441,6 +441,30 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                           ),
                         ),
                         PopupMenuItem(
+                          value: '/join-requests',
+                          child: Row(
+                            children: [
+                              Icon(Icons.how_to_reg_outlined,
+                                  size: 18,
+                                  color: currentRoute == '/join-requests'
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF54433E)),
+                              const SizedBox(width: 10),
+                              Text(
+                                'Quản Lý Đơn Gia Nhập',
+                                style: TextStyle(
+                                  fontWeight: currentRoute == '/join-requests'
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  color: currentRoute == '/join-requests'
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF2B1810),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
                           value: '/audit-logs',
                           child: Row(
                             children: [
