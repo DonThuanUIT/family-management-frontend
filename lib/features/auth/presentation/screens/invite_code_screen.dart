@@ -423,7 +423,7 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                           _infoRow(
                             'Hình thức:',
                             _previewData!.inviteType == 'PositionLinkCode'
-                                ? 'Mã liên kết vị trí cá nhân (US-19)'
+                                ? 'Mã liên kết vị trí cá nhân'
                                 : 'Mã mời chung ghi danh vào phả hệ',
                           ),
                           const SizedBox(height: 16),

@@ -123,6 +123,20 @@ class TaskModel {
       status == TaskStatusEnum.overdue ||
       (status != TaskStatusEnum.completed && deadline.isBefore(DateTime.now()));
 
+  /// US-08: Hạng mục công việc đang trong ngưỡng cảnh báo tiến độ ≤ 24 giờ
+  bool get isWithin24Hours {
+    if (status == TaskStatusEnum.completed || isOverdue) return false;
+    final now = DateTime.now();
+    final diff = deadline.difference(now);
+    return !diff.isNegative && diff.inHours <= 24;
+  }
+
+  Duration get remainingDuration {
+    final now = DateTime.now();
+    final diff = deadline.difference(now);
+    return diff.isNegative ? Duration.zero : diff;
+  }
+
   factory TaskModel.fromJson(Map<String, dynamic> json) {
     final rawBudget = json['advanceBudget'];
     int budgetInt = 0;

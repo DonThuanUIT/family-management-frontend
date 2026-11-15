@@ -205,7 +205,7 @@ class _JoinRequestsManagementScreenState
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Trưởng tộc và Trưởng chi nhánh có thẩm quyền xem xét hồ sơ, điều chỉnh lại vị trí nhánh phả hệ nếu ứng viên chọn nhầm trước khi phê duyệt (AC-08), hoặc từ chối kèm lý do chính thức (AC-06).',
+                  'Trưởng tộc và Trưởng chi nhánh có thẩm quyền xem xét hồ sơ, điều chỉnh lại vị trí nhánh phả hệ nếu ứng viên chọn nhầm trước khi phê duyệt, hoặc từ chối kèm lý do chính thức.',
                   style: TextStyle(
                     fontFamily: 'Plus Jakarta Sans',
                     fontSize: 12.5,
