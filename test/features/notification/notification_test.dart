@@ -148,6 +148,29 @@ void main() {
           model.suggestedDescription, 'Lễ tưởng niệm và cúng giỗ Cụ Lê Văn An.');
     });
 
+    test('NotificationModel parses overdue 12h escalation and exposes US-47 getter', () {
+      final json = {
+        'notificationId': 'notif-us47-001',
+        'clanId': 'clan-1',
+        'title': 'Cảnh báo quá hạn 12h: Chuẩn bị bài tế văn & trang phục khánh tiết',
+        'content':
+            'Hạng mục [TSK-02] do Chi 1 phụ trách đã quá hạn 14 giờ 0 phút.',
+        'category': 'Task',
+        'referenceType': 'Task',
+        'referenceId': 'TSK-02',
+        'isRead': false,
+        'createdAt': '2026-11-15T08:00:00Z',
+        'metadata': {
+          'alertLevel': 'OverdueAlert12H',
+          'isOverdue12H': true,
+          'overdueHours': 14,
+        },
+      };
+
+      final model = NotificationModel.fromJson(json);
+      expect(model.isTaskOverdue12HEscalation, isTrue);
+    });
+
     test('UnreadCountModel parses count and provides hasUnread getter', () {
       final json = {
         'total': 3,
@@ -543,6 +566,49 @@ void main() {
       expect(find.text('Tạo sự kiện Đám giỗ'), findsNothing);
       // Mark read is available
       expect(find.text('Đánh dấu đã đọc'), findsOneWidget);
+    });
+
+    testWidgets('Renders overdue 12h escalation notification with LEO THANG 12H badge', (tester) async {
+      final escalationMockRepo = MockNotificationRepository(
+        notifications: [
+          NotificationModel(
+            notificationId: 'NTF-US47-001',
+            clanId: 'VN-LE-2026',
+            category: NotificationCategoryEnum.task,
+            title: 'Cảnh báo quá hạn 12h: Chuẩn bị bài tế văn & trang phục khánh tiết',
+            content: 'Hạng mục [TSK-02] do Chi 1 phụ trách đã quá hạn 14 giờ 0 phút.',
+            referenceType: 'Task',
+            referenceId: 'TSK-02',
+            isRead: false,
+            createdAt: DateTime.now().subtract(const Duration(minutes: 15)),
+            metadata: {
+              'alertLevel': 'OverdueAlert12H',
+              'isOverdue12H': true,
+              'overdueHours': 14,
+            },
+          ),
+        ],
+        unreadCount: const UnreadCountModel(total: 1, taskCount: 1, eventCount: 0, financeCount: 0),
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            notificationRepositoryProvider.overrideWithValue(escalationMockRepo),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(
+              body: NotificationCenterDialog(),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Badge must appear
+      expect(find.text('LEO THANG 12H'), findsOneWidget);
+      expect(find.textContaining('Cảnh báo quá hạn 12h'), findsOneWidget);
     });
   });
 

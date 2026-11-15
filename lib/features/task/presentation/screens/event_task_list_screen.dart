@@ -9,6 +9,7 @@ import '../../../event/presentation/providers/event_providers.dart';
 import '../../data/models/task_models.dart';
 import '../providers/task_providers.dart';
 import '../widgets/assign_task_dialog.dart';
+import '../widgets/branch_overdue_escalation_card.dart';
 import '../widgets/create_task_dialog.dart';
 import '../widgets/task_card.dart';
 
@@ -96,6 +97,36 @@ class _EventTaskListScreenState extends ConsumerState<EventTaskListScreen> {
         );
 
     final isDesktop = MediaQuery.of(context).size.width >= 840;
+
+    // [US-47] Tính toán danh sách công việc trễ hạn >= 12h gửi riêng cho Trưởng chi / Trưởng nhánh
+    final bool canViewEscalationCard = session.isBranchHead &&
+        session.managedBranchId != null &&
+        session.managedBranchId!.isNotEmpty;
+
+    final List<TaskModel> escalationTasksToShow;
+    final String displayBranchName;
+
+    if (!canViewEscalationCard) {
+      escalationTasksToShow = const [];
+      displayBranchName = '';
+    } else {
+      escalationTasksToShow = taskState.tasks.where((t) {
+        if (!t.isOverdue12Hours) return false;
+        final matchesBranchId = t.assignedBranchId != null &&
+            t.assignedBranchId!.trim() == session.managedBranchId!.trim();
+        final matchesBranchName = t.assignedBranchName != null &&
+            session.branchName.isNotEmpty &&
+            (t.assignedBranchName!.trim().toLowerCase() ==
+                    session.branchName.trim().toLowerCase() ||
+                t.assignedBranchName!
+                    .toLowerCase()
+                    .contains(session.branchName.toLowerCase()));
+        return matchesBranchId || matchesBranchName;
+      }).toList();
+      displayBranchName = session.branchName.isNotEmpty
+          ? session.branchName
+          : 'Chi Nhánh Phụ Trách';
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9F8F6),
@@ -262,6 +293,13 @@ class _EventTaskListScreenState extends ConsumerState<EventTaskListScreen> {
                   _buildEventHeaderCard(event, isDesktop, canManage, isClosed),
 
                 const SizedBox(height: 14),
+
+                // [US-47] Thẻ cảnh báo khẩn cấp màu đỏ gửi riêng cho Trưởng chi / Trưởng nhánh
+                if (canViewEscalationCard && escalationTasksToShow.isNotEmpty)
+                  BranchOverdueEscalationCard(
+                    overdueTasks: escalationTasksToShow,
+                    branchName: displayBranchName,
+                  ),
 
                 // 4. Thanh lọc & Tìm kiếm
                 _buildFilterToolbar(taskState, isDesktop),
@@ -702,7 +740,7 @@ class _EventTaskListScreenState extends ConsumerState<EventTaskListScreen> {
             crossAxisCount: crossAxisCount,
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
-            mainAxisExtent: 310,
+            mainAxisExtent: 380,
           ),
           itemCount: tasks.length,
           itemBuilder: (context, index) {

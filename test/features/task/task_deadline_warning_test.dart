@@ -184,4 +184,101 @@ void main() {
       expect(find.text('Còn 24h'), findsNothing);
     });
   });
+
+  group('TaskModel Overdue Escalation Logic (US-47)', () {
+    test('isOverdue12Hours returns true when deadline is 12 hours or more in the past', () {
+      final task12h = TaskModel(
+        taskId: 'T-12H',
+        eventId: 'EV-01',
+        taskName: 'Chuẩn bị bài tế văn',
+        status: TaskStatusEnum.inProgress,
+        advanceBudget: 500000,
+        deadline: DateTime.now().subtract(const Duration(hours: 14)),
+        assignedMemberId: 'MEM-01',
+        assignedMemberName: 'Nguyễn Văn Em',
+        createdBy: 'ADMIN',
+      );
+
+      expect(task12h.isOverdue12Hours, isTrue);
+      expect(task12h.overdueHours, 14);
+      expect(task12h.overdueDurationText, 'Trễ 14h');
+    });
+
+    test('isOverdue12Hours returns false when deadline is less than 12 hours in the past', () {
+      final taskRecent = TaskModel(
+        taskId: 'T-RECENT',
+        eventId: 'EV-01',
+        taskName: 'Sắp xếp mâm cỗ',
+        status: TaskStatusEnum.inProgress,
+        advanceBudget: 200000,
+        deadline: DateTime.now().subtract(const Duration(hours: 11, minutes: 50)),
+        assignedMemberId: 'MEM-02',
+        assignedMemberName: 'Lê Văn B',
+        createdBy: 'ADMIN',
+      );
+
+      expect(taskRecent.isOverdue12Hours, isFalse);
+    });
+
+    test('isOverdue12Hours returns false when task is already completed', () {
+      final taskDone = TaskModel(
+        taskId: 'T-DONE',
+        eventId: 'EV-01',
+        taskName: 'Đã hoàn thành',
+        status: TaskStatusEnum.completed,
+        advanceBudget: 100000,
+        deadline: DateTime.now().subtract(const Duration(hours: 20)),
+        assignedMemberId: 'MEM-03',
+        assignedMemberName: 'Trần Văn C',
+        createdBy: 'ADMIN',
+      );
+
+      expect(taskDone.isOverdue12Hours, isFalse);
+    });
+  });
+
+  group('TaskCard 12h Overdue Escalation Integration (Stitch W4)', () {
+    testWidgets('Displays "Trễ 14h" badge and Stitch W4 Notice Box when task is overdue 12h+', (tester) async {
+      final taskOverdue14h = TaskModel(
+        taskId: 'T-STITCH-W4',
+        eventId: 'EV-01',
+        taskName: 'Chuẩn bị bài tế văn & trang phục khánh tiết',
+        details: 'Hoàn thiện bản thảo văn tế chữ Hán - Quốc ngữ',
+        status: TaskStatusEnum.inProgress,
+        advanceBudget: 1000000,
+        deadline: DateTime.now().subtract(const Duration(hours: 14)),
+        assignedBranchId: 'BR-01',
+        assignedBranchName: 'Chi 1 (Tiểu ban nghi lễ)',
+        createdBy: 'ADMIN',
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: TaskCard(
+                task: taskOverdue14h,
+                canManage: true,
+                isClosed: false,
+                onReassign: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Stitch W4 Escalation badge
+      expect(find.text('Trễ 14h'), findsOneWidget);
+      expect(find.byIcon(Icons.warning_amber_rounded), findsOneWidget);
+
+      // Stitch W4 Notice Box
+      expect(find.text('ĐÃ BÁO ĐỘNG VƯỢT CẤP LÊN TRƯỞNG CHI'), findsOneWidget);
+      expect(
+        find.textContaining('Hệ thống đã tự động ghi vết cảnh báo'),
+        findsOneWidget,
+      );
+    });
+  });
 }

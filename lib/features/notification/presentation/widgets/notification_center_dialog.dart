@@ -360,7 +360,8 @@ class _NotificationCenterDialogState
     NotificationModel item,
     NotificationListNotifier notifier,
   ) {
-    final isDeadlineWarning = item.isTaskDeadlineWarning;
+    final isEscalation12H = item.isTaskOverdue12HEscalation;
+    final isDeadlineWarning = item.isTaskDeadlineWarning && !isEscalation12H;
     final isAnniversary = item.isDeathAnniversaryReminder;
     final timeFormat = DateFormat('HH:mm • dd/MM/yyyy');
     final canCreateEvent =
@@ -368,17 +369,21 @@ class _NotificationCenterDialogState
 
     return Container(
       decoration: BoxDecoration(
-        color: item.isRead ? Colors.white : const Color(0xFFFFF9F8),
+        color: isEscalation12H
+            ? const Color(0xFFFFF1F0)
+            : (item.isRead ? Colors.white : const Color(0xFFFFF9F8)),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isDeadlineWarning
-              ? const Color(0xFFE57373)
-              : (isAnniversary
-                  ? const Color(0xFFE8B07A)
-                  : (item.isRead
-                      ? const Color(0xFFE6DFD8)
-                      : const Color(0xFFFFCDD2))),
-          width: (isDeadlineWarning || isAnniversary) ? 1.4 : 1.0,
+          color: isEscalation12H
+              ? const Color(0xFFBA1A1A)
+              : (isDeadlineWarning
+                  ? const Color(0xFFE57373)
+                  : (isAnniversary
+                      ? const Color(0xFFE8B07A)
+                      : (item.isRead
+                          ? const Color(0xFFE6DFD8)
+                          : const Color(0xFFFFCDD2)))),
+          width: (isEscalation12H || isDeadlineWarning || isAnniversary) ? 1.4 : 1.0,
         ),
         boxShadow: const [
           BoxShadow(
@@ -395,7 +400,33 @@ class _NotificationCenterDialogState
           // Header: Category Badge + Status + Timestamp
           Row(
             children: [
-              if (isDeadlineWarning)
+              if (isEscalation12H)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFBA1A1A),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.warning_amber_rounded,
+                          size: 12, color: Colors.white),
+                      SizedBox(width: 4),
+                      Text(
+                        'LEO THANG 12H',
+                        style: TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else if (isDeadlineWarning)
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

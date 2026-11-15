@@ -72,6 +72,24 @@ class NotificationModel {
         lowerTitle.contains('nhắc nhở');
   }
 
+  /// [US-47] Kiểm tra xem thông báo này có phải cảnh báo leo thang công việc quá hạn 12H tới Trưởng chi
+  bool get isTaskOverdue12HEscalation {
+    if (metadata?['alertLevel'] == 'OverdueAlert12H' ||
+        metadata?['isOverdue12H'] == true) {
+      return true;
+    }
+    final lowerTitle = title.toLowerCase();
+    final lowerContent = content.toLowerCase();
+    return lowerTitle.contains('quá hạn 12h') ||
+        lowerTitle.contains('trễ hạn 12h') ||
+        lowerTitle.contains('overduealert12h') ||
+        (category == NotificationCategoryEnum.task &&
+            (lowerTitle.contains('quá hạn') || lowerTitle.contains('trễ')) &&
+            (lowerContent.contains('12 giờ') ||
+                lowerContent.contains('12h') ||
+                lowerContent.contains('trưởng chi')));
+  }
+
   /// Kiểm tra xem thông báo này có phải nhắc ngày giỗ (US-40)
   bool get isDeathAnniversaryReminder {
     final lowerRef = referenceType?.toLowerCase() ?? '';
