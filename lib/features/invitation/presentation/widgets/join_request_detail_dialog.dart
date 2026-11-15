@@ -365,7 +365,7 @@ class _JoinRequestDetailDialogState extends ConsumerState<JoinRequestDetailDialo
 
                                 const SizedBox(height: 8),
                                 const Text(
-                                  'Gợi ý AC-08: Nếu người nộp đơn chọn nhầm chi nhánh, quý vị hãy chọn lại nhánh chính xác trước khi bấm Phê duyệt. Thành viên sẽ được thêm vào đúng nhánh đã chọn.',
+                                  'Gợi ý: Nếu người nộp đơn chọn nhầm chi nhánh, quý vị hãy chọn lại nhánh chính xác trước khi bấm Phê duyệt. Thành viên sẽ được thêm vào đúng nhánh đã chọn.',
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: Color(0xFF6B584E),
