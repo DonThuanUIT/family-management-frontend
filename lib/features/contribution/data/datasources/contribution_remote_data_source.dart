@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -55,6 +56,22 @@ abstract class ContributionRemoteDataSource {
   Future<ElectronicReceiptDto> getCashReceiptByNumber(String receiptNumber);
 
   Future<InKindElectronicReceiptDto> getInKindReceiptByNumber(String receiptNumber);
+
+  Future<MemberContributionHistoryResponseDto> getMyContributionHistory({bool includeFamily = false});
+
+  Future<Uint8List> downloadReceiptPdf(String receiptNumber);
+
+  Future<List<UnreconciledContributionDto>> getUnreconciledContributions({String? eventId});
+
+  Future<void> reconcileContribution(String contributionId, ReconcileContributionRequestDto request);
+
+  Future<void> auditClanAsset(String assetId, AuditClanAssetRequestDto request);
+
+  Future<List<ClanAssetAuditResponseDto>> getClanAssetAudits(String assetId);
+
+  Future<VietQrResponseDto> generateVietQr(GenerateVietQrRequestDto request);
+
+  Future<EventPendingInKindCheckResponseDto> checkPendingInKindContributions(String eventId);
 }
 
 class ContributionRemoteDataSourceImpl implements ContributionRemoteDataSource {
@@ -225,6 +242,83 @@ class ContributionRemoteDataSourceImpl implements ContributionRemoteDataSource {
         await _dio.get('contributions/in-kind/receipts/$receiptNumber');
     final data = response.data['data'] as Map<String, dynamic>;
     return InKindElectronicReceiptDto.fromJson(data);
+  }
+
+  @override
+  Future<MemberContributionHistoryResponseDto> getMyContributionHistory({bool includeFamily = false}) async {
+    final response = await _dio.get(
+      'contributions/my-history',
+      queryParameters: {'includeFamily': includeFamily},
+    );
+    final data = response.data['data'] as Map<String, dynamic>;
+    return MemberContributionHistoryResponseDto.fromJson(data);
+  }
+
+  @override
+  Future<Uint8List> downloadReceiptPdf(String receiptNumber) async {
+    final response = await _dio.get<List<int>>(
+      'contributions/receipts/$receiptNumber/pdf',
+      options: Options(responseType: ResponseType.bytes),
+    );
+    return Uint8List.fromList(response.data!);
+  }
+
+  @override
+  Future<List<UnreconciledContributionDto>> getUnreconciledContributions({String? eventId}) async {
+    final queryParams = <String, dynamic>{};
+    if (eventId != null && eventId.isNotEmpty) {
+      queryParams['eventId'] = eventId;
+    }
+    final response = await _dio.get(
+      'contributions/cash/unreconciled',
+      queryParameters: queryParams,
+    );
+    final rawList = response.data['data'] as List<dynamic>? ?? [];
+    return rawList
+        .map((e) => UnreconciledContributionDto.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  @override
+  Future<void> reconcileContribution(String contributionId, ReconcileContributionRequestDto request) async {
+    await _dio.put(
+      'contributions/cash/$contributionId/reconcile',
+      data: request.toJson(),
+    );
+  }
+
+  @override
+  Future<void> auditClanAsset(String assetId, AuditClanAssetRequestDto request) async {
+    await _dio.put(
+      'clan-assets/$assetId/audit',
+      data: request.toJson(),
+    );
+  }
+
+  @override
+  Future<List<ClanAssetAuditResponseDto>> getClanAssetAudits(String assetId) async {
+    final response = await _dio.get('clan-assets/$assetId/audits');
+    final rawList = response.data['data'] as List<dynamic>? ?? [];
+    return rawList
+        .map((e) => ClanAssetAuditResponseDto.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  @override
+  Future<VietQrResponseDto> generateVietQr(GenerateVietQrRequestDto request) async {
+    final response = await _dio.post(
+      'contributions/vietqr/generate',
+      data: request.toJson(),
+    );
+    final data = response.data['data'] as Map<String, dynamic>;
+    return VietQrResponseDto.fromJson(data);
+  }
+
+  @override
+  Future<EventPendingInKindCheckResponseDto> checkPendingInKindContributions(String eventId) async {
+    final response = await _dio.get('contributions/in-kind/events/$eventId/pending-check');
+    final data = response.data['data'] as Map<String, dynamic>;
+    return EventPendingInKindCheckResponseDto.fromJson(data);
   }
 }
 

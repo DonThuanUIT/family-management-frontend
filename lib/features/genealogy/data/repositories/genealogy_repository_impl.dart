@@ -37,6 +37,35 @@ class GenealogyRepositoryImpl implements GenealogyRepository {
     return _remoteDataSource.getClanMembers();
   }
 
+  @override
+  Future<BranchDetailDto> updateBranch(String branchId, UpdateBranchRequestDto request) {
+    return _remoteDataSource.updateBranch(branchId, request);
+  }
+
+  @override
+  Future<void> assignMemberToBranch(String memberId, String branchId) {
+    return _remoteDataSource.assignMemberToBranch(memberId, branchId);
+  }
+
+  @override
+  Future<List<MemberSearchDto>> searchMembers({
+    String? keyword,
+    String? memberId,
+    String? fullName,
+    int? generation,
+    String? branchId,
+    String? status,
+  }) {
+    return _remoteDataSource.searchMembers(
+      keyword: keyword,
+      memberId: memberId,
+      fullName: fullName,
+      generation: generation,
+      branchId: branchId,
+      status: status,
+    );
+  }
+
   FamilyBranchDetail _toEntity(BranchDetailDto dto) {
     return FamilyBranchDetail(
       branchId: dto.branchId,

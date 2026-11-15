@@ -257,20 +257,55 @@ class _ReceiveContributionScreenState
           ],
         );
 
-        final actionBtn = ElevatedButton.icon(
-          onPressed: () => _showAddContributionModal(context),
-          icon: const Icon(Icons.post_add, size: 20),
-          label: const Text('Tiếp Nhận Đóng Góp'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF8B1E1E),
-            foregroundColor: Colors.white,
-            minimumSize: const Size(170, 46),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+        final actionButtons = Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ElevatedButton.icon(
+              onPressed: () => _showAddContributionModal(context),
+              icon: const Icon(Icons.post_add, size: 18),
+              label: const Text('Tiếp Nhận Tại Bàn'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF8B1E1E),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
             ),
-          ),
+            OutlinedButton.icon(
+              onPressed: () => context.push('/contributions/online'),
+              icon: const Icon(Icons.qr_code_2, size: 18),
+              label: const Text('Đóng Góp VietQR (US-53)'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF3F51B5),
+                side: const BorderSide(color: Color(0xFF3F51B5)),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => context.push('/contributions/reconcile'),
+              icon: const Icon(Icons.rule, size: 18),
+              label: const Text('Đối Soát (US-50)'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF006E2A),
+                side: const BorderSide(color: Color(0xFF006E2A)),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => context.push('/contributions/my-history'),
+              icon: const Icon(Icons.history_edu, size: 18),
+              label: const Text('Đóng Góp Của Tôi (US-49)'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF8B1E1E),
+                side: const BorderSide(color: Color(0xFF8B1E1E)),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ],
         );
 
         if (isNarrow) {
@@ -279,7 +314,7 @@ class _ReceiveContributionScreenState
             children: [
               infoColumn,
               const SizedBox(height: 16),
-              actionBtn,
+              actionButtons,
             ],
           );
         }
@@ -309,7 +344,7 @@ class _ReceiveContributionScreenState
             const SizedBox(width: 18),
             Expanded(child: infoColumn),
             const SizedBox(width: 18),
-            actionBtn,
+            actionButtons,
           ],
         );
       }),

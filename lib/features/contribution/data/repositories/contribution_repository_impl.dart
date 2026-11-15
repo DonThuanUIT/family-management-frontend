@@ -1,4 +1,5 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'dart:typed_data';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/repositories/contribution_repository.dart';
 import '../datasources/contribution_remote_data_source.dart';
@@ -116,6 +117,46 @@ class ContributionRepositoryImpl implements ContributionRepository {
   Future<InKindElectronicReceiptDto> getInKindReceiptByNumber(
       String receiptNumber) {
     return _remoteDataSource.getInKindReceiptByNumber(receiptNumber);
+  }
+
+  @override
+  Future<MemberContributionHistoryResponseDto> getMyContributionHistory({bool includeFamily = false}) {
+    return _remoteDataSource.getMyContributionHistory(includeFamily: includeFamily);
+  }
+
+  @override
+  Future<Uint8List> downloadReceiptPdf(String receiptNumber) {
+    return _remoteDataSource.downloadReceiptPdf(receiptNumber);
+  }
+
+  @override
+  Future<List<UnreconciledContributionDto>> getUnreconciledContributions({String? eventId}) {
+    return _remoteDataSource.getUnreconciledContributions(eventId: eventId);
+  }
+
+  @override
+  Future<void> reconcileContribution(String contributionId, ReconcileContributionRequestDto request) {
+    return _remoteDataSource.reconcileContribution(contributionId, request);
+  }
+
+  @override
+  Future<void> auditClanAsset(String assetId, AuditClanAssetRequestDto request) {
+    return _remoteDataSource.auditClanAsset(assetId, request);
+  }
+
+  @override
+  Future<List<ClanAssetAuditResponseDto>> getClanAssetAudits(String assetId) {
+    return _remoteDataSource.getClanAssetAudits(assetId);
+  }
+
+  @override
+  Future<VietQrResponseDto> generateVietQr(GenerateVietQrRequestDto request) {
+    return _remoteDataSource.generateVietQr(request);
+  }
+
+  @override
+  Future<EventPendingInKindCheckResponseDto> checkPendingInKindContributions(String eventId) {
+    return _remoteDataSource.checkPendingInKindContributions(eventId);
   }
 }
 

@@ -153,24 +153,25 @@ final genealogyMemberListProvider = FutureProvider<List<BranchMemberItem>>((ref)
     if (list.isNotEmpty) return list;
   } catch (_) {}
 
-  return const [
-    BranchMemberItem(
-      memberId: 'MEM_TRUONG_TOC',
-      fullName: 'Nguyễn Trọng Hoàng',
-      generation: 1,
-      roleInBranch: 'Khởi Tổ / Trưởng Tộc • Đời 1',
-    ),
-    BranchMemberItem(
-      memberId: 'MEM_TRUONG_CHI',
-      fullName: 'Nguyễn Văn An',
-      generation: 2,
-      roleInBranch: 'Trưởng Chi 2 • Đời 2',
-    ),
-    BranchMemberItem(
-      memberId: 'MEM_MAI_ANH',
-      fullName: 'Nguyễn Thị Mai Anh',
-      generation: 3,
-      roleInBranch: 'Chi 2 • Đời 3',
-    ),
-  ];
+  return const [];
+});
+
+/// State quản lý tìm kiếm thành viên thông minh trên cây phả hệ (US-30, Task #112)
+final memberSearchQueryProvider = StateProvider<String>((ref) => '');
+final memberSearchGenerationProvider = StateProvider<int?>((ref) => null);
+final memberSearchBranchIdProvider = StateProvider<String?>((ref) => null);
+
+final memberSearchResultsProvider = FutureProvider<List<MemberSearchDto>>((ref) async {
+  final query = ref.watch(memberSearchQueryProvider);
+  final gen = ref.watch(memberSearchGenerationProvider);
+  final branchId = ref.watch(memberSearchBranchIdProvider);
+  if (query.trim().isEmpty && gen == null && branchId == null) {
+    return [];
+  }
+  final repo = ref.watch(genealogyRepositoryProvider);
+  return repo.searchMembers(
+    keyword: query.isNotEmpty ? query : null,
+    generation: gen,
+    branchId: branchId,
+  );
 });

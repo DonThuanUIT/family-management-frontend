@@ -251,6 +251,42 @@ class ContributionUiNotifier extends Notifier<ContributionUiState> {
     state = state.copyWith(searchQuery: query);
   }
 
+  Future<void> auditClanAsset({
+    required String assetId,
+    required int actualQuantity,
+    required String conditionStatus,
+    String? storageLocation,
+    String? notes,
+  }) async {
+    await _repository.auditClanAsset(
+      assetId,
+      AuditClanAssetRequestDto(
+        actualQuantity: actualQuantity,
+        conditionStatus: conditionStatus,
+        storageLocation: storageLocation,
+        notes: notes,
+      ),
+    );
+    await fetchFromBackend();
+  }
+
+  Future<void> reconcileContribution({
+    required String contributionId,
+    required String bankTransactionCode,
+    String? transferProofUrl,
+    String? note,
+  }) async {
+    await _repository.reconcileContribution(
+      contributionId,
+      ReconcileContributionRequestDto(
+        bankTransactionCode: bankTransactionCode,
+        transferProofUrl: transferProofUrl,
+        note: note,
+      ),
+    );
+    await fetchFromBackend();
+  }
+
   String _formatDate(DateTime dt) {
     return '${dt.year}${dt.month.toString().padLeft(2, '0')}${dt.day.toString().padLeft(2, '0')}';
   }
@@ -264,3 +300,27 @@ final contributionUiProvider =
     NotifierProvider<ContributionUiNotifier, ContributionUiState>(
   ContributionUiNotifier.new,
 );
+
+/// Provider Lịch sử đóng góp cá nhân và nhánh gia đình (US-49, Task #175)
+final myContributionHistoryProvider = FutureProvider.family<MemberContributionHistoryResponseDto, bool>((ref, includeFamily) async {
+  final repo = ref.watch(contributionRepositoryProvider);
+  return repo.getMyContributionHistory(includeFamily: includeFamily);
+});
+
+/// Provider Danh sách giao dịch chuyển khoản chưa đối soát cho Thủ quỹ (US-50, Task #178)
+final unreconciledContributionsProvider = FutureProvider.family<List<UnreconciledContributionDto>, String?>((ref, eventId) async {
+  final repo = ref.watch(contributionRepositoryProvider);
+  return repo.getUnreconciledContributions(eventId: eventId);
+});
+
+/// Provider Lịch sử kiểm kê tài sản dòng họ (US-52, Task #184)
+final clanAssetAuditsProvider = FutureProvider.family<List<ClanAssetAuditResponseDto>, String>((ref, assetId) async {
+  final repo = ref.watch(contributionRepositoryProvider);
+  return repo.getClanAssetAudits(assetId);
+});
+
+/// Provider Kiểm tra chốt hiện vật sự kiện trước khi đóng (US-51, Task #181)
+final eventPendingInKindCheckProvider = FutureProvider.family<EventPendingInKindCheckResponseDto, String>((ref, eventId) async {
+  final repo = ref.watch(contributionRepositoryProvider);
+  return repo.checkPendingInKindContributions(eventId);
+});

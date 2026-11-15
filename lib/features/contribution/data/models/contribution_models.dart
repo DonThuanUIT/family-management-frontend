@@ -341,3 +341,371 @@ class ClanAssetDto {
     };
   }
 }
+
+/// DTO Lịch sử đóng góp cá nhân & gia đình (US-49, Task #175)
+class MemberContributionHistoryResponseDto {
+  final String memberId;
+  final String memberName;
+  final String? branchId;
+  final String? branchName;
+  final String? clanId;
+  final double totalPersonalContributed;
+  final double totalAllocated;
+  final List<MemberContributionHistoryItemDto> items;
+
+  const MemberContributionHistoryResponseDto({
+    required this.memberId,
+    required this.memberName,
+    this.branchId,
+    this.branchName,
+    this.clanId,
+    required this.totalPersonalContributed,
+    required this.totalAllocated,
+    required this.items,
+  });
+
+  factory MemberContributionHistoryResponseDto.fromJson(Map<String, dynamic> json) {
+    final rawItems = json['items'] as List<dynamic>? ?? [];
+    return MemberContributionHistoryResponseDto(
+      memberId: (json['memberId'] ?? '') as String,
+      memberName: (json['memberName'] ?? '') as String,
+      branchId: json['branchId'] as String?,
+      branchName: json['branchName'] as String?,
+      clanId: json['clanId'] as String?,
+      totalPersonalContributed: ((json['totalPersonalContributed'] ?? 0) as num).toDouble(),
+      totalAllocated: ((json['totalAllocated'] ?? 0) as num).toDouble(),
+      items: rawItems.map((e) => MemberContributionHistoryItemDto.fromJson(e as Map<String, dynamic>)).toList(),
+    );
+  }
+}
+
+class MemberContributionHistoryItemDto {
+  final String contributionId;
+  final String receiptNumber;
+  final String eventId;
+  final String? eventName;
+  final String payerMemberId;
+  final String? payerMemberName;
+  final String contributionType;
+  final PaymentMethod paymentMethod;
+  final String? itemName;
+  final double quantity;
+  final String? unit;
+  final double totalMonetaryValue;
+  final double myAllocatedAmount;
+  final String status;
+  final DateTime? contributionDate;
+
+  const MemberContributionHistoryItemDto({
+    required this.contributionId,
+    required this.receiptNumber,
+    required this.eventId,
+    this.eventName,
+    required this.payerMemberId,
+    this.payerMemberName,
+    required this.contributionType,
+    required this.paymentMethod,
+    this.itemName,
+    required this.quantity,
+    this.unit,
+    required this.totalMonetaryValue,
+    required this.myAllocatedAmount,
+    required this.status,
+    this.contributionDate,
+  });
+
+  factory MemberContributionHistoryItemDto.fromJson(Map<String, dynamic> json) {
+    DateTime? date;
+    if (json['contributionDate'] != null) {
+      date = DateTime.tryParse(json['contributionDate'].toString());
+    }
+
+    return MemberContributionHistoryItemDto(
+      contributionId: (json['contributionId'] ?? '') as String,
+      receiptNumber: (json['receiptNumber'] ?? '') as String,
+      eventId: (json['eventId'] ?? '') as String,
+      eventName: json['eventName'] as String?,
+      payerMemberId: (json['payerMemberId'] ?? '') as String,
+      payerMemberName: json['payerMemberName'] as String?,
+      contributionType: (json['contributionType'] ?? 'Cash') as String,
+      paymentMethod: PaymentMethod.fromString(json['paymentMethod']?.toString()),
+      itemName: json['itemName'] as String?,
+      quantity: ((json['quantity'] ?? 1) as num).toDouble(),
+      unit: json['unit'] as String?,
+      totalMonetaryValue: ((json['totalMonetaryValue'] ?? 0) as num).toDouble(),
+      myAllocatedAmount: ((json['myAllocatedAmount'] ?? 0) as num).toDouble(),
+      status: (json['status'] ?? 'Completed') as String,
+      contributionDate: date,
+    );
+  }
+}
+
+/// DTO Giao dịch chuyển khoản chưa đối soát (US-50, Task #178)
+class UnreconciledContributionDto {
+  final String contributionId;
+  final String receiptNumber;
+  final String eventId;
+  final String? eventName;
+  final String payerMemberId;
+  final String? payerMemberName;
+  final double amount;
+  final String? amountInWords;
+  final DateTime? contributionDate;
+  final String? bankTransactionCode;
+  final String? transferProofUrl;
+  final bool isReconciled;
+
+  const UnreconciledContributionDto({
+    required this.contributionId,
+    required this.receiptNumber,
+    required this.eventId,
+    this.eventName,
+    required this.payerMemberId,
+    this.payerMemberName,
+    required this.amount,
+    this.amountInWords,
+    this.contributionDate,
+    this.bankTransactionCode,
+    this.transferProofUrl,
+    this.isReconciled = false,
+  });
+
+  factory UnreconciledContributionDto.fromJson(Map<String, dynamic> json) {
+    DateTime? date;
+    if (json['contributionDate'] != null) {
+      date = DateTime.tryParse(json['contributionDate'].toString());
+    }
+
+    return UnreconciledContributionDto(
+      contributionId: (json['contributionId'] ?? '') as String,
+      receiptNumber: (json['receiptNumber'] ?? '') as String,
+      eventId: (json['eventId'] ?? '') as String,
+      eventName: json['eventName'] as String?,
+      payerMemberId: (json['payerMemberId'] ?? '') as String,
+      payerMemberName: json['payerMemberName'] as String?,
+      amount: ((json['amount'] ?? 0) as num).toDouble(),
+      amountInWords: json['amountInWords'] as String?,
+      contributionDate: date,
+      bankTransactionCode: json['bankTransactionCode'] as String?,
+      transferProofUrl: json['transferProofUrl'] as String?,
+      isReconciled: json['isReconciled'] == true,
+    );
+  }
+}
+
+/// Request DTO Xác nhận đối soát ngân hàng (US-50, Task #178)
+class ReconcileContributionRequestDto {
+  final String bankTransactionCode;
+  final String? transferProofUrl;
+  final String? note;
+
+  const ReconcileContributionRequestDto({
+    required this.bankTransactionCode,
+    this.transferProofUrl,
+    this.note,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'bankTransactionCode': bankTransactionCode.trim(),
+      if (transferProofUrl != null && transferProofUrl!.trim().isNotEmpty)
+        'transferProofUrl': transferProofUrl!.trim()
+      else
+        'transferProofUrl': null,
+      if (note != null && note!.trim().isNotEmpty)
+        'note': note!.trim()
+      else
+        'note': null,
+    };
+  }
+}
+
+/// Request DTO Cập nhật kiểm kê tài sản định kỳ (US-52, Task #184)
+class AuditClanAssetRequestDto {
+  final int actualQuantity;
+  final String conditionStatus;
+  final String? storageLocation;
+  final String? notes;
+
+  const AuditClanAssetRequestDto({
+    required this.actualQuantity,
+    required this.conditionStatus,
+    this.storageLocation,
+    this.notes,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'actualQuantity': actualQuantity,
+      'conditionStatus': conditionStatus.trim(),
+      if (storageLocation != null && storageLocation!.trim().isNotEmpty)
+        'storageLocation': storageLocation!.trim()
+      else
+        'storageLocation': null,
+      if (notes != null && notes!.trim().isNotEmpty)
+        'notes': notes!.trim()
+      else
+        'notes': null,
+    };
+  }
+}
+
+/// DTO Lịch sử kiểm kê tài sản (US-52, Task #184)
+class ClanAssetAuditResponseDto {
+  final String auditId;
+  final String assetId;
+  final DateTime? auditDate;
+  final int previousQuantity;
+  final int actualQuantity;
+  final String previousCondition;
+  final String conditionStatus;
+  final String? storageLocation;
+  final String? auditorAccountId;
+  final String? notes;
+  final DateTime? createdAt;
+
+  const ClanAssetAuditResponseDto({
+    required this.auditId,
+    required this.assetId,
+    this.auditDate,
+    required this.previousQuantity,
+    required this.actualQuantity,
+    required this.previousCondition,
+    required this.conditionStatus,
+    this.storageLocation,
+    this.auditorAccountId,
+    this.notes,
+    this.createdAt,
+  });
+
+  factory ClanAssetAuditResponseDto.fromJson(Map<String, dynamic> json) {
+    DateTime? aDate;
+    if (json['auditDate'] != null) {
+      aDate = DateTime.tryParse(json['auditDate'].toString());
+    }
+    DateTime? cDate;
+    if (json['createdAt'] != null) {
+      cDate = DateTime.tryParse(json['createdAt'].toString());
+    }
+
+    return ClanAssetAuditResponseDto(
+      auditId: (json['auditId'] ?? '') as String,
+      assetId: (json['assetId'] ?? '') as String,
+      auditDate: aDate,
+      previousQuantity: ((json['previousQuantity'] ?? 0) as num).toInt(),
+      actualQuantity: ((json['actualQuantity'] ?? 0) as num).toInt(),
+      previousCondition: (json['previousCondition'] ?? 'Good') as String,
+      conditionStatus: (json['conditionStatus'] ?? 'Good') as String,
+      storageLocation: json['storageLocation'] as String?,
+      auditorAccountId: json['auditorAccountId'] as String?,
+      notes: json['notes'] as String?,
+      createdAt: cDate,
+    );
+  }
+}
+
+/// Request DTO Sinh mã VietQR động đóng góp trực tuyến (US-53, Task #187)
+class GenerateVietQrRequestDto {
+  final String eventId;
+  final String? memberId;
+  final double amount;
+  final String? note;
+
+  const GenerateVietQrRequestDto({
+    required this.eventId,
+    this.memberId,
+    required this.amount,
+    this.note,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'eventId': eventId.trim(),
+      if (memberId != null && memberId!.trim().isNotEmpty)
+        'memberId': memberId!.trim()
+      else
+        'memberId': null,
+      'amount': amount,
+      if (note != null && note!.trim().isNotEmpty)
+        'note': note!.trim()
+      else
+        'note': null,
+    };
+  }
+}
+
+/// DTO Chi tiết mã VietQR sinh ra (US-53, Task #187)
+class VietQrResponseDto {
+  final String qrCodeUrl;
+  final String qrPayload;
+  final String bankBin;
+  final String bankName;
+  final String accountNumber;
+  final String accountName;
+  final double amount;
+  final String transferContent;
+  final String eventId;
+  final String? eventName;
+  final String? memberId;
+  final String? memberName;
+
+  const VietQrResponseDto({
+    required this.qrCodeUrl,
+    required this.qrPayload,
+    required this.bankBin,
+    required this.bankName,
+    required this.accountNumber,
+    required this.accountName,
+    required this.amount,
+    required this.transferContent,
+    required this.eventId,
+    this.eventName,
+    this.memberId,
+    this.memberName,
+  });
+
+  factory VietQrResponseDto.fromJson(Map<String, dynamic> json) {
+    return VietQrResponseDto(
+      qrCodeUrl: (json['qrCodeUrl'] ?? '') as String,
+      qrPayload: (json['qrPayload'] ?? '') as String,
+      bankBin: (json['bankBin'] ?? '') as String,
+      bankName: (json['bankName'] ?? '') as String,
+      accountNumber: (json['accountNumber'] ?? '') as String,
+      accountName: (json['accountName'] ?? '') as String,
+      amount: ((json['amount'] ?? 0) as num).toDouble(),
+      transferContent: (json['transferContent'] ?? '') as String,
+      eventId: (json['eventId'] ?? '') as String,
+      eventName: json['eventName'] as String?,
+      memberId: json['memberId'] as String?,
+      memberName: json['memberName'] as String?,
+    );
+  }
+}
+
+/// DTO Kiểm tra chốt hiện vật sự kiện (US-51, Task #181)
+class EventPendingInKindCheckResponseDto {
+  final String eventId;
+  final String? eventName;
+  final bool hasPendingItems;
+  final int pendingCount;
+  final String warningMessage;
+
+  const EventPendingInKindCheckResponseDto({
+    required this.eventId,
+    this.eventName,
+    required this.hasPendingItems,
+    required this.pendingCount,
+    required this.warningMessage,
+  });
+
+  factory EventPendingInKindCheckResponseDto.fromJson(Map<String, dynamic> json) {
+    return EventPendingInKindCheckResponseDto(
+      eventId: (json['eventId'] ?? '') as String,
+      eventName: json['eventName'] as String?,
+      hasPendingItems: json['hasPendingItems'] == true,
+      pendingCount: ((json['pendingCount'] ?? 0) as num).toInt(),
+      warningMessage: (json['warningMessage'] ?? '') as String,
+    );
+  }
+}
+

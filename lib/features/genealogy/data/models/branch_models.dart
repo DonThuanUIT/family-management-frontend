@@ -307,3 +307,82 @@ class BranchUiDetail {
     );
   }
 }
+
+/// Request DTO cập nhật chi nhánh (bao gồm reparenting / điều chuyển nhánh)
+class UpdateBranchRequestDto {
+  final String branchName;
+  final String? parentBranchId;
+  final String? description;
+  final String? representativeId;
+
+  const UpdateBranchRequestDto({
+    required this.branchName,
+    this.parentBranchId,
+    this.description,
+    this.representativeId,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'branchName': branchName.trim(),
+      'parentBranchId': parentBranchId?.trim(),
+      'description': description?.trim(),
+      'representativeId': representativeId?.trim(),
+    };
+  }
+}
+
+/// Request DTO điều chuyển thành viên sang chi nhánh khác
+class AssignMemberRequestDto {
+  final String branchId;
+
+  const AssignMemberRequestDto({required this.branchId});
+
+  Map<String, dynamic> toJson() {
+    return {
+      'branchId': branchId.trim(),
+    };
+  }
+}
+
+/// Response DTO kết quả tìm kiếm thành viên từ `GET /api/v1/members/search`
+class MemberSearchDto {
+  final String memberId;
+  final String fullName;
+  final int generation;
+  final String? branchId;
+  final String? branchName;
+  final String? status;
+  final String? gender;
+  final String? dateOfBirth;
+  final String? deathDateLunar;
+  final bool isPlaceholder;
+
+  const MemberSearchDto({
+    required this.memberId,
+    required this.fullName,
+    required this.generation,
+    this.branchId,
+    this.branchName,
+    this.status,
+    this.gender,
+    this.dateOfBirth,
+    this.deathDateLunar,
+    this.isPlaceholder = false,
+  });
+
+  factory MemberSearchDto.fromJson(Map<String, dynamic> json) {
+    return MemberSearchDto(
+      memberId: json['memberId']?.toString() ?? '',
+      fullName: json['fullName']?.toString() ?? '',
+      generation: (json['generation'] as num?)?.toInt() ?? 1,
+      branchId: json['branchId']?.toString(),
+      branchName: json['branchName']?.toString(),
+      status: json['status']?.toString(),
+      gender: json['gender']?.toString(),
+      dateOfBirth: json['dateOfBirth']?.toString(),
+      deathDateLunar: json['deathDateLunar']?.toString(),
+      isPlaceholder: json['isPlaceholder'] == true,
+    );
+  }
+}
