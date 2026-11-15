@@ -177,11 +177,14 @@ class _ReceiveContributionScreenState
         ],
       ),
       child: LayoutBuilder(builder: (context, constraints) {
-        final isNarrow = constraints.maxWidth < 720;
+        final isNarrow = constraints.maxWidth < 1180;
         final infoColumn = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 4,
               children: [
                 Container(
                   padding:
@@ -215,7 +218,6 @@ class _ReceiveContributionScreenState
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
                 const Text(
                   'Hạch toán tự động qua VietQR & Sổ cái',
                   style: TextStyle(
@@ -309,11 +311,39 @@ class _ReceiveContributionScreenState
           ],
         );
 
+        final headerIcon = Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF8B1E1E), Color(0xFF6B1414)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x208B1E1E),
+                blurRadius: 8,
+                offset: Offset(0, 3),
+              ),
+            ],
+          ),
+          child: const Icon(Icons.celebration,
+              color: Color(0xFFD4A017), size: 30),
+        );
+
         if (isNarrow) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              infoColumn,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  headerIcon,
+                  const SizedBox(width: 14),
+                  Expanded(child: infoColumn),
+                ],
+              ),
               const SizedBox(height: 16),
               actionButtons,
             ],
@@ -321,31 +351,13 @@ class _ReceiveContributionScreenState
         }
 
         return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF8B1E1E), Color(0xFF6B1414)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x208B1E1E),
-                    blurRadius: 8,
-                    offset: Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: const Icon(Icons.celebration,
-                  color: Color(0xFFD4A017), size: 30),
-            ),
+            headerIcon,
             const SizedBox(width: 18),
             Expanded(child: infoColumn),
             const SizedBox(width: 18),
-            actionButtons,
+            Flexible(child: actionButtons),
           ],
         );
       }),

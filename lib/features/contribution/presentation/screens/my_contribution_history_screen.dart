@@ -193,29 +193,50 @@ class _MyContributionHistoryScreenState
                     const SizedBox(height: 20),
 
                     // Hai thẻ tổng quan đóng góp (US-49)
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildSummaryCard(
+                    if (isDesktop)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildSummaryCard(
+                              title: 'TỔNG ĐÓNG GÓP CÁ NHÂN',
+                              amount: history.totalPersonalContributed,
+                              subtitle: 'Các khoản ghi nhận đứng tên trực tiếp bạn',
+                              icon: Icons.person_pin,
+                              accentColor: const Color(0xFF2E8B43),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _buildSummaryCard(
+                              title: 'TỔNG ĐÓNG GÓP CẢ NHÁNH / GIA ĐÌNH',
+                              amount: history.totalAllocated,
+                              subtitle: 'Bao gồm phần phân bổ công đức cho hộ gia đình',
+                              icon: Icons.family_restroom,
+                              accentColor: const Color(0xFFD4A017),
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      Column(
+                        children: [
+                          _buildSummaryCard(
                             title: 'TỔNG ĐÓNG GÓP CÁ NHÂN',
                             amount: history.totalPersonalContributed,
                             subtitle: 'Các khoản ghi nhận đứng tên trực tiếp bạn',
                             icon: Icons.person_pin,
                             accentColor: const Color(0xFF2E8B43),
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildSummaryCard(
+                          const SizedBox(height: 12),
+                          _buildSummaryCard(
                             title: 'TỔNG ĐÓNG GÓP CẢ NHÁNH / GIA ĐÌNH',
                             amount: history.totalAllocated,
                             subtitle: 'Bao gồm phần phân bổ công đức cho hộ gia đình',
                             icon: Icons.family_restroom,
                             accentColor: const Color(0xFFD4A017),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
 
                     // Chi tiết phân rã đệ quy chi nhánh (US-11 & US-49: BranchContributionController)
                     if (history.branchId != null && history.branchId!.isNotEmpty) ...[
@@ -415,115 +436,137 @@ class _MyContributionHistoryScreenState
     final dateStr = item.contributionDate != null ? _dateFormat.format(item.contributionDate!) : 'Chưa cập nhật';
     final isDownloading = _downloadingReceiptNumber == item.receiptNumber;
 
+    final typeIcon = Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: isCash ? const Color(0xFF2E8B43).withValues(alpha: 0.1) : const Color(0xFFD4A017).withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(
+        isCash ? Icons.payments : Icons.inventory_2,
+        color: isCash ? const Color(0xFF2E8B43) : const Color(0xFFB36E1B),
+        size: 20,
+      ),
+    );
+
+    final infoContent = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              item.receiptNumber,
+              style: const TextStyle(
+                fontFamily: 'JetBrains Mono',
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: kPrimaryColor,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0EDEB),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                item.paymentMethod.displayName,
+                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 3),
+        Text(
+          isCash ? 'Đóng góp tiền mặt / chuyển khoản' : 'Hiện vật: ${item.itemName ?? 'Cúng tiến'}',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Color(0xFF2B1810)),
+        ),
+        Text(
+          'Sự kiện: ${item.eventName ?? item.eventId} • $dateStr',
+          style: const TextStyle(fontSize: 11.5, color: Color(0xFF78655C)),
+        ),
+      ],
+    );
+
+    final amountContent = Column(
+      crossAxisAlignment: isDesktop ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        Text(
+          _currencyFormat.format(item.totalMonetaryValue),
+          style: TextStyle(
+            fontFamily: 'Merriweather',
+            fontWeight: FontWeight.bold,
+            fontSize: 14.5,
+            color: isCash ? const Color(0xFF2E8B43) : const Color(0xFFB36E1B),
+          ),
+        ),
+        if (item.myAllocatedAmount > 0 && item.myAllocatedAmount != item.totalMonetaryValue)
+          Text(
+            'Phân bổ: ${_currencyFormat.format(item.myAllocatedAmount)}',
+            style: const TextStyle(fontSize: 11, color: Color(0xFF006E2A), fontWeight: FontWeight.w600),
+          ),
+      ],
+    );
+
+    final pdfButton = ElevatedButton.icon(
+      onPressed: isDownloading ? null : () => _handleDownloadPdf(item.receiptNumber),
+      icon: isDownloading
+          ? const SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+            )
+          : const Icon(Icons.picture_as_pdf, size: 16),
+      label: Text(isDownloading ? 'Đang tải...' : 'In / Tải PDF'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: kPrimaryColor,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+      ),
+    );
+
+    if (!isDesktop) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                typeIcon,
+                const SizedBox(width: 12),
+                Expanded(child: infoContent),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                amountContent,
+                pdfButton,
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Icon loại đóng góp
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: isCash ? const Color(0xFF2E8B43).withValues(alpha: 0.1) : const Color(0xFFD4A017).withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              isCash ? Icons.payments : Icons.inventory_2,
-              color: isCash ? const Color(0xFF2E8B43) : const Color(0xFFB36E1B),
-              size: 20,
-            ),
-          ),
+          typeIcon,
           const SizedBox(width: 14),
-
-          // Nội dung khoản đóng góp
-          Expanded(
-            flex: 4,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      item.receiptNumber,
-                      style: const TextStyle(
-                        fontFamily: 'JetBrains Mono',
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: kPrimaryColor,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF0EDEB),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        item.paymentMethod.displayName,
-                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  isCash ? 'Đóng góp tiền mặt / chuyển khoản' : 'Hiện vật: ${item.itemName ?? 'Cúng tiến'}',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Color(0xFF2B1810)),
-                ),
-                Text(
-                  'Sự kiện: ${item.eventName ?? item.eventId} • $dateStr',
-                  style: const TextStyle(fontSize: 11.5, color: Color(0xFF78655C)),
-                ),
-              ],
-            ),
-          ),
-
-          // Số tiền / Giá trị
-          Expanded(
-            flex: 3,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  _currencyFormat.format(item.totalMonetaryValue),
-                  style: TextStyle(
-                    fontFamily: 'Merriweather',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14.5,
-                    color: isCash ? const Color(0xFF2E8B43) : const Color(0xFFB36E1B),
-                  ),
-                ),
-                if (item.myAllocatedAmount > 0 && item.myAllocatedAmount != item.totalMonetaryValue)
-                  Text(
-                    'Phân bổ bạn: ${_currencyFormat.format(item.myAllocatedAmount)}',
-                    style: const TextStyle(fontSize: 11, color: Color(0xFF006E2A), fontWeight: FontWeight.w600),
-                  ),
-              ],
-            ),
-          ),
+          Expanded(flex: 4, child: infoContent),
+          Expanded(flex: 3, child: amountContent),
           const SizedBox(width: 16),
-
-          // Nút Xem / In / Tải PDF phiếu thu (US-49, Task #175)
-          ElevatedButton.icon(
-            onPressed: isDownloading ? null : () => _handleDownloadPdf(item.receiptNumber),
-            icon: isDownloading
-                ? const SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                  )
-                : const Icon(Icons.picture_as_pdf, size: 16),
-            label: Text(isDownloading ? 'Đang tải...' : 'In / Tải PDF'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: kPrimaryColor,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-            ),
-          ),
+          pdfButton,
         ],
       ),
     );
+  }
   }
 }

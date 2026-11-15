@@ -518,29 +518,36 @@ class _OnlineContributionScreenState
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: const TextStyle(fontSize: 12.5, color: Color(0xFF54433E))),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                fontFamily: isBold ? 'JetBrains Mono' : null,
-                fontSize: 13,
-                fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-                color: isBold ? const Color(0xFF8B1E1E) : const Color(0xFF2B1810),
-              ),
-            ),
-            if (canCopy) ...[
-              const SizedBox(width: 6),
-              InkWell(
-                onTap: () => _copyToClipboard(value, label),
-                child: const Padding(
-                  padding: EdgeInsets.all(4),
-                  child: Icon(Icons.copy, size: 16, color: Color(0xFF8B1E1E)),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Flexible(
+                child: Text(
+                  value,
+                  textAlign: TextAlign.end,
+                  style: TextStyle(
+                    fontFamily: isBold ? 'JetBrains Mono' : null,
+                    fontSize: 13,
+                    fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+                    color: isBold ? const Color(0xFF8B1E1E) : const Color(0xFF2B1810),
+                  ),
                 ),
               ),
+              if (canCopy) ...[
+                const SizedBox(width: 6),
+                InkWell(
+                  onTap: () => _copyToClipboard(value, label),
+                  child: const Padding(
+                    padding: EdgeInsets.all(4),
+                    child: Icon(Icons.copy, size: 16, color: Color(0xFF8B1E1E)),
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ],
     );

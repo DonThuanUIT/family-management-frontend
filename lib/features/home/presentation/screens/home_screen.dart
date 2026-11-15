@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -409,6 +410,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           final activeBranchMembersAsync = ref.watch(branchMembersProvider(activeBranchId));
           final activeBranchMembers = activeBranchMembersAsync.value ?? [];
 
+          final rootMembersAsync = ref.watch(branchMembersProvider(tree.branchId));
+          final rootMembers = rootMembersAsync.value ?? [];
+
+          // Tự động phân giải tên Khởi Tổ thông minh nếu backend chưa set representativeName
+          final effectiveRootRepresentative = (tree.representativeName != null && tree.representativeName!.trim().isNotEmpty)
+              ? tree.representativeName!
+              : (rootMembers.firstWhereOrNull((m) => m.generation == 1)?.fullName ??
+                  (rootMembers.isNotEmpty ? rootMembers.first.fullName : 'Chưa cập nhật'));
+
           // Xác định nhánh được chọn để hiển thị ở Sidebar
           final BranchUiDetail selectedDetail;
           if (_selectedMember != null) {
@@ -429,23 +439,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           } else if (activeBranchId == tree.branchId) {
             final isRootCurrentUser = isClanHead ||
                 currentMemberId == tree.representativeId ||
-                currentUserName == tree.representativeName;
+                currentUserName == tree.representativeName ||
+                currentUserName == effectiveRootRepresentative;
             selectedDetail = BranchUiDetail(
               id: tree.branchId,
               name: tree.branchName,
               badge: isRootCurrentUser ? '★ VỊ TRÍ CỦA BẠN • TRƯỞNG TỘC' : 'CỤ KHỞI TỔ • ĐỜI 1',
               code: tree.branchId,
-              representative: tree.representativeName ?? 'Chưa cập nhật',
+              representative: effectiveRootRepresentative,
               representativeSubtext: 'Trưởng Tộc • Đại diện Dòng họ',
               memberCount: tree.memberCount,
-              activatedMemberCount: activeBranchMembers.where((m) => m.isActivated).length > 0
-                  ? activeBranchMembers.where((m) => m.isActivated).length
+              activatedMemberCount: rootMembers.where((m) => m.isActivated).length > 0
+                  ? rootMembers.where((m) => m.isActivated).length
                   : tree.memberCount,
               fundAmount: '0 đ',
               description: rootBranchState.branch?.description ??
                   'Chi nhánh gốc khởi lập gia phả dòng họ, nơi quy tụ toàn thể con cháu.',
-              successionChain: [tree.representativeName ?? 'Khởi Tổ'],
-              members: activeBranchMembers,
+              successionChain: [effectiveRootRepresentative],
+              members: rootMembers,
               isRoot: true,
             );
           } else {
@@ -463,8 +474,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             searchNode(tree);
 
             final childNode = foundChild ?? (tree.children.isNotEmpty ? tree.children.first : tree);
+            final childMembersAsync = ref.watch(branchMembersProvider(childNode.branchId));
+            final childMembers = childMembersAsync.value ?? [];
+            final effectiveChildRep = (childNode.representativeName != null && childNode.representativeName!.trim().isNotEmpty)
+                ? childNode.representativeName!
+                : (childMembers.firstWhereOrNull((m) => m.roleInBranch.contains('Trưởng') || m.generation == childNode.generationLevel)?.fullName ??
+                    (childMembers.isNotEmpty ? childMembers.first.fullName : 'Chưa cập nhật'));
+
             final isChildCurrentUser = currentMemberId == childNode.representativeId ||
-                currentUserName == childNode.representativeName;
+                currentUserName == childNode.representativeName ||
+                currentUserName == effectiveChildRep;
 
             selectedDetail = BranchUiDetail(
               id: childNode.branchId,
@@ -473,7 +492,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ? '★ VỊ TRÍ CỦA BẠN • TRƯỞNG CHI'
                   : 'Chi ${childNode.branchName} • Đời ${childNode.generationLevel}',
               code: childNode.branchId,
-              representative: childNode.representativeName ?? 'Chưa cập nhật',
+              representative: effectiveChildRep,
               representativeSubtext: 'Đại diện Chi • Đời ${childNode.generationLevel}',
               memberCount: childNode.memberCount,
               activatedMemberCount: activeBranchMembers.where((m) => m.isActivated).length > 0
@@ -481,7 +500,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   : childNode.memberCount,
               fundAmount: '0 đ',
               description: 'Chi nhánh trực thuộc phả hệ dòng họ ${tree.clanName}.',
-              successionChain: [tree.representativeName ?? 'Khởi Tổ', childNode.representativeName ?? 'Trưởng Chi'],
+              successionChain: [effectiveRootRepresentative, effectiveChildRep],
               members: activeBranchMembers,
               isRoot: false,
             );
@@ -489,21 +508,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           final isRootCurrentUser = isClanHead ||
               currentMemberId == tree.representativeId ||
-              currentUserName == tree.representativeName;
+              currentUserName == tree.representativeName ||
+              currentUserName == effectiveRootRepresentative;
 
           final rootUiDetail = BranchUiDetail(
             id: tree.branchId,
             name: tree.branchName,
             badge: isRootCurrentUser ? '★ VỊ TRÍ CỦA BẠN • TRƯỞNG TỘC' : 'CỤ KHỞI TỔ • ĐỜI 1',
             code: tree.branchId,
-            representative: tree.representativeName ?? 'Chưa cập nhật',
+            representative: effectiveRootRepresentative,
             representativeSubtext: 'Trưởng Tộc • Đại diện Dòng họ',
             memberCount: tree.memberCount,
-            activatedMemberCount: tree.memberCount,
+            activatedMemberCount: rootMembers.where((m) => m.isActivated).length > 0
+                ? rootMembers.where((m) => m.isActivated).length
+                : tree.memberCount,
             fundAmount: '0 đ',
             description: rootBranchState.branch?.description ??
                 'Chi nhánh gốc khởi lập gia phả dòng họ, nơi quy tụ toàn thể con cháu.',
-            members: activeBranchId == tree.branchId ? activeBranchMembers : const [],
+            members: rootMembers,
             isRoot: true,
           );
 
@@ -622,6 +644,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     onTap: () => _handleSelectBranch(tree.branchId, selectedDetail, isWide),
                                     onShowPopover: () => _showNodePopover(context, rootUiDetail, tree),
                                   ),
+
+                                  // HIỂN THỊ CÁC THÀNH VIÊN TRỰC THUỘC CHI GỐC (NGOÀI CỤ KHỞI TỔ)
+                                  if (_isFullTreeExpanded) ...[
+                                    for (final member in rootMembers.where((m) => m.fullName != rootUiDetail.representative && m.memberId != tree.representativeId).toList()..sort((a, b) => a.generation.compareTo(b.generation))) ...[
+                                      Container(width: 2, height: 16, color: kPrimaryColor),
+                                      _buildSubGenerationCard(
+                                        generation: 'Đời ${member.generation}',
+                                        title: member.fullName,
+                                        subtitle: member.birthDeathInfo ?? (member.generation == 1 ? 'Khởi Tổ / Tiền Hiền' : 'Thành viên Chi Gốc'),
+                                        color: kPrimaryColor,
+                                        isSelected: _selectedMember?.memberId == member.memberId,
+                                        isHighlighted: _highlightedMemberId == member.memberId,
+                                        onTap: () {
+                                          setState(() {
+                                            _selectedMember = member;
+                                            _selectedBranchId = tree.branchId;
+                                          });
+                                        },
+                                      ),
+                                    ],
+                                  ],
 
                                   // HIỂN THỊ CÁC CHI NHÁNH CON
                                   if (tree.children.isNotEmpty) ...[
@@ -980,7 +1023,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final childMembersAsync = ref.watch(branchMembersProvider(child.branchId));
     final childMembers = childMembersAsync.value ?? [];
 
-    final subMembers = childMembers.where((m) => m.memberId != child.representativeId).toList()
+    final effectiveRepresentative = (child.representativeName != null && child.representativeName!.trim().isNotEmpty)
+        ? child.representativeName!
+        : (childMembers.firstWhereOrNull((m) => m.roleInBranch.contains('Trưởng') || m.generation == child.generationLevel)?.fullName ??
+            (childMembers.isNotEmpty ? childMembers.first.fullName : 'Chưa cập nhật'));
+
+    final isChildCurrentUser = currentMemberId == child.representativeId ||
+        currentUserName == child.representativeName ||
+        currentUserName == effectiveRepresentative;
+
+    final subMembers = childMembers.where((m) => m.memberId != child.representativeId && m.fullName != effectiveRepresentative).toList()
       ..sort((a, b) => a.generation.compareTo(b.generation));
 
     final childUiDetail = BranchUiDetail(
@@ -990,7 +1042,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ? '★ VỊ TRÍ CỦA BẠN • TRƯỞNG CHI'
           : 'Chi ${child.branchName} • Đời ${child.generationLevel}',
       code: child.branchId,
-      representative: child.representativeName ?? 'Chưa cập nhật',
+      representative: effectiveRepresentative,
       representativeSubtext: 'Đại diện Chi • Đời ${child.generationLevel}',
       memberCount: child.memberCount,
       activatedMemberCount: childMembers.where((m) => m.isActivated).length > 0
