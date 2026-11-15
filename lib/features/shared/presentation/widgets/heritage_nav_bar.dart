@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/security/rbac_models.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../notification/presentation/providers/notification_providers.dart';
+import '../../../notification/presentation/widgets/notification_center_dialog.dart';
 
 /// Item trong thanh điều hướng Stitch FamilyFund
 class HeritageNavItem {
@@ -79,6 +81,8 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(dualRbacSessionProvider);
     final authState = ref.watch(authStateProvider);
+    final notifState = ref.watch(notificationListProvider);
+    final unreadSummary = notifState.unreadSummary;
 
     final fullName = authState.user?.fullName.isNotEmpty == true
         ? authState.user!.fullName
@@ -116,11 +120,10 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
             child: Row(
               children: [
                 // 1. Brand Logo & Name
-                ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: isWide ? 280 : MediaQuery.sizeOf(context).width - 116,
-                  ),
-                  child: InkWell(
+                Flexible(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 280),
+                    child: InkWell(
                     onTap: () => context.go('/home'),
                     borderRadius: BorderRadius.circular(8),
                     child: Padding(
@@ -202,6 +205,7 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                       ),
                     ),
                   ),
+                ),
                 ),
 
                 const SizedBox(width: 8),
@@ -359,6 +363,30 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                       const SizedBox(width: 8),
                     ],
 
+                    // Notification Bell Button (US-08 & US-39)
+                    IconButton(
+                      tooltip: 'Trung tâm thông báo & Cảnh báo tiến độ',
+                      icon: Badge(
+                        isLabelVisible: unreadSummary.hasUnread,
+                        label: Text(
+                          '${unreadSummary.total}',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        backgroundColor: const Color(0xFFBA1A1A),
+                        child: const Icon(
+                          Icons.notifications_outlined,
+                          size: 21,
+                          color: Color(0xFF54433E),
+                        ),
+                      ),
+                      onPressed: () => NotificationCenterDialog.show(context),
+                    ),
+                    const SizedBox(width: 4),
+
                     // User Profile & Logout Popover
                     PopupMenuButton<String>(
                       tooltip: 'Tài khoản & Điều hướng',
@@ -457,6 +485,30 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                                       ? FontWeight.bold
                                       : FontWeight.normal,
                                   color: currentRoute == '/join-requests'
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF2B1810),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: '/notifications',
+                          child: Row(
+                            children: [
+                              Icon(Icons.notifications_active_outlined,
+                                  size: 18,
+                                  color: currentRoute == '/notifications'
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF54433E)),
+                              const SizedBox(width: 10),
+                              Text(
+                                'Trung Tâm Thông Báo (US-08)',
+                                style: TextStyle(
+                                  fontWeight: currentRoute == '/notifications'
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  color: currentRoute == '/notifications'
                                       ? const Color(0xFF8B1E1E)
                                       : const Color(0xFF2B1810),
                                 ),
