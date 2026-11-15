@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:familyfund_app/core/security/rbac_models.dart';
+import 'package:familyfund_app/features/event/presentation/widgets/create_event_sheet.dart';
 import 'package:familyfund_app/features/notification/data/models/notification_models.dart';
 import 'package:familyfund_app/features/notification/data/repositories/notification_repository_impl.dart';
 import 'package:familyfund_app/features/notification/domain/repositories/notification_repository.dart';
@@ -69,6 +71,21 @@ class MockNotificationRepository implements NotificationRepository {
   }
 }
 
+class _MemberOnlyRbacNotifier extends DualRbacSessionNotifier {
+  @override
+  DualRbacSession build() {
+    return const DualRbacSession(
+      accountId: 'ACC_MEMBER',
+      memberId: 'MEM_MAI_ANH',
+      fullName: 'Nguyễn Thị Mai Anh',
+      branchName: 'Chi 2 - Nhánh Giáp',
+      managedBranchId: '',
+      globalRoles: {SystemRole.roleMember},
+      eventRolesByEventId: {},
+    );
+  }
+}
+
 void main() {
   group('Notification Models & Serialization Tests', () {
     test('NotificationModel serializes and deserializes correctly', () {
@@ -96,6 +113,39 @@ void main() {
       final serialized = model.toJson();
       expect(serialized['notificationId'], 'notif-001');
       expect(serialized['category'], 'Task');
+    });
+
+    test('NotificationModel parses death anniversary reminder and exposes US-40 getters', () {
+      final json = {
+        'notificationId': 'notif-us40-001',
+        'clanId': 'clan-1',
+        'title': 'Nhắc nhở ngày giỗ: Cụ Lê Văn An (Đời thứ 3)',
+        'content':
+            'Sắp đến ngày giỗ Cụ Lê Văn An vào ngày 15/02 Âm lịch (Dương lịch: 23/03/2026).',
+        'category': 'Event',
+        'referenceType': 'DeathAnniversary',
+        'referenceId': 'MEM-003',
+        'isRead': false,
+        'createdAt': '2026-11-15T08:00:00Z',
+        'metadata': {
+          'deceasedName': 'Cụ Lê Văn An',
+          'deathDateSolar': '2026-03-23T08:30:00.000Z',
+          'deathDateLunar': '15/02 Âm lịch',
+          'location': 'Từ đường Chi 2, Xã Kim Liên',
+          'suggestedBudget': 35000000.0,
+          'description': 'Lễ tưởng niệm và cúng giỗ Cụ Lê Văn An.',
+        },
+      };
+
+      final model = NotificationModel.fromJson(json);
+      expect(model.isDeathAnniversaryReminder, isTrue);
+      expect(model.deceasedName, 'Cụ Lê Văn An');
+      expect(model.deathDateLunar, '15/02 Âm lịch');
+      expect(model.deathDateSolar, DateTime.parse('2026-03-23T08:30:00.000Z'));
+      expect(model.suggestedLocation, 'Từ đường Chi 2, Xã Kim Liên');
+      expect(model.suggestedBudget, 35000000.0);
+      expect(
+          model.suggestedDescription, 'Lễ tưởng niệm và cúng giỗ Cụ Lê Văn An.');
     });
 
     test('UnreadCountModel parses count and provides hasUnread getter', () {
@@ -335,6 +385,164 @@ void main() {
 
       // Now all are read
       expect(mockRepo.notifications.every((n) => n.isRead), isTrue);
+    });
+
+    testWidgets('Renders death anniversary reminder with GIỖ CHẠP badge and quick action button', (tester) async {
+      final anniversaryMockRepo = MockNotificationRepository(
+        notifications: [
+          NotificationModel(
+            notificationId: 'notif-us40-01',
+            clanId: 'c1',
+            title: 'Nhắc nhở ngày giỗ: Cụ Lê Văn An',
+            content:
+                'Sắp đến ngày giỗ Cụ Lê Văn An vào ngày 15/02 Âm lịch (Dương lịch: 23/03/2026).',
+            category: NotificationCategoryEnum.event,
+            referenceType: 'DeathAnniversary',
+            referenceId: 'MEM-003',
+            isRead: false,
+            createdAt: DateTime.now().subtract(const Duration(hours: 1)),
+            metadata: {
+              'deceasedName': 'Cụ Lê Văn An',
+              'deathDateSolar': '2026-03-23T08:30:00.000Z',
+              'deathDateLunar': '15/02 Âm lịch',
+              'location': 'Từ đường Chi 2, Xã Kim Liên',
+              'suggestedBudget': 35000000.0,
+            },
+          ),
+        ],
+        unreadCount: const UnreadCountModel(total: 1, taskCount: 0, eventCount: 1, financeCount: 0),
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            notificationRepositoryProvider.overrideWithValue(anniversaryMockRepo),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(
+              body: NotificationCenterDialog(),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Badge GIỖ CHẠP
+      expect(find.text('GIỖ CHẠP'), findsOneWidget);
+      // Nút Tạo sự kiện Đám giỗ
+      expect(find.text('Tạo sự kiện Đám giỗ'), findsOneWidget);
+      // Info box người mất & ngày giỗ
+      expect(find.textContaining('Cụ Lê Văn An'), findsWidgets);
+      expect(find.textContaining('15/02 Âm lịch'), findsWidgets);
+    });
+
+    testWidgets('Tapping "Tạo sự kiện Đám giỗ" opens CreateEventSheet with prefilled values and banner', (tester) async {
+      final anniversaryMockRepo = MockNotificationRepository(
+        notifications: [
+          NotificationModel(
+            notificationId: 'notif-us40-01',
+            clanId: 'c1',
+            title: 'Nhắc nhở ngày giỗ: Cụ Lê Văn An',
+            content:
+                'Sắp đến ngày giỗ Cụ Lê Văn An vào ngày 15/02 Âm lịch (Dương lịch: 23/03/2026).',
+            category: NotificationCategoryEnum.event,
+            referenceType: 'DeathAnniversary',
+            referenceId: 'MEM-003',
+            isRead: false,
+            createdAt: DateTime.now().subtract(const Duration(hours: 1)),
+            metadata: {
+              'deceasedName': 'Cụ Lê Văn An',
+              'deathDateSolar': '2026-03-23T08:30:00.000Z',
+              'deathDateLunar': '15/02 Âm lịch',
+              'location': 'Từ đường Chi 2, Xã Kim Liên',
+              'suggestedBudget': 35000000.0,
+            },
+          ),
+        ],
+        unreadCount: const UnreadCountModel(total: 1, taskCount: 0, eventCount: 1, financeCount: 0),
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            notificationRepositoryProvider.overrideWithValue(anniversaryMockRepo),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(
+              body: NotificationCenterDialog(),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      final createBtn = find.text('Tạo sự kiện Đám giỗ');
+      expect(createBtn, findsOneWidget);
+      await tester.tap(createBtn);
+      await tester.pumpAndSettle();
+
+      // Form CreateEventSheet is opened
+      expect(find.byType(CreateEventSheet), findsOneWidget);
+      // Banner hiển thị
+      expect(find.byKey(const Key('anniversary_prefill_banner')), findsOneWidget);
+      expect(find.text('Tự động điền từ Thông báo Nhắc Ngày Giỗ'), findsOneWidget);
+      // Nút xác nhận mang nhãn đúng
+      expect(find.text('Xác Nhận & Tổ Chức Đám Giỗ'), findsOneWidget);
+      // Giá trị điền sẵn
+      expect(find.text('Lễ Đám Giỗ Cụ Lê Văn An'), findsOneWidget);
+      expect(find.text('15/02 Âm lịch'), findsOneWidget);
+      expect(find.text('Từ đường Chi 2, Xã Kim Liên'), findsOneWidget);
+    });
+
+    testWidgets('Non-admin / regular member cannot see "Tạo sự kiện Đám giỗ" button (RBAC Guard)', (tester) async {
+      final anniversaryMockRepo = MockNotificationRepository(
+        notifications: [
+          NotificationModel(
+            notificationId: 'notif-us40-01',
+            clanId: 'c1',
+            title: 'Nhắc nhở ngày giỗ: Cụ Lê Văn An',
+            content:
+                'Sắp đến ngày giỗ Cụ Lê Văn An vào ngày 15/02 Âm lịch (Dương lịch: 23/03/2026).',
+            category: NotificationCategoryEnum.event,
+            referenceType: 'DeathAnniversary',
+            referenceId: 'MEM-003',
+            isRead: false,
+            createdAt: DateTime.now().subtract(const Duration(hours: 1)),
+            metadata: {
+              'deceasedName': 'Cụ Lê Văn An',
+              'deathDateSolar': '2026-03-23T08:30:00.000Z',
+              'deathDateLunar': '15/02 Âm lịch',
+            },
+          ),
+        ],
+        unreadCount: const UnreadCountModel(total: 1, taskCount: 0, eventCount: 1, financeCount: 0),
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            notificationRepositoryProvider.overrideWithValue(anniversaryMockRepo),
+            dualRbacSessionProvider.overrideWith(_MemberOnlyRbacNotifier.new),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(
+              body: NotificationCenterDialog(),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Info is visible
+      expect(find.text('GIỖ CHẠP'), findsOneWidget);
+      expect(find.textContaining('Cụ Lê Văn An'), findsWidgets);
+      // But the action button to create event is NOT shown
+      expect(find.text('Tạo sự kiện Đám giỗ'), findsNothing);
+      // Mark read is available
+      expect(find.text('Đánh dấu đã đọc'), findsOneWidget);
     });
   });
 
