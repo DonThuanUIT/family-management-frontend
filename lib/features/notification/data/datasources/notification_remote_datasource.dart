@@ -55,6 +55,28 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
       },
     ),
     NotificationModel(
+      notificationId: 'NTF-US47-001',
+      clanId: 'VN-LE-2026',
+      category: NotificationCategoryEnum.task,
+      title: 'Cảnh báo quá hạn 12h: Chuẩn bị bài tế văn & trang phục khánh tiết',
+      content:
+          'Hạng mục [TSK-02] thuộc sự kiện [Lễ Giỗ Tổ 2026] do Chi 1 (Tiểu ban nghi lễ) phụ trách đã quá hạn 14 giờ 0 phút (Hạn chót: 18:00 • 13/03/2026). Hệ thống đã kích hoạt báo động khẩn cấp gửi Trưởng chi để đôn đốc xử lý.',
+      referenceType: 'Task',
+      referenceId: 'TSK-02',
+      isRead: false,
+      createdAt: DateTime.now().subtract(const Duration(minutes: 15)),
+      metadata: {
+        'alertLevel': 'OverdueAlert12H',
+        'isOverdue12H': true,
+        'taskId': 'TSK-02',
+        'eventId': 'EVT_2026_GIOTO',
+        'taskName': 'Chuẩn bị bài tế văn & trang phục khánh tiết',
+        'assignedBranchId': 'BR_CHI_1',
+        'assignedBranchName': 'Chi 1',
+        'overdueHours': 14,
+      },
+    ),
+    NotificationModel(
       notificationId: 'NTF-US08-001',
       clanId: 'VN-LE-2026',
       category: NotificationCategoryEnum.task,

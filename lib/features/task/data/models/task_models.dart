@@ -131,6 +131,26 @@ class TaskModel {
     return !diff.isNegative && diff.inHours <= 24;
   }
 
+  /// [US-47] Hạng mục công việc đã trôi qua hạn chót từ 12 giờ trở lên
+  bool get isOverdue12Hours {
+    if (status == TaskStatusEnum.completed) return false;
+    final now = DateTime.now();
+    final diff = now.difference(deadline);
+    return diff.inHours >= 12;
+  }
+
+  /// Số giờ trễ hạn thực tế (phục vụ hiển thị badge `⚠️ Trễ 14h`)
+  int get overdueHours {
+    final now = DateTime.now();
+    final diff = now.difference(deadline);
+    return diff.isNegative ? 0 : diff.inHours;
+  }
+
+  /// Chuỗi hiển thị thời lượng trễ hạn (ví dụ: 'Trễ 14h')
+  String get overdueDurationText {
+    return 'Trễ ${overdueHours}h';
+  }
+
   Duration get remainingDuration {
     final now = DateTime.now();
     final diff = deadline.difference(now);
