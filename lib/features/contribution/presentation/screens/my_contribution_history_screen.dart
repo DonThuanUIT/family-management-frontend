@@ -568,5 +568,4 @@ class _MyContributionHistoryScreenState
       ),
     );
   }
-  }
 }

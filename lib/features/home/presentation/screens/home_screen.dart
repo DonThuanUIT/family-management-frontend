@@ -1016,8 +1016,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     required BranchTreeNodeDto rootTree,
   }) {
     const kPrimaryColor = Color(0xFF8F482F);
-    final isChildCurrentUser = currentMemberId == child.representativeId ||
-        currentUserName == child.representativeName;
     final isCollapsed = _collapsedBranchIds.contains(child.branchId);
 
     final childMembersAsync = ref.watch(branchMembersProvider(child.branchId));
