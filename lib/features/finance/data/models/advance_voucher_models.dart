@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/utils/formatters.dart';
 
-/// Trạng thái phiếu tạm ứng sự kiện theo backend Flyway V25 và enum `AdvanceVoucherStatus`.
+/// Trạng thái phiếu tạm ứng sự kiện theo backend Flyway V25, V26 và enum `AdvanceVoucherStatus`.
 enum AdvanceVoucherStatusEnum {
   choGiaoTien('ChoGiaoTien', 'Chờ giao tiền'),
   chuaTatToan('ChuaTatToan', 'Chưa tất toán'),
   daTatToan('DaTatToan', 'Đã tất toán'),
-  daHuy('DaHuy', 'Đã hủy');
+  daHuy('DaHuy', 'Đã hủy'),
+  quaHan('QuaHan', 'Quá hạn quyết toán');
 
   final String code;
   final String displayName;
@@ -16,8 +17,15 @@ enum AdvanceVoucherStatusEnum {
 
   static AdvanceVoucherStatusEnum fromCode(String? code) {
     if (code == null) return AdvanceVoucherStatusEnum.choGiaoTien;
+    final lower = code.toLowerCase();
+    if (lower == 'pendingdisbursement') return AdvanceVoucherStatusEnum.choGiaoTien;
+    if (lower == 'undisbursed') return AdvanceVoucherStatusEnum.chuaTatToan;
+    if (lower == 'settled') return AdvanceVoucherStatusEnum.daTatToan;
+    if (lower == 'cancelled') return AdvanceVoucherStatusEnum.daHuy;
+    if (lower == 'overdue' || lower == 'quahan') return AdvanceVoucherStatusEnum.quaHan;
+
     return AdvanceVoucherStatusEnum.values.firstWhere(
-      (e) => e.code.toLowerCase() == code.toLowerCase(),
+      (e) => e.code.toLowerCase() == lower,
       orElse: () => AdvanceVoucherStatusEnum.choGiaoTien,
     );
   }
@@ -32,6 +40,8 @@ enum AdvanceVoucherStatusEnum {
         return const Color(0xFFDCFCE7); // Xanh lá nhạt
       case AdvanceVoucherStatusEnum.daHuy:
         return const Color(0xFFF3F4F6); // Xám
+      case AdvanceVoucherStatusEnum.quaHan:
+        return const Color(0xFFFFDAD6); // Đỏ hồng nhạt
     }
   }
 
@@ -45,6 +55,8 @@ enum AdvanceVoucherStatusEnum {
         return const Color(0xFF15803D);
       case AdvanceVoucherStatusEnum.daHuy:
         return const Color(0xFF4B5563);
+      case AdvanceVoucherStatusEnum.quaHan:
+        return const Color(0xFFBA1A1A);
     }
   }
 
@@ -58,6 +70,8 @@ enum AdvanceVoucherStatusEnum {
         return const Color(0xFF4ADE80);
       case AdvanceVoucherStatusEnum.daHuy:
         return const Color(0xFF9CA3AF);
+      case AdvanceVoucherStatusEnum.quaHan:
+        return const Color(0xFFFCA5A5);
     }
   }
 
@@ -71,16 +85,20 @@ enum AdvanceVoucherStatusEnum {
         return Icons.check_circle_outline_rounded;
       case AdvanceVoucherStatusEnum.daHuy:
         return Icons.cancel_outlined;
+      case AdvanceVoucherStatusEnum.quaHan:
+        return Icons.warning_amber_rounded;
     }
   }
 }
 
-/// DTO / Entity biểu diễn Phiếu tạm ứng sự kiện (US-46).
+/// DTO / Entity biểu diễn Phiếu tạm ứng sự kiện (US-46, US-48).
 @immutable
 class AdvanceVoucherModel {
   final String advanceVoucherId;
   final String taskId;
   final String? taskName;
+  final String? eventId;
+  final String? eventName;
   final String recipientMemberId;
   final String? recipientMemberName;
   final int advanceAmount; // Đơn vị: VNĐ (int)
@@ -91,6 +109,7 @@ class AdvanceVoucherModel {
   final String? treasurerAccountId;
   final DateTime? disbursedAt;
   final String? disbursementNotes;
+  final DateTime? overdueAt;
   final DateTime createdAt;
   final DateTime? updatedAt;
 
@@ -98,6 +117,8 @@ class AdvanceVoucherModel {
     required this.advanceVoucherId,
     required this.taskId,
     this.taskName,
+    this.eventId,
+    this.eventName,
     required this.recipientMemberId,
     this.recipientMemberName,
     required this.advanceAmount,
@@ -108,6 +129,7 @@ class AdvanceVoucherModel {
     this.treasurerAccountId,
     this.disbursedAt,
     this.disbursementNotes,
+    this.overdueAt,
     required this.createdAt,
     this.updatedAt,
   });
@@ -122,6 +144,9 @@ class AdvanceVoucherModel {
   String? get formattedDisbursedAt =>
       disbursedAt != null ? AppFormatters.formatDateTime(disbursedAt!) : null;
 
+  String? get formattedOverdueAt =>
+      overdueAt != null ? AppFormatters.formatDateTime(overdueAt!) : null;
+
   bool get isPendingDisbursement =>
       status == AdvanceVoucherStatusEnum.choGiaoTien;
 
@@ -130,6 +155,28 @@ class AdvanceVoucherModel {
   bool get isSettled => status == AdvanceVoucherStatusEnum.daTatToan;
 
   bool get isCancelled => status == AdvanceVoucherStatusEnum.daHuy;
+
+  /// Khoản tạm ứng bị xem là quá hạn nộp chứng từ nếu đã được chuyển sang `QuaHan`
+  /// HOẶC đang ở `ChuaTatToan` nhưng thời gian hiện tại đã vượt qua `settlementDeadline`.
+  bool get isOverdue =>
+      status == AdvanceVoucherStatusEnum.quaHan ||
+      (status == AdvanceVoucherStatusEnum.chuaTatToan &&
+          settlementDeadline.isBefore(DateTime.now()));
+
+  /// Số ngày trễ hạn nộp chứng từ.
+  int get overdueDays {
+    if (!isOverdue) return 0;
+    final diff = DateTime.now().difference(settlementDeadline).inDays;
+    return diff > 0 ? diff : 0;
+  }
+
+  /// Chuỗi hiển thị thời gian quá hạn ngắn gọn, trang trọng.
+  String get overdueDurationText {
+    if (!isOverdue) return '';
+    final days = overdueDays;
+    if (days == 0) return 'Quá hạn hôm nay';
+    return 'Quá hạn $days ngày';
+  }
 
   factory AdvanceVoucherModel.fromJson(Map<String, dynamic> json) {
     final rawAmount = json['advanceAmount'];
@@ -146,8 +193,11 @@ class AdvanceVoucherModel {
           '',
       taskId: json['taskId'] as String? ?? '',
       taskName: json['taskName'] as String?,
+      eventId: json['eventId'] as String?,
+      eventName: json['eventName'] as String?,
       recipientMemberId: json['recipientMemberId'] as String? ?? '',
-      recipientMemberName: json['recipientMemberName'] as String?,
+      recipientMemberName: json['recipientMemberName'] as String? ??
+          json['recipientName'] as String?,
       advanceAmount: amountInt,
       status: AdvanceVoucherStatusEnum.fromCode(json['status'] as String?),
       receivedDate: json['receivedDate'] != null
@@ -165,6 +215,9 @@ class AdvanceVoucherModel {
           ? DateTime.tryParse(json['disbursedAt'].toString())?.toLocal()
           : null,
       disbursementNotes: json['disbursementNotes'] as String?,
+      overdueAt: json['overdueAt'] != null
+          ? DateTime.tryParse(json['overdueAt'].toString())?.toLocal()
+          : null,
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'].toString())?.toLocal() ??
               DateTime.now()
@@ -179,6 +232,8 @@ class AdvanceVoucherModel {
         'advanceVoucherId': advanceVoucherId,
         'taskId': taskId,
         'taskName': taskName,
+        if (eventId != null) 'eventId': eventId,
+        if (eventName != null) 'eventName': eventName,
         'recipientMemberId': recipientMemberId,
         'recipientMemberName': recipientMemberName,
         'advanceAmount': advanceAmount,
@@ -189,6 +244,7 @@ class AdvanceVoucherModel {
         'treasurerAccountId': treasurerAccountId,
         'disbursedAt': disbursedAt?.toUtc().toIso8601String(),
         'disbursementNotes': disbursementNotes,
+        if (overdueAt != null) 'overdueAt': overdueAt?.toUtc().toIso8601String(),
         'createdAt': createdAt.toUtc().toIso8601String(),
         'updatedAt': updatedAt?.toUtc().toIso8601String(),
       };
@@ -197,6 +253,8 @@ class AdvanceVoucherModel {
     String? advanceVoucherId,
     String? taskId,
     String? taskName,
+    String? eventId,
+    String? eventName,
     String? recipientMemberId,
     String? recipientMemberName,
     int? advanceAmount,
@@ -207,6 +265,7 @@ class AdvanceVoucherModel {
     String? treasurerAccountId,
     DateTime? disbursedAt,
     String? disbursementNotes,
+    DateTime? overdueAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -214,6 +273,8 @@ class AdvanceVoucherModel {
       advanceVoucherId: advanceVoucherId ?? this.advanceVoucherId,
       taskId: taskId ?? this.taskId,
       taskName: taskName ?? this.taskName,
+      eventId: eventId ?? this.eventId,
+      eventName: eventName ?? this.eventName,
       recipientMemberId: recipientMemberId ?? this.recipientMemberId,
       recipientMemberName: recipientMemberName ?? this.recipientMemberName,
       advanceAmount: advanceAmount ?? this.advanceAmount,
@@ -224,6 +285,7 @@ class AdvanceVoucherModel {
       treasurerAccountId: treasurerAccountId ?? this.treasurerAccountId,
       disbursedAt: disbursedAt ?? this.disbursedAt,
       disbursementNotes: disbursementNotes ?? this.disbursementNotes,
+      overdueAt: overdueAt ?? this.overdueAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -275,5 +337,51 @@ class ConfirmDisbursementRequestDto {
       map['notes'] = notes!.trim();
     }
     return map;
+  }
+}
+
+/// Request DTO gửi nhắc nhở / đôn đốc thu hồi tạm ứng (`US-48`).
+class SendSettlementReminderRequestDto {
+  final String voucherId;
+  final String? customMessage;
+
+  const SendSettlementReminderRequestDto({
+    required this.voucherId,
+    this.customMessage,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'voucherId': voucherId,
+        if (customMessage != null && customMessage!.trim().isNotEmpty)
+          'customMessage': customMessage!.trim(),
+      };
+}
+
+/// Thống kê kết quả sau khi kích hoạt quét quá hạn thủ công (`POST /api/v1/advances/scan-overdue`).
+class OverdueScanSummaryModel {
+  final int scannedCount;
+  final int overdueTransitionedCount;
+  final int notificationsSentCount;
+  final DateTime referenceTime;
+
+  const OverdueScanSummaryModel({
+    required this.scannedCount,
+    required this.overdueTransitionedCount,
+    required this.notificationsSentCount,
+    required this.referenceTime,
+  });
+
+  factory OverdueScanSummaryModel.fromJson(Map<String, dynamic> json) {
+    return OverdueScanSummaryModel(
+      scannedCount: (json['scannedCount'] as num?)?.toInt() ?? 0,
+      overdueTransitionedCount:
+          (json['overdueTransitionedCount'] as num?)?.toInt() ?? 0,
+      notificationsSentCount:
+          (json['notificationsSentCount'] as num?)?.toInt() ?? 0,
+      referenceTime: json['referenceTime'] != null
+          ? DateTime.tryParse(json['referenceTime'].toString())?.toLocal() ??
+              DateTime.now()
+          : DateTime.now(),
+    );
   }
 }

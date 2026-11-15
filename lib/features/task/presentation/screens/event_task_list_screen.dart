@@ -12,6 +12,7 @@ import '../widgets/assign_task_dialog.dart';
 import '../widgets/branch_overdue_escalation_card.dart';
 import '../widgets/create_task_dialog.dart';
 import '../widgets/task_card.dart';
+import '../../../finance/presentation/widgets/overdue_advance_alert_banner.dart';
 
 /// Màn hình danh sách công việc chuẩn bị cho sự kiện (US-07).
 /// Hỗ trợ thích ứng đa nền tảng (Web 1280px + Mobile 390px) và đủ 5 trạng thái màn hình:
@@ -293,6 +294,12 @@ class _EventTaskListScreenState extends ConsumerState<EventTaskListScreen> {
                   _buildEventHeaderCard(event, isDesktop, canManage, isClosed),
 
                 const SizedBox(height: 14),
+
+                // [US-48] Banner cảnh báo khẩn cấp khi có các khoản tạm ứng quá hạn nộp chứng từ
+                OverdueAdvanceAlertBanner(
+                  eventId: widget.eventId,
+                  eventName: event?.eventName,
+                ),
 
                 // [US-47] Thẻ cảnh báo khẩn cấp màu đỏ gửi riêng cho Trưởng chi / Trưởng nhánh
                 if (canViewEscalationCard && escalationTasksToShow.isNotEmpty)

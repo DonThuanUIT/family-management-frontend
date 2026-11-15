@@ -17,4 +17,8 @@ abstract class AdvanceVoucherRepository {
   });
 
   Future<AdvanceVoucherModel> getAdvanceVoucherDetail(String advanceVoucherId);
+
+  Future<OverdueScanSummaryModel> scanOverdueVouchers();
+
+  Future<void> sendSettlementReminder(SendSettlementReminderRequestDto request);
 }

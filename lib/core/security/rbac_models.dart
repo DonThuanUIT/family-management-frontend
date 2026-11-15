@@ -324,6 +324,81 @@ class DualRbacSession {
     return false;
   }
 
+  /// [US-48] Kiểm tra quyền xem danh sách theo dõi các khoản tạm ứng quá hạn nộp chứng từ.
+  /// Ràng buộc: Quản trị viên, Trưởng tộc, Trưởng chi, hoặc nhân sự giữ vai trò BTC (HeadOfOrganizer, OrganizerMember, EventTreasurer).
+  bool canViewOverdueAdvanceList({
+    bool isClosed = false,
+    List<dynamic>? personnel,
+    String? eventId,
+  }) {
+    if (isAdmin || isClanHead || isBranchHead) return true;
+    if (eventId != null && eventRolesByEventId.containsKey(eventId)) {
+      final ctx = eventRolesByEventId[eventId]!;
+      if (ctx.role == EventContextualRole.headOfOrganizer ||
+          ctx.role == EventContextualRole.organizerMember ||
+          ctx.role == EventContextualRole.eventTreasurer) {
+        return true;
+      }
+    }
+    if (personnel != null) {
+      for (final p in personnel) {
+        final pMemberId = p is Map ? p['memberId'] : (p.memberId as String?);
+        final pRole = p is Map ? p['eventRole'] : (p.eventRole as String?);
+        if (pMemberId == memberId) {
+          if (pRole == 'HeadOfOrganizer' ||
+              pRole == 'OrganizerMember' ||
+              pRole == 'EventTreasurer') {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  /// [US-48] Kiểm tra quyền gửi thông báo "Đôn đốc thu hồi" khoản tạm ứng quá hạn.
+  /// Ràng buộc: Sự kiện chưa Closed VÀ (là Quản trị viên, Trưởng tộc, Trưởng chi, hoặc nhân sự BTC: HeadOfOrganizer, OrganizerMember, EventTreasurer).
+  bool canUrgeAdvanceSettlement({
+    bool isClosed = false,
+    List<dynamic>? personnel,
+    String? eventId,
+  }) {
+    if (isClosed) return false;
+    if (isAdmin || isClanHead || isBranchHead) return true;
+    if (eventId != null && eventRolesByEventId.containsKey(eventId)) {
+      final ctx = eventRolesByEventId[eventId]!;
+      if (!ctx.isEffectiveReadOnly &&
+          (ctx.role == EventContextualRole.headOfOrganizer ||
+              ctx.role == EventContextualRole.organizerMember ||
+              ctx.role == EventContextualRole.eventTreasurer)) {
+        return true;
+      }
+    }
+    if (personnel != null) {
+      for (final p in personnel) {
+        final pMemberId = p is Map ? p['memberId'] : (p.memberId as String?);
+        final pRole = p is Map ? p['eventRole'] : (p.eventRole as String?);
+        final pReadOnly =
+            p is Map ? p['isReadOnly'] == true : (p.isReadOnly == true);
+        if (pMemberId == memberId && !pReadOnly) {
+          if (pRole == 'HeadOfOrganizer' ||
+              pRole == 'OrganizerMember' ||
+              pRole == 'EventTreasurer') {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  /// [US-48] Kiểm tra quyền kích hoạt quét quá hạn thủ công (`POST /api/v1/advances/scan-overdue`).
+  /// Ràng buộc: Chỉ dành riêng cho Quản trị viên hệ thống (`ROLE_ADMIN`) hoặc Trưởng tộc (`ROLE_CLAN_HEAD`).
+  bool canTriggerManualOverdueScan({bool isClosed = false}) {
+    if (isClosed) return false;
+    return isAdmin || isClanHead;
+  }
+
   DualRbacSession copyWith({
     String? accountId,
     String? memberId,

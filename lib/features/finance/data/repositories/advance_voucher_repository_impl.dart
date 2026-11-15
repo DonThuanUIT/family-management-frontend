@@ -48,4 +48,15 @@ class AdvanceVoucherRepositoryImpl implements AdvanceVoucherRepository {
   Future<AdvanceVoucherModel> getAdvanceVoucherDetail(String advanceVoucherId) {
     return _remoteDataSource.getAdvanceVoucherDetail(advanceVoucherId);
   }
+
+  @override
+  Future<OverdueScanSummaryModel> scanOverdueVouchers() {
+    return _remoteDataSource.scanOverdueVouchers();
+  }
+
+  @override
+  Future<void> sendSettlementReminder(
+      SendSettlementReminderRequestDto request) {
+    return _remoteDataSource.sendSettlementReminder(request);
+  }
 }

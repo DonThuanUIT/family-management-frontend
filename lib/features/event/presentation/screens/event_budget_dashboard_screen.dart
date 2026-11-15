@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/event_providers.dart';
 import '../widgets/event_budget_hero_card.dart';
 import '../widgets/task_budget_breakdown_section.dart';
+import '../../../finance/presentation/widgets/overdue_advance_alert_banner.dart';
 
 /// Bảng Điều Khiển Ngân Sách Sự Kiện (Event Budget Dashboard - US-37).
 /// Hiển thị thanh tiến độ tiêu dùng ngân sách và banner cảnh báo màu đỏ khi vượt trần dự toán.
@@ -204,6 +205,10 @@ class EventBudgetDashboardScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
+                            OverdueAdvanceAlertBanner(
+                              eventId: eventId,
+                              eventName: budget.eventName,
+                            ),
                             EventBudgetHeroCard(budget: budget),
                             const SizedBox(height: 16),
                             Container(
@@ -273,6 +278,10 @@ class EventBudgetDashboardScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          OverdueAdvanceAlertBanner(
+                            eventId: eventId,
+                            eventName: budget.eventName,
+                          ),
                           // 1. Thẻ Hero Tổng Quan Ngân Sách Tích Hợp
                           EventBudgetHeroCard(budget: budget),
 
