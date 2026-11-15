@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/security/rbac_models.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../event/presentation/widgets/create_event_sheet.dart';
 import '../../data/models/notification_models.dart';
 import '../providers/notification_providers.dart';
 
@@ -359,7 +361,10 @@ class _NotificationCenterDialogState
     NotificationListNotifier notifier,
   ) {
     final isDeadlineWarning = item.isTaskDeadlineWarning;
+    final isAnniversary = item.isDeathAnniversaryReminder;
     final timeFormat = DateFormat('HH:mm • dd/MM/yyyy');
+    final canCreateEvent =
+        ref.watch(dualRbacSessionProvider).canManageEventLifecycleAndPersonnel;
 
     return Container(
       decoration: BoxDecoration(
@@ -368,10 +373,12 @@ class _NotificationCenterDialogState
         border: Border.all(
           color: isDeadlineWarning
               ? const Color(0xFFE57373)
-              : (item.isRead
-                  ? const Color(0xFFE6DFD8)
-                  : const Color(0xFFFFCDD2)),
-          width: isDeadlineWarning ? 1.4 : 1.0,
+              : (isAnniversary
+                  ? const Color(0xFFE8B07A)
+                  : (item.isRead
+                      ? const Color(0xFFE6DFD8)
+                      : const Color(0xFFFFCDD2))),
+          width: (isDeadlineWarning || isAnniversary) ? 1.4 : 1.0,
         ),
         boxShadow: const [
           BoxShadow(
@@ -409,6 +416,33 @@ class _NotificationCenterDialogState
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFFBA1A1A),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else if (isAnniversary)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF3E0),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFFE65100)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.auto_stories,
+                          size: 12, color: Color(0xFFE65100)),
+                      SizedBox(width: 4),
+                      Text(
+                        'GIỖ CHẠP',
+                        style: TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFE65100),
                         ),
                       ),
                     ],
@@ -471,7 +505,9 @@ class _NotificationCenterDialogState
               fontWeight: item.isRead ? FontWeight.w600 : FontWeight.bold,
               color: isDeadlineWarning
                   ? const Color(0xFF8B1E1E)
-                  : const Color(0xFF1C1C1A),
+                  : (isAnniversary
+                      ? const Color(0xFF7A1518)
+                      : const Color(0xFF1C1C1A)),
             ),
           ),
           const SizedBox(height: 4),
@@ -485,12 +521,84 @@ class _NotificationCenterDialogState
               height: 1.4,
             ),
           ),
+
+          // Hộp tóm tắt thông tin ngày giỗ (US-40)
+          if (isAnniversary) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF9ED),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFF5DCB7)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline,
+                      size: 14, color: Color(0xFFB45309)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Người mất: ${item.deceasedName} • Âm lịch: ${item.deathDateLunar} • Dương lịch: ${DateFormat('dd/MM/yyyy').format(item.deathDateSolar)}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.amber.shade900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
 
           // Action row
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
+              if (isAnniversary && canCreateEvent) ...[
+                ElevatedButton.icon(
+                  key: const Key('quick_create_anniversary_event_btn'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (ctx) => CreateEventSheet(
+                        initialEventName: 'Lễ Đám Giỗ ${item.deceasedName}',
+                        initialLunarDate: item.deathDateLunar,
+                        initialSolarDate: item.deathDateSolar,
+                        initialLocation: item.suggestedLocation ??
+                            'Từ đường Chi 2, Xã Kim Liên',
+                        initialDescription: item.suggestedDescription ??
+                            'Lễ tưởng niệm và cúng giỗ ${item.deceasedName} ngày ${item.deathDateLunar}. Con cháu tề tựu dâng hương tưởng nhớ công đức tiền nhân.',
+                        initialEstimatedBudget:
+                            item.suggestedBudget ?? 35000000.0,
+                        fromAnniversaryReminder: true,
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.celebration_outlined, size: 14),
+                  label: const Text(
+                    'Tạo sự kiện Đám giỗ',
+                    style:
+                        TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF7A1518),
+                    foregroundColor: Colors.white,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    minimumSize: const Size(0, 32),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
               if (item.category == NotificationCategoryEnum.task) ...[
                 ElevatedButton.icon(
                   onPressed: () {

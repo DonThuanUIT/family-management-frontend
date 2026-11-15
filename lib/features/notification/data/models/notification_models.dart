@@ -44,6 +44,7 @@ class NotificationModel {
   final bool isRead;
   final DateTime? readAt;
   final DateTime createdAt;
+  final Map<String, dynamic>? metadata;
 
   const NotificationModel({
     required this.notificationId,
@@ -56,6 +57,7 @@ class NotificationModel {
     this.isRead = false,
     this.readAt,
     required this.createdAt,
+    this.metadata,
   });
 
   /// Kiểm tra xem thông báo này có phải cảnh báo tiến độ hạn chót (US-08)
@@ -70,6 +72,106 @@ class NotificationModel {
         lowerTitle.contains('nhắc nhở');
   }
 
+  /// Kiểm tra xem thông báo này có phải nhắc ngày giỗ (US-40)
+  bool get isDeathAnniversaryReminder {
+    final lowerRef = referenceType?.toLowerCase() ?? '';
+    if (lowerRef.contains('death_anniversary') ||
+        lowerRef.contains('anniversary')) {
+      return true;
+    }
+    if (metadata?['isDeathAnniversary'] == true) {
+      return true;
+    }
+    if (category == NotificationCategoryEnum.event) {
+      final lowerTitle = title.toLowerCase();
+      final lowerContent = content.toLowerCase();
+      return lowerTitle.contains('ngày giỗ') ||
+          lowerTitle.contains('đám giỗ') ||
+          lowerTitle.contains('nhắc nhở ngày giỗ') ||
+          lowerTitle.contains('giỗ') ||
+          lowerContent.contains('ngày giỗ') ||
+          lowerContent.contains('đám giỗ');
+    }
+    return false;
+  }
+
+  /// Tên tiền nhân / người mất
+  String get deceasedName {
+    if (metadata?['deceasedName'] != null &&
+        (metadata!['deceasedName'] as String).trim().isNotEmpty) {
+      return (metadata!['deceasedName'] as String).trim();
+    }
+    final titleMatch =
+        RegExp(r'(Cụ\s+[^(\n,]+)', caseSensitive: false).firstMatch(title);
+    if (titleMatch != null) {
+      return titleMatch.group(1)!.trim();
+    }
+    return 'Cụ Tiền Nhân';
+  }
+
+  /// Ngày giỗ Âm lịch
+  String get deathDateLunar {
+    if (metadata?['deathDateLunar'] != null &&
+        (metadata!['deathDateLunar'] as String).trim().isNotEmpty) {
+      return (metadata!['deathDateLunar'] as String).trim();
+    }
+    if (metadata?['lunarDate'] != null &&
+        (metadata!['lunarDate'] as String).trim().isNotEmpty) {
+      return (metadata!['lunarDate'] as String).trim();
+    }
+    final lunarMatch = RegExp(
+            r'(\d{1,2}/\d{1,2}(?:\s*Âm lịch|\s*ÂL)?)',
+            caseSensitive: false)
+        .firstMatch(content);
+    if (lunarMatch != null) {
+      return lunarMatch.group(1)!.trim();
+    }
+    return '15/02 Âm lịch';
+  }
+
+  /// Ngày Dương lịch năm nay
+  DateTime get deathDateSolar {
+    if (metadata?['deathDateSolar'] != null) {
+      final parsed = DateTime.tryParse(metadata!['deathDateSolar'].toString());
+      if (parsed != null) return parsed;
+    }
+    if (metadata?['solarDate'] != null) {
+      final parsed = DateTime.tryParse(metadata!['solarDate'].toString());
+      if (parsed != null) return parsed;
+    }
+    return DateTime.now().add(const Duration(days: 14));
+  }
+
+  /// Địa điểm tổ chức gợi ý
+  String? get suggestedLocation {
+    if (metadata?['location'] != null) {
+      return metadata!['location'] as String;
+    }
+    if (metadata?['suggestedLocation'] != null) {
+      return metadata!['suggestedLocation'] as String;
+    }
+    return 'Từ đường dòng họ';
+  }
+
+  /// Dự toán ngân sách gợi ý
+  double? get suggestedBudget {
+    if (metadata?['suggestedBudget'] != null) {
+      return (metadata!['suggestedBudget'] as num).toDouble();
+    }
+    if (metadata?['budget'] != null) {
+      return (metadata!['budget'] as num).toDouble();
+    }
+    return 35000000.0;
+  }
+
+  /// Ghi chú / kế hoạch chi tiết gợi ý
+  String? get suggestedDescription {
+    if (metadata?['description'] != null) {
+      return metadata!['description'] as String;
+    }
+    return 'Lễ tưởng niệm và cúng giỗ $deceasedName ngày $deathDateLunar. Con cháu tề tựu dâng hương tưởng nhớ công đức tiền nhân.';
+  }
+
   NotificationModel copyWith({
     String? notificationId,
     String? clanId,
@@ -81,6 +183,7 @@ class NotificationModel {
     bool? isRead,
     DateTime? readAt,
     DateTime? createdAt,
+    Map<String, dynamic>? metadata,
   }) {
     return NotificationModel(
       notificationId: notificationId ?? this.notificationId,
@@ -93,6 +196,7 @@ class NotificationModel {
       isRead: isRead ?? this.isRead,
       readAt: readAt ?? this.readAt,
       createdAt: createdAt ?? this.createdAt,
+      metadata: metadata ?? this.metadata,
     );
   }
 
@@ -110,6 +214,11 @@ class NotificationModel {
       readAtDate = DateTime.tryParse(json['readAt'].toString());
     }
 
+    Map<String, dynamic>? meta;
+    if (json['metadata'] is Map<String, dynamic>) {
+      meta = json['metadata'] as Map<String, dynamic>;
+    }
+
     return NotificationModel(
       notificationId: (json['notificationId'] as String?) ?? '',
       clanId: (json['clanId'] as String?) ?? '',
@@ -121,6 +230,7 @@ class NotificationModel {
       isRead: (json['isRead'] as bool?) ?? false,
       readAt: readAtDate,
       createdAt: createdAtDate,
+      metadata: meta,
     );
   }
 
@@ -136,6 +246,7 @@ class NotificationModel {
       'isRead': isRead,
       'readAt': readAt?.toUtc().toIso8601String(),
       'createdAt': createdAt.toUtc().toIso8601String(),
+      if (metadata != null) 'metadata': metadata,
     };
   }
 }

@@ -33,6 +33,28 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
   // Danh sách mẫu thực tế phục vụ kiểm thử và offline
   static final List<NotificationModel> _mockNotifications = [
     NotificationModel(
+      notificationId: 'NTF-US40-001',
+      clanId: 'VN-LE-2026',
+      category: NotificationCategoryEnum.event,
+      title: 'Nhắc nhở ngày giỗ: Cụ Lê Văn An (Đời thứ 3, Chi 2)',
+      content:
+          'Sắp đến ngày giỗ Cụ Lê Văn An vào ngày 15/02 Âm lịch (Dương lịch: 23/03/2026). Ban tổ chức có thể bấm tạo sự kiện để con cháu đăng ký tham dự và chuẩn bị kế hoạch tế tự chu tất.',
+      referenceType: 'DeathAnniversary',
+      referenceId: 'MEM-DEC-003',
+      isRead: false,
+      createdAt: DateTime.now().subtract(const Duration(hours: 1, minutes: 15)),
+      metadata: {
+        'deceasedName': 'Cụ Lê Văn An',
+        'deathDateSolar': '2026-03-23T08:30:00.000Z',
+        'deathDateLunar': '15/02 Âm lịch (Bính Ngọ)',
+        'location': 'Từ đường Chi 2, Xã Kim Liên',
+        'suggestedBudget': 35000000.0,
+        'description':
+            'Lễ tưởng niệm và cúng giỗ Cụ Lê Văn An (Đời thứ 3, Chi 2). Con cháu tề tựu dâng hương tưởng nhớ công đức tiền nhân.',
+        'isDeathAnniversary': true,
+      },
+    ),
+    NotificationModel(
       notificationId: 'NTF-US08-001',
       clanId: 'VN-LE-2026',
       category: NotificationCategoryEnum.task,

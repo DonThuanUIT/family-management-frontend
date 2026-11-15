@@ -153,4 +153,39 @@ void main() {
       expect(find.text('Sức Chứa Tối Đa'), findsOneWidget);
     },
   );
+
+  testWidgets(
+    'US-40: CreateEventSheet displays prefill banner and "Xác Nhận & Tổ Chức Đám Giỗ" submit button when fromAnniversaryReminder is true',
+    (tester) async {
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: CreateEventSheet(
+                initialEventName: 'Lễ Đám Giỗ Cụ Lê Văn An',
+                initialLunarDate: '15/02 Bính Ngọ',
+                initialLocation: 'Từ đường Chi 2',
+                initialDescription: 'Lễ tưởng niệm và cúng giỗ Cụ Lê Văn An.',
+                initialEstimatedBudget: 35000000.0,
+                fromAnniversaryReminder: true,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(
+        find.byKey(const Key('anniversary_prefill_banner')),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Tự động điền từ Thông báo Nhắc Ngày Giỗ'),
+        findsOneWidget,
+      );
+      expect(find.text('Lễ Đám Giỗ Cụ Lê Văn An'), findsOneWidget);
+      expect(find.text('15/02 Bính Ngọ'), findsOneWidget);
+      expect(find.text('Từ đường Chi 2'), findsOneWidget);
+      expect(find.text('Xác Nhận & Tổ Chức Đám Giỗ'), findsOneWidget);
+    },
+  );
 }
