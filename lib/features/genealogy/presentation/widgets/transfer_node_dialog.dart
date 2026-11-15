@@ -1,9 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/branch_models.dart';
 import '../../data/repositories/genealogy_repository_impl.dart';
-import '../../domain/repositories/genealogy_repository.dart';
 import '../providers/genealogy_providers.dart';
 
 /// Hộp thoại điều chuyển chi nhánh hoặc thành viên kèm cảnh báo lỗi đệ quy trực quan (US-28, Task #108).

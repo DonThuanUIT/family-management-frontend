@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+﻿import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,6 +6,17 @@ import '../../../../core/network/dio_client.dart';
 import '../models/contribution_models.dart';
 
 abstract class ContributionRemoteDataSource {
+  Future<BranchRecursiveContributionDto> getRecursiveBranchContributionSummary({
+    required String branchId,
+    String? eventId,
+    int? year,
+  });
+
+  Future<double> getRecursiveBranchContributionTotal({
+    required String branchId,
+    String? eventId,
+    int? year,
+  });
   Future<ElectronicReceiptDto> recordCashContribution({
     required String eventId,
     required String payerMemberId,
@@ -341,20 +352,56 @@ class ContributionRemoteDataSourceImpl implements ContributionRemoteDataSource {
     String branchId, {
     String? eventId,
     int? year,
+  }) {
+    return getRecursiveBranchContributionSummary(
+      branchId: branchId,
+      eventId: eventId,
+      year: year,
+    );
+  }
+
+  @override
+  Future<BranchRecursiveContributionDto> getRecursiveBranchContributionSummary({
+    required String branchId,
+    String? eventId,
+    int? year,
   }) async {
     final queryParams = <String, dynamic>{};
-    if (eventId != null && eventId.isNotEmpty) {
-      queryParams['eventId'] = eventId;
+    if (eventId != null && eventId.trim().isNotEmpty) {
+      queryParams['eventId'] = eventId.trim();
     }
-    if (year != null) {
+    if (year != null && year > 0) {
       queryParams['year'] = year;
     }
+
     final response = await _dio.get(
       'contributions/branches/$branchId/recursive-summary',
       queryParameters: queryParams,
     );
     final data = response.data['data'] as Map<String, dynamic>;
     return BranchRecursiveContributionDto.fromJson(data);
+  }
+
+  @override
+  Future<double> getRecursiveBranchContributionTotal({
+    required String branchId,
+    String? eventId,
+    int? year,
+  }) async {
+    final queryParams = <String, dynamic>{};
+    if (eventId != null && eventId.trim().isNotEmpty) {
+      queryParams['eventId'] = eventId.trim();
+    }
+    if (year != null && year > 0) {
+      queryParams['year'] = year;
+    }
+
+    final response = await _dio.get(
+      'contributions/branches/$branchId/recursive-total',
+      queryParameters: queryParams,
+    );
+    final numVal = response.data['data'];
+    return ((numVal ?? 0) as num).toDouble();
   }
 }
 

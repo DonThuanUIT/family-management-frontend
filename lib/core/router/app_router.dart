@@ -7,20 +7,31 @@ import '../../features/auth/presentation/screens/auth_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/invite_code_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/auth/presentation/screens/my_profile_screen.dart';
 import '../../features/auth/presentation/screens/pending_approval_screen.dart';
 import '../../features/auth/presentation/screens/register_creator_screen.dart';
 import '../../features/auth/presentation/screens/register_member_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/auth/presentation/screens/welcome_screen.dart';
+import '../../features/audit/presentation/screens/system_audit_log_screen.dart';
 import '../../features/contribution/presentation/screens/clan_asset_inventory_screen.dart';
 import '../../features/contribution/presentation/screens/receive_contribution_screen.dart';
 import '../../features/contribution/presentation/screens/my_contribution_history_screen.dart';
 import '../../features/contribution/presentation/screens/bank_reconciliation_screen.dart';
 import '../../features/contribution/presentation/screens/online_contribution_screen.dart';
+import '../../features/event/presentation/screens/event_budget_dashboard_screen.dart';
 import '../../features/event/presentation/screens/event_list_screen.dart';
+import '../../features/event/presentation/screens/event_logistics_dashboard_screen.dart';
+import '../../features/finance/presentation/screens/overdue_advance_vouchers_screen.dart';
 import '../../features/genealogy/presentation/screens/edit_root_branch_screen.dart';
+import '../../features/genealogy/presentation/screens/member_import_screen.dart';
+import '../../features/genealogy/presentation/screens/privacy_settings_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
-import '../../features/shared/presentation/widgets/heritage_nav_bar.dart';
+import '../../features/invitation/presentation/screens/clan_invites_screen.dart';
+import '../../features/invitation/presentation/screens/join_requests_management_screen.dart';
+import '../../features/member_media/presentation/screens/member_detail_screen.dart';
+import '../../features/notification/presentation/screens/notification_center_screen.dart';
+import '../../features/role/presentation/screens/role_management_screen.dart';
 import '../../features/task/presentation/screens/event_task_list_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -36,6 +47,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     navigatorKey: _rootNavigatorKey,
     initialLocation: initialLocation,
     routes: [
+      GoRoute(
+        path: '/members/:memberId',
+        name: 'member-detail',
+        builder: (context, state) =>
+            MemberDetailScreen(memberId: state.pathParameters['memberId']!),
+      ),
       // 1. Màn hình Khởi động (Splash)
       GoRoute(
         path: '/',
@@ -50,11 +67,46 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const WelcomeScreen(),
       ),
 
-      // 3. Màn hình Đăng Nhập (Login)
+      // 3. Màn hình Đăng Nhập (Login) & Liên kết nhanh mã vị trí (US-19)
       GoRoute(
         path: '/login',
         name: 'login',
-        builder: (context, state) => const LoginScreen(),
+        builder: (context, state) {
+          final code = state.uri.queryParameters['code'] ??
+              state.uri.queryParameters['inviteCode'];
+          final tabStr = state.uri.queryParameters['tab'];
+          final tab = tabStr != null ? int.tryParse(tabStr) : null;
+          return LoginScreen(
+            initialInviteCode: code,
+            initialTabIndex: tab ?? (code != null ? 0 : 1),
+          );
+        },
+      ),
+
+      // Route nhanh cho việc nhận link vị trí / nhập mã liên kết nhanh (US-19)
+      GoRoute(
+        path: '/claim-position',
+        name: 'claim-position',
+        builder: (context, state) {
+          final code = state.uri.queryParameters['code'] ??
+              state.uri.queryParameters['inviteCode'];
+          return LoginScreen(
+            initialInviteCode: code,
+            initialTabIndex: 0,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/join',
+        name: 'join',
+        builder: (context, state) {
+          final code = state.uri.queryParameters['code'] ??
+              state.uri.queryParameters['inviteCode'];
+          return LoginScreen(
+            initialInviteCode: code,
+            initialTabIndex: 0,
+          );
+        },
       ),
 
       // 4. Màn hình Đăng Ký Trưởng Tộc (Register Clan Creator)
@@ -141,10 +193,62 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               return EventTaskListScreen(eventId: eventId);
             },
           ),
+          // 10.2. Dashboard Hậu Cần Sự Kiện cho BTC (US-42)
+          GoRoute(
+            path: ':eventId/logistics',
+            name: 'event-logistics',
+            builder: (context, state) {
+              final eventId = state.pathParameters['eventId'] ?? '';
+              return EventLogisticsDashboardScreen(eventId: eventId);
+            },
+          ),
+          // 10.3. Bảng Điều Khiển Ngân Sách Sự Kiện (US-37)
+          GoRoute(
+            path: ':eventId/budget',
+            name: 'event-budget',
+            builder: (context, state) {
+              final eventId = state.pathParameters['eventId'] ?? '';
+              return EventBudgetDashboardScreen(eventId: eventId);
+            },
+          ),
+          // 10.4. Theo Dõi Tạm Ứng Quá Hạn Nộp Chứng Từ (US-48)
+          GoRoute(
+            path: ':eventId/advances/overdue',
+            name: 'event-overdue-advances',
+            builder: (context, state) {
+              final eventId = state.pathParameters['eventId'] ?? '';
+              final eventName = state.uri.queryParameters['eventName'];
+              return OverdueAdvanceVouchersScreen(
+                eventId: eventId,
+                eventName: eventName,
+              );
+            },
+          ),
         ],
       ),
 
-      // 11. Bàn Tiếp Nhận Đóng Góp & Sổ Cái Thu Chi (Task #71)
+      // Route theo dõi tạm ứng quá hạn tổng hợp toàn dòng họ (US-48)
+      GoRoute(
+        path: '/finance/overdue-advances',
+        name: 'finance-overdue-advances',
+        builder: (context, state) {
+          final eventId = state.uri.queryParameters['eventId'];
+          final eventName = state.uri.queryParameters['eventName'];
+          return OverdueAdvanceVouchersScreen(
+            eventId: eventId,
+            eventName: eventName,
+          );
+        },
+      ),
+
+      // 11. Phân hệ Quản lý Phân Quyền & Chức Sự Tác Nghiệp (US-03)
+      GoRoute(
+        path: '/roles',
+        name: 'roles',
+        builder: (context, state) => const RoleManagementScreen(),
+      ),
+
+      // 12. Bàn Tiếp Nhận Đóng Góp & Sổ Cái Thu Chi (Task #71)
       GoRoute(
         path: '/contributions',
         name: 'contributions',
@@ -177,23 +281,66 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ],
       ),
 
-      // 12. Kho Hiện Vật & Bảo Vật Từ Đường (Task #74)
+      // 13. Kho Hiện Vật & Bảo Vật Từ Đường (Task #74)
       GoRoute(
         path: '/clan-assets',
         name: 'clan-assets',
         builder: (context, state) => const ClanAssetInventoryScreen(),
       ),
 
-      // 13. Phân hệ Cấp Mã Mời Gia Tộc (Chưa triển khai - để trống theo yêu cầu)
+      // 14. Phân hệ Cấp Mã Mời & Khởi Tạo Hồ Sơ Gia Phả (US-18)
       GoRoute(
         path: '/clan-invites',
         name: 'clan-invites',
-        builder: (context, state) => const Scaffold(
-          backgroundColor: Color(0xFFFAF6F0),
-          appBar: HeritageNavBar(currentRoute: '/clan-invites'),
-          bottomNavigationBar: HeritageBottomNavBar(currentRoute: '/clan-invites'),
-          body: SizedBox.shrink(),
-        ),
+        builder: (context, state) {
+          final branchId = state.uri.queryParameters['branchId'];
+          return ClanInvitesScreen(initialBranchId: branchId);
+        },
+      ),
+
+      // 15. Nhật Ký Thao Tác Hệ Thống & So Sánh Diff (Audit Log Viewer)
+      GoRoute(
+        path: '/audit-logs',
+        name: 'audit-logs',
+        builder: (context, state) => const SystemAuditLogScreen(),
+      ),
+
+      // 16. Cài đặt Quyền riêng tư Cá nhân (US-25)
+      GoRoute(
+        path: '/privacy-settings',
+        name: 'privacy-settings',
+        builder: (context, state) => const PrivacySettingsScreen(),
+      ),
+
+      // 17. Hồ sơ cá nhân và đổi mật khẩu (US-22)
+      GoRoute(
+        path: '/profile',
+        name: 'profile',
+        builder: (context, state) => const MyProfileScreen(),
+      ),
+
+      // 18. Nhập hàng loạt thành viên từ file Excel/CSV (US-31)
+      GoRoute(
+        path: '/members/import',
+        name: 'members-import',
+        builder: (context, state) => const MemberImportScreen(),
+      ),
+
+      // 19. Màn hình Quản Lý Yêu Cầu Gia Nhập Cho Trưởng Tộc / Trưởng Chi (US-33)
+      GoRoute(
+        path: '/join-requests',
+        name: 'join-requests',
+        builder: (context, state) {
+          final branchId = state.uri.queryParameters['branchId'];
+          return JoinRequestsManagementScreen(initialBranchId: branchId);
+        },
+      ),
+
+      // 20. Trung Tâm Thông Báo & Cảnh Báo Tiến Độ (US-08 & US-39)
+      GoRoute(
+        path: '/notifications',
+        name: 'notifications',
+        builder: (context, state) => const NotificationCenterScreen(),
       ),
     ],
   );

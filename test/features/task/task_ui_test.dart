@@ -96,6 +96,9 @@ class FakeEventRepository implements EventRepository {
 
   @override
   Future<List<EventNotificationModel>> getEventNotifications(String eventId) async => [];
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 class FakeDualRbacNotifier extends DualRbacSessionNotifier {

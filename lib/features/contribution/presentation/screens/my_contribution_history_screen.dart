@@ -1,17 +1,12 @@
-import 'dart:typed_data';
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 
-import '../../../../core/security/rbac_models.dart';
-import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../shared/presentation/widgets/heritage_nav_bar.dart';
 import '../../data/models/contribution_models.dart';
 import '../../data/repositories/contribution_repository_impl.dart';
-import '../../domain/repositories/contribution_repository.dart';
 import '../providers/contribution_ui_provider.dart';
-import '../widgets/electronic_receipt_dialog.dart';
 
 /// Màn hình 'Đóng góp của tôi' (US-49, Task #175)
 /// Hiển thị lịch sử đóng góp cá nhân, tổng đóng góp của nhánh gia đình và nút Xem / In / Tải phiếu thu PDF.

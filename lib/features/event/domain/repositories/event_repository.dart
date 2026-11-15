@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import '../../data/models/event_budget_models.dart';
 import '../../data/models/event_models.dart';
 
 abstract class EventRepository {
@@ -9,4 +12,20 @@ abstract class EventRepository {
   Future<List<EventPersonnelModel>> assignPersonnel(
       String eventId, AssignPersonnelRequestDto request);
   Future<List<EventNotificationModel>> getEventNotifications(String eventId);
+  Future<RegistrationModel?> getMyRegistration(String eventId);
+  Future<RegistrationModel> registerAttendees(
+      String eventId, RegisterAttendeesRequestDto request);
+  Future<RegistrationModel> updateRegistration(
+      String registrationId, UpdateRegistrationRequestDto request);
+  Future<RegistrationModel> cancelRegistration(String registrationId);
+  Future<EventLogisticsSummaryModel> getEventRegistrationSummary(
+    String eventId, {
+    String? branchId,
+  });
+  Future<Uint8List> exportEventRegistrationSummary(
+    String eventId, {
+    String? branchId,
+    String format = 'xlsx',
+  });
+  Future<EventBudgetSummaryModel> getEventBudgetSummary(String eventId);
 }

@@ -2,6 +2,17 @@
 import '../../data/models/contribution_models.dart';
 
 abstract class ContributionRepository {
+  Future<BranchRecursiveContributionDto> getRecursiveBranchContributionSummary({
+    required String branchId,
+    String? eventId,
+    int? year,
+  });
+
+  Future<double> getRecursiveBranchContributionTotal({
+    required String branchId,
+    String? eventId,
+    int? year,
+  });
   Future<ElectronicReceiptDto> recordCashContribution({
     required String eventId,
     required String payerMemberId,

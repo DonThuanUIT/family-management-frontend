@@ -1,15 +1,15 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../../core/security/rbac_models.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../shared/presentation/widgets/heritage_nav_bar.dart';
 import '../../data/models/contribution_models.dart';
 import '../../data/repositories/contribution_repository_impl.dart';
-import '../../domain/repositories/contribution_repository.dart';
 import '../providers/contribution_ui_provider.dart';
 
 /// Màn hình 'Đóng góp trực tuyến' cho con cháu ở xa (US-53, Task #187).
@@ -113,6 +113,57 @@ class _OnlineContributionScreenState
         duration: const Duration(seconds: 2),
       ),
     );
+  }
+
+  /// Xây dựng chuỗi VietQR EMVCo tiêu chuẩn Napas 247 cho ứng dụng ngân hàng quét trực tiếp
+  String _buildVietQrPayload(VietQrResponseDto qr) {
+    if (qr.bankBin.isEmpty || qr.accountNumber.isEmpty) {
+      return qr.qrPayload.isNotEmpty ? qr.qrPayload : qr.qrCodeUrl;
+    }
+
+    String tlv(String tag, String value) {
+      final len = value.length.toString().padLeft(2, '0');
+      return '$tag$len$value';
+    }
+
+    String calcCrc16(String str) {
+      int crc = 0xFFFF;
+      for (int i = 0; i < str.length; i++) {
+        int c = str.codeUnitAt(i);
+        crc ^= (c << 8);
+        for (int j = 0; j < 8; j++) {
+          if ((crc & 0x8000) != 0) {
+            crc = ((crc << 1) ^ 0x1021) & 0xFFFF;
+          } else {
+            crc = (crc << 1) & 0xFFFF;
+          }
+        }
+      }
+      return crc.toRadixString(16).toUpperCase().padLeft(4, '0');
+    }
+
+    // Tiêu chuẩn VietQR Napas EMVCo
+    final f00 = tlv('00', '01');
+    final f01 = tlv('01', '12'); // 12 = Dynamic QR (có số tiền)
+
+    // Tag 38: Thông tin ngân hàng thụ hưởng (Merchant Info)
+    final guid = tlv('00', 'A000000727');
+    final beneficiary = tlv('00', qr.bankBin) + tlv('01', qr.accountNumber);
+    final sub38_01 = tlv('01', beneficiary);
+    final serviceCode = tlv('02', 'QRIBFTTA');
+    final f38 = tlv('38', guid + sub38_01 + serviceCode);
+
+    final f53 = tlv('53', '704'); // VND
+    final f54 = tlv('54', qr.amount.toInt().toString());
+    final f58 = tlv('58', 'VN');
+
+    // Tag 62: Nội dung chuyển khoản
+    final sub62_08 = tlv('08', qr.transferContent);
+    final f62 = tlv('62', sub62_08);
+
+    final rawWithoutCrc = '$f00$f01$f38$f53$f54$f58$f62' '6304';
+    final crc = calcCrc16(rawWithoutCrc);
+    return '$rawWithoutCrc$crc';
   }
 
   @override
@@ -396,32 +447,112 @@ class _OnlineContributionScreenState
                         ),
                         const SizedBox(height: 16),
 
-                        // Ảnh mã QR
+                        // Khung mã VietQR chuẩn xác
                         Container(
-                          padding: const EdgeInsets.all(12),
+                          width: 280,
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE6DFD8)),
-                          ),
-                          child: Image.network(
-                            _generatedQr!.qrCodeUrl,
-                            width: 240,
-                            height: 240,
-                            fit: BoxFit.contain,
-                            errorBuilder: (_, __, ___) => Container(
-                              width: 240,
-                              height: 240,
-                              color: const Color(0xFFF9F7F5),
-                              child: const Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.qr_code, size: 80, color: Color(0xFF8B1E1E)),
-                                  SizedBox(height: 8),
-                                  Text('Quét mã qua app ngân hàng', style: TextStyle(fontSize: 12)),
-                                ],
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFFD4AF37), width: 1.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.08),
+                                blurRadius: 16,
+                                offset: const Offset(0, 4),
                               ),
-                            ),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Header chuẩn VietQR & Napas 247
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFFAF6EE),
+                                  borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
+                                  border: Border(bottom: BorderSide(color: Color(0xFFE6DFD8))),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF005BAA),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: const Text(
+                                            'VietQR',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w900,
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFED1C24),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: const Text(
+                                            'napas 247',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Text(
+                                      _generatedQr!.bankName.split('-').first.trim(),
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF58413F),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: QrImageView(
+                                  data: _buildVietQrPayload(_generatedQr!),
+                                  version: QrVersions.auto,
+                                  size: 220,
+                                  backgroundColor: Colors.white,
+                                  eyeStyle: const QrEyeStyle(
+                                    eyeShape: QrEyeShape.square,
+                                    color: Color(0xFF8B1E1E),
+                                  ),
+                                  dataModuleStyle: const QrDataModuleStyle(
+                                    dataModuleShape: QrDataModuleShape.square,
+                                    color: Color(0xFF2B1810),
+                                  ),
+                                  errorCorrectionLevel: QrErrorCorrectLevel.M,
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: const Text(
+                                  'Quét bằng ứng dụng Ngân hàng bất kỳ',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Color(0xFF755B53),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 16),

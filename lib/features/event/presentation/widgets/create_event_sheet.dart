@@ -6,7 +6,24 @@ import '../../data/models/event_models.dart';
 import '../providers/event_providers.dart';
 
 class CreateEventSheet extends ConsumerStatefulWidget {
-  const CreateEventSheet({super.key});
+  final String? initialEventName;
+  final String? initialLunarDate;
+  final DateTime? initialSolarDate;
+  final String? initialLocation;
+  final String? initialDescription;
+  final double? initialEstimatedBudget;
+  final bool fromAnniversaryReminder;
+
+  const CreateEventSheet({
+    super.key,
+    this.initialEventName,
+    this.initialLunarDate,
+    this.initialSolarDate,
+    this.initialLocation,
+    this.initialDescription,
+    this.initialEstimatedBudget,
+    this.fromAnniversaryReminder = false,
+  });
 
   @override
   ConsumerState<CreateEventSheet> createState() => _CreateEventSheetState();
@@ -15,19 +32,43 @@ class CreateEventSheet extends ConsumerStatefulWidget {
 class _CreateEventSheetState extends ConsumerState<CreateEventSheet> {
   final _formKey = GlobalKey<FormState>();
 
-  final _nameController = TextEditingController();
-  final _locationController = TextEditingController();
-  final _lunarController = TextEditingController();
-  final _budgetController = TextEditingController();
-  final _descController = TextEditingController();
+  late final TextEditingController _nameController;
+  late final TextEditingController _locationController;
+  late final TextEditingController _lunarController;
+  late final TextEditingController _budgetController;
+  late final TextEditingController _descController;
+  late final TextEditingController _maxCapacityController;
 
-  DateTime _selectedDate = DateTime.now().add(const Duration(days: 14));
+  late DateTime _selectedDate;
   TimeOfDay _selectedTime = const TimeOfDay(hour: 8, minute: 30);
+  DateTime? _registrationDeadline;
 
   String? _selectedHeadOfOrganizer;
   String? _selectedTreasurer;
 
   bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.initialEventName ?? '');
+    _locationController =
+        TextEditingController(text: widget.initialLocation ?? '');
+    _lunarController =
+        TextEditingController(text: widget.initialLunarDate ?? '');
+    _budgetController = TextEditingController(
+      text: widget.initialEstimatedBudget != null &&
+              widget.initialEstimatedBudget! > 0
+          ? NumberFormat('#,###', 'vi_VN').format(widget.initialEstimatedBudget)
+          : '',
+    );
+    _descController =
+        TextEditingController(text: widget.initialDescription ?? '');
+    _maxCapacityController = TextEditingController();
+
+    _selectedDate = widget.initialSolarDate ??
+        DateTime.now().add(const Duration(days: 14));
+  }
 
   @override
   void dispose() {
@@ -36,6 +77,7 @@ class _CreateEventSheetState extends ConsumerState<CreateEventSheet> {
     _lunarController.dispose();
     _budgetController.dispose();
     _descController.dispose();
+    _maxCapacityController.dispose();
     super.dispose();
   }
 
@@ -61,6 +103,34 @@ class _CreateEventSheetState extends ConsumerState<CreateEventSheet> {
     }
   }
 
+  Future<void> _pickDeadline() async {
+    final now = DateTime.now();
+    final initialDate = _registrationDeadline ?? now.add(const Duration(days: 7));
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365 * 2)),
+    );
+    if (pickedDate == null || !mounted) return;
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: _registrationDeadline != null
+          ? TimeOfDay.fromDateTime(_registrationDeadline!)
+          : const TimeOfDay(hour: 23, minute: 59),
+    );
+    if (pickedTime == null || !mounted) return;
+    setState(() {
+      _registrationDeadline = DateTime(
+        pickedDate.year,
+        pickedDate.month,
+        pickedDate.day,
+        pickedTime.hour,
+        pickedTime.minute,
+      );
+    });
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -79,6 +149,10 @@ class _CreateEventSheetState extends ConsumerState<CreateEventSheet> {
         ) ??
         0.0;
 
+    final maxCapacityText = _maxCapacityController.text.trim();
+    final maxCapacity =
+        maxCapacityText.isNotEmpty ? int.tryParse(maxCapacityText) : null;
+
     final request = CreateEventRequestDto(
       eventName: _nameController.text.trim(),
       description: _descController.text.trim(),
@@ -90,6 +164,8 @@ class _CreateEventSheetState extends ConsumerState<CreateEventSheet> {
       estimatedBudget: budget,
       headOfOrganizerMemberId: _selectedHeadOfOrganizer,
       treasurerMemberId: _selectedTreasurer,
+      registrationDeadline: _registrationDeadline,
+      maxCapacity: maxCapacity,
     );
 
     final success =
@@ -100,9 +176,13 @@ class _CreateEventSheetState extends ConsumerState<CreateEventSheet> {
       if (success) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Khởi tạo sự kiện mới thành công (Trạng thái: Draft)!'),
-            backgroundColor: Color(0xFF1B5E20),
+          SnackBar(
+            content: Text(
+              widget.fromAnniversaryReminder
+                  ? 'Khởi tạo kế hoạch tổ chức Đám giỗ thành công!'
+                  : 'Khởi tạo sự kiện mới thành công (Trạng thái: Draft)!',
+            ),
+            backgroundColor: const Color(0xFF1B5E20),
           ),
         );
       } else {
@@ -119,6 +199,7 @@ class _CreateEventSheetState extends ConsumerState<CreateEventSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      constraints: const BoxConstraints(maxWidth: 680),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -196,6 +277,57 @@ class _CreateEventSheetState extends ConsumerState<CreateEventSheet> {
                 ],
               ),
               const Divider(height: 24),
+
+              // Banner tự động điền từ ngày giỗ (US-40)
+              if (widget.fromAnniversaryReminder) ...[
+                Container(
+                  key: const Key('anniversary_prefill_banner'),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF9ED),
+                    borderRadius: BorderRadius.circular(12),
+                    border:
+                        Border.all(color: const Color(0xFFF5DCB7), width: 1.2),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.auto_awesome,
+                        color: Color(0xFFB45309),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Tự động điền từ Thông báo Nhắc Ngày Giỗ',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF7A1518),
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              'Hệ thống đã tự động điền sẵn tên điển lễ, ngày giỗ âm/dương lịch và địa điểm. Ban tổ chức vui lòng kiểm tra và xác nhận.',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                color: Colors.amber.shade900,
+                                height: 1.35,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+              ],
 
               // 1. Tên sự kiện
               TextFormField(
@@ -298,6 +430,68 @@ class _CreateEventSheetState extends ConsumerState<CreateEventSheet> {
               ),
               const SizedBox(height: 14),
 
+              // 5b. Cấu hình Hạn chót đăng ký & Sức chứa tối đa cho BTC (US-43)
+              Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: InkWell(
+                      key: const Key('create_event_deadline_picker'),
+                      onTap: _pickDeadline,
+                      borderRadius: BorderRadius.circular(10),
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: 'Hạn Chót Đăng Ký',
+                          prefixIcon: const Icon(Icons.timer_outlined, size: 18),
+                          suffixIcon: _registrationDeadline != null
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear, size: 16),
+                                  onPressed: () => setState(
+                                      () => _registrationDeadline = null),
+                                )
+                              : null,
+                        ),
+                        child: Text(
+                          _registrationDeadline != null
+                              ? DateFormat('dd/MM/yyyy HH:mm')
+                                  .format(_registrationDeadline!)
+                              : 'Không giới hạn',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            color: _registrationDeadline != null
+                                ? const Color(0xFF2B1810)
+                                : const Color(0xFF8A7A70),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 2,
+                    child: TextFormField(
+                      key: const Key('create_event_max_capacity_input'),
+                      controller: _maxCapacityController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Sức Chứa Tối Đa',
+                        hintText: 'VD: 150',
+                        prefixIcon: Icon(Icons.groups_outlined, size: 18),
+                      ),
+                      validator: (val) {
+                        if (val == null || val.trim().isEmpty) return null;
+                        final parsed = int.tryParse(val.trim());
+                        if (parsed == null || parsed < 1) {
+                          return 'Phải >= 1';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
               // 6. Contextual RBAC: Ban tổ chức & Thủ quỹ
               Container(
                 padding: const EdgeInsets.all(12),
@@ -335,6 +529,7 @@ class _CreateEventSheetState extends ConsumerState<CreateEventSheet> {
                     const SizedBox(height: 10),
                     DropdownButtonFormField<String>(
                       initialValue: _selectedHeadOfOrganizer,
+                      isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Trưởng Ban Tổ Chức (Max 1)',
                         isDense: true,
@@ -355,6 +550,7 @@ class _CreateEventSheetState extends ConsumerState<CreateEventSheet> {
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
                       initialValue: _selectedTreasurer,
+                      isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Thủ Quỹ Sự Kiện (Max 1)',
                         isDense: true,
@@ -408,9 +604,11 @@ class _CreateEventSheetState extends ConsumerState<CreateEventSheet> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text(
-                        'Ban Hành & Lưu Kế Hoạch',
-                        style: TextStyle(
+                    : Text(
+                        widget.fromAnniversaryReminder
+                            ? 'Xác Nhận & Tổ Chức Đám Giỗ'
+                            : 'Ban Hành & Lưu Kế Hoạch',
+                        style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),

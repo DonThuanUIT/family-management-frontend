@@ -1,7 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/repositories/event_repository.dart';
 import '../datasources/event_remote_datasource.dart';
+import '../models/event_budget_models.dart';
 import '../models/event_models.dart';
 
 class EventRepositoryImpl implements EventRepository {
@@ -38,6 +41,51 @@ class EventRepositoryImpl implements EventRepository {
   @override
   Future<List<EventNotificationModel>> getEventNotifications(String eventId) =>
       _remoteDataSource.getEventNotifications(eventId);
+
+  @override
+  Future<RegistrationModel?> getMyRegistration(String eventId) =>
+      _remoteDataSource.getMyRegistration(eventId);
+
+  @override
+  Future<RegistrationModel> registerAttendees(
+    String eventId,
+    RegisterAttendeesRequestDto request,
+  ) =>
+      _remoteDataSource.registerAttendees(eventId, request);
+
+  @override
+  Future<RegistrationModel> updateRegistration(
+    String registrationId,
+    UpdateRegistrationRequestDto request,
+  ) =>
+      _remoteDataSource.updateRegistration(registrationId, request);
+
+  @override
+  Future<RegistrationModel> cancelRegistration(String registrationId) =>
+      _remoteDataSource.cancelRegistration(registrationId);
+
+  @override
+  Future<EventLogisticsSummaryModel> getEventRegistrationSummary(
+    String eventId, {
+    String? branchId,
+  }) =>
+      _remoteDataSource.getEventRegistrationSummary(eventId, branchId: branchId);
+
+  @override
+  Future<Uint8List> exportEventRegistrationSummary(
+    String eventId, {
+    String? branchId,
+    String format = 'xlsx',
+  }) =>
+      _remoteDataSource.exportEventRegistrationSummary(
+        eventId,
+        branchId: branchId,
+        format: format,
+      );
+
+  @override
+  Future<EventBudgetSummaryModel> getEventBudgetSummary(String eventId) =>
+      _remoteDataSource.getEventBudgetSummary(eventId);
 }
 
 final eventRepositoryProvider = Provider<EventRepository>((ref) {

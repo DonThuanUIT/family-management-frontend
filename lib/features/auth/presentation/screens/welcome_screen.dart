@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../widgets/heritage_auth_split_shell.dart';
+
 class WelcomeScreen extends ConsumerWidget {
   const WelcomeScreen({super.key});
 
@@ -10,14 +12,13 @@ class WelcomeScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFFAF6F0),
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 460),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+        child: HeritageAuthSplitShell(
+          maxMobileWidth: 460,
+          badgeLabel: 'KHỞI NGUỒN GIA TỘC',
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
                   // Logo Container
                   Container(
                     width: 108,
@@ -302,8 +303,6 @@ class WelcomeScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-            ),
-          ),
         ),
       ),
     );

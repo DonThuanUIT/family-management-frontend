@@ -176,6 +176,32 @@ class ContributionRepositoryImpl implements ContributionRepository {
       year: year,
     );
   }
+
+  @override
+  Future<BranchRecursiveContributionDto> getRecursiveBranchContributionSummary({
+    required String branchId,
+    String? eventId,
+    int? year,
+  }) {
+    return _remoteDataSource.getRecursiveBranchContributionSummary(
+      branchId: branchId,
+      eventId: eventId,
+      year: year,
+    );
+  }
+
+  @override
+  Future<double> getRecursiveBranchContributionTotal({
+    required String branchId,
+    String? eventId,
+    int? year,
+  }) {
+    return _remoteDataSource.getRecursiveBranchContributionTotal(
+      branchId: branchId,
+      eventId: eventId,
+      year: year,
+    );
+  }
 }
 
 final contributionRepositoryProvider = Provider<ContributionRepository>((ref) {

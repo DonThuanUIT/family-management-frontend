@@ -1,4 +1,6 @@
-// ignore_for_file: constant_identifier_names
+﻿// ignore_for_file: constant_identifier_names
+
+export 'branch_recursive_contribution_models.dart';
 
 enum PaymentMethod {
   Cash('Tiền mặt'),
@@ -751,93 +753,4 @@ class ClanBankingInfoDto {
   }
 }
 
-/// DTO Đóng góp đệ quy của chi nhánh (US-11 & US-49)
-class BranchRecursiveContributionDto {
-  final String branchId;
-  final String branchName;
-  final int? generationLevel;
-  final String? parentBranchId;
-  final String? representativeId;
-  final String? representativeName;
-  final String? eventId;
-  final String? eventName;
-  final int? year;
-  final int directMemberCount;
-  final int totalRecursiveMemberCount;
-  final int directContributingMemberCount;
-  final int totalRecursiveContributingMemberCount;
-  final int directContributionCount;
-  final double directCashAmount;
-  final double directInKindAmount;
-  final double directTotalAmount;
-  final double descendantsCashAmount;
-  final double descendantsInKindAmount;
-  final double descendantsTotalAmount;
-  final double totalRecursiveCashAmount;
-  final double totalRecursiveInKindAmount;
-  final double totalRecursiveAmount;
-  final String? totalRecursiveAmountInWords;
-  final List<BranchRecursiveContributionDto> childBranches;
-
-  const BranchRecursiveContributionDto({
-    required this.branchId,
-    required this.branchName,
-    this.generationLevel,
-    this.parentBranchId,
-    this.representativeId,
-    this.representativeName,
-    this.eventId,
-    this.eventName,
-    this.year,
-    required this.directMemberCount,
-    required this.totalRecursiveMemberCount,
-    required this.directContributingMemberCount,
-    required this.totalRecursiveContributingMemberCount,
-    required this.directContributionCount,
-    required this.directCashAmount,
-    required this.directInKindAmount,
-    required this.directTotalAmount,
-    required this.descendantsCashAmount,
-    required this.descendantsInKindAmount,
-    required this.descendantsTotalAmount,
-    required this.totalRecursiveCashAmount,
-    required this.totalRecursiveInKindAmount,
-    required this.totalRecursiveAmount,
-    this.totalRecursiveAmountInWords,
-    this.childBranches = const [],
-  });
-
-  factory BranchRecursiveContributionDto.fromJson(Map<String, dynamic> json) {
-    return BranchRecursiveContributionDto(
-      branchId: (json['branchId'] ?? '') as String,
-      branchName: (json['branchName'] ?? '') as String,
-      generationLevel: json['generationLevel'] as int?,
-      parentBranchId: json['parentBranchId'] as String?,
-      representativeId: json['representativeId'] as String?,
-      representativeName: json['representativeName'] as String?,
-      eventId: json['eventId'] as String?,
-      eventName: json['eventName'] as String?,
-      year: json['year'] as int?,
-      directMemberCount: ((json['directMemberCount'] ?? 0) as num).toInt(),
-      totalRecursiveMemberCount: ((json['totalRecursiveMemberCount'] ?? 0) as num).toInt(),
-      directContributingMemberCount: ((json['directContributingMemberCount'] ?? 0) as num).toInt(),
-      totalRecursiveContributingMemberCount: ((json['totalRecursiveContributingMemberCount'] ?? 0) as num).toInt(),
-      directContributionCount: ((json['directContributionCount'] ?? 0) as num).toInt(),
-      directCashAmount: ((json['directCashAmount'] ?? 0) as num).toDouble(),
-      directInKindAmount: ((json['directInKindAmount'] ?? 0) as num).toDouble(),
-      directTotalAmount: ((json['directTotalAmount'] ?? 0) as num).toDouble(),
-      descendantsCashAmount: ((json['descendantsCashAmount'] ?? 0) as num).toDouble(),
-      descendantsInKindAmount: ((json['descendantsInKindAmount'] ?? 0) as num).toDouble(),
-      descendantsTotalAmount: ((json['descendantsTotalAmount'] ?? 0) as num).toDouble(),
-      totalRecursiveCashAmount: ((json['totalRecursiveCashAmount'] ?? 0) as num).toDouble(),
-      totalRecursiveInKindAmount: ((json['totalRecursiveInKindAmount'] ?? 0) as num).toDouble(),
-      totalRecursiveAmount: ((json['totalRecursiveAmount'] ?? 0) as num).toDouble(),
-      totalRecursiveAmountInWords: json['totalRecursiveAmountInWords'] as String?,
-      childBranches: (json['childBranches'] as List<dynamic>?)
-              ?.map((c) => BranchRecursiveContributionDto.fromJson(c as Map<String, dynamic>))
-              .toList() ??
-          const [],
-    );
-  }
-}
 

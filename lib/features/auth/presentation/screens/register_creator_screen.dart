@@ -99,6 +99,7 @@ class _RegisterCreatorScreenState extends ConsumerState<RegisterCreatorScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
+    final isDesktop = MediaQuery.sizeOf(context).width >= 960;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAF6F0),
@@ -126,10 +127,13 @@ class _RegisterCreatorScreenState extends ConsumerState<RegisterCreatorScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          padding: EdgeInsets.symmetric(
+            horizontal: isDesktop ? 32 : 20,
+            vertical: isDesktop ? 20 : 12,
+          ),
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 580),
+              constraints: BoxConstraints(maxWidth: isDesktop ? 1080 : 580),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -182,293 +186,21 @@ class _RegisterCreatorScreenState extends ConsumerState<RegisterCreatorScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Section 1: Thông tin dòng họ
-                    Card(
-                      elevation: 0,
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: const BorderSide(color: Color(0xFFE8DFD8)),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(18),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Row(
-                              children: [
-                                Icon(Icons.account_tree,
-                                    color: Color(0xFF7A1518), size: 20),
-                                SizedBox(width: 8),
-                                Text(
-                                  '1. Thông Tin Dòng Họ',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF7A1518),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const Divider(height: 24),
-                            TextFormField(
-                              controller: _clanNameController,
-                              decoration: const InputDecoration(
-                                labelText: 'Tên Dòng Họ *',
-                                hintText: 'VD: Nguyễn Tộc, Trần Tộc, Lê Đại Gia',
-                              ),
-                              validator: (v) => v == null || v.trim().isEmpty
-                                  ? 'Vui lòng nhập tên dòng họ'
-                                  : null,
-                            ),
-                            const SizedBox(height: 14),
-                            TextFormField(
-                              controller: _ancestorNameController,
-                              decoration: const InputDecoration(
-                                labelText: 'Danh tính Thủy Tổ (nếu rõ)',
-                                hintText: 'VD: Cụ Thủy Tổ Nguyễn Quý Công',
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            Row(
-                              children: [
-                                Expanded(
-                                  flex: 2,
-                                  child: TextFormField(
-                                    controller: _originLocationController,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Quê quán / Gốc tích',
-                                      hintText: 'VD: Thái Bình',
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  flex: 1,
-                                  child: TextFormField(
-                                    controller: _establishedYearController,
-                                    keyboardType: TextInputType.number,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Năm khởi lập',
-                                      hintText: '1820',
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-                            TextFormField(
-                              controller: _descriptionController,
-                              maxLines: 2,
-                              decoration: const InputDecoration(
-                                labelText: 'Mô tả / Lời răn dạy của dòng họ',
-                                hintText: 'Tộc ước, phương châm gia phong...',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Section 2: Thông tin Trưởng tộc
-                    Card(
-                      elevation: 0,
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: const BorderSide(color: Color(0xFFE8DFD8)),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(18),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Row(
-                              children: [
-                                Icon(Icons.person,
-                                    color: Color(0xFF7A1518), size: 20),
-                                SizedBox(width: 8),
-                                Text(
-                                  '2. Thông Tin Trưởng Tộc',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF7A1518),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const Divider(height: 24),
-                            TextFormField(
-                              controller: _fullNameController,
-                              decoration: const InputDecoration(
-                                labelText: 'Họ và tên Trưởng tộc *',
-                                hintText: 'VD: Nguyễn Trọng Hoàng',
-                              ),
-                              validator: (v) => v == null || v.trim().isEmpty
-                                  ? 'Vui lòng nhập họ và tên'
-                                  : null,
-                            ),
-                            const SizedBox(height: 14),
-                            TextFormField(
-                              controller: _phoneController,
-                              keyboardType: TextInputType.phone,
-                              decoration: const InputDecoration(
-                                labelText: 'Số điện thoại đăng nhập *',
-                                hintText: '0901234567',
-                              ),
-                              validator: (v) => v == null || v.trim().length < 8
-                                  ? 'SĐT phải từ 8-15 ký tự'
-                                  : null,
-                            ),
-                            const SizedBox(height: 14),
-                            TextFormField(
-                              controller: _emailController,
-                              keyboardType: TextInputType.emailAddress,
-                              decoration: const InputDecoration(
-                                labelText: 'Email nhận thông báo',
-                                hintText: 'truongtoc@example.com',
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            // Gender Selection
-                            const Text(
-                              'Giới tính *',
-                              style: TextStyle(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: ChoiceChip(
-                                    label: const Center(
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(Icons.male, size: 18),
-                                          SizedBox(width: 4),
-                                          Text('Nam'),
-                                        ],
-                                      ),
-                                    ),
-                                    selected: _gender == 'Male',
-                                    selectedColor: const Color(0xFF7A1518),
-                                    labelStyle: TextStyle(
-                                      color: _gender == 'Male'
-                                          ? Colors.white
-                                          : const Color(0xFF2B1810),
-                                    ),
-                                    onSelected: (val) {
-                                      if (val) setState(() => _gender = 'Male');
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: ChoiceChip(
-                                    label: const Center(
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(Icons.female, size: 18),
-                                          SizedBox(width: 4),
-                                          Text('Nữ'),
-                                        ],
-                                      ),
-                                    ),
-                                    selected: _gender == 'Female',
-                                    selectedColor: const Color(0xFF7A1518),
-                                    labelStyle: TextStyle(
-                                      color: _gender == 'Female'
-                                          ? Colors.white
-                                          : const Color(0xFF2B1810),
-                                    ),
-                                    onSelected: (val) {
-                                      if (val) {
-                                        setState(() => _gender = 'Female');
-                                      }
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-                            // Date of birth picker
-                            InkWell(
-                              onTap: () async {
-                                final now = DateTime.now();
-                                final picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: DateTime(now.year - 40),
-                                  firstDate: DateTime(1900),
-                                  lastDate: now,
-                                );
-                                if (picked != null) {
-                                  setState(() => _selectedDob = picked);
-                                }
-                              },
-                              child: InputDecorator(
-                                decoration: const InputDecoration(
-                                  labelText: 'Ngày tháng năm sinh',
-                                  suffixIcon: Icon(Icons.calendar_month),
-                                ),
-                                child: Text(
-                                  _selectedDob != null
-                                      ? "${_selectedDob!.day}/${_selectedDob!.month}/${_selectedDob!.year}"
-                                      : 'Chọn ngày sinh',
-                                  style: TextStyle(
-                                    color: _selectedDob != null
-                                        ? const Color(0xFF2B1810)
-                                        : Colors.grey,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            TextFormField(
-                              controller: _passwordController,
-                              obscureText: _obscurePassword,
-                              decoration: InputDecoration(
-                                labelText: 'Mật khẩu bảo vệ *',
-                                hintText: 'Tối thiểu 6 ký tự',
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscurePassword
-                                        ? Icons.visibility_off_outlined
-                                        : Icons.visibility_outlined,
-                                  ),
-                                  onPressed: () => setState(() =>
-                                      _obscurePassword = !_obscurePassword),
-                                ),
-                              ),
-                              validator: (v) => v == null || v.trim().length < 6
-                                  ? 'Mật khẩu tối thiểu 6 ký tự'
-                                  : null,
-                            ),
-                            const SizedBox(height: 14),
-                            TextFormField(
-                              controller: _confirmPasswordController,
-                              obscureText: _obscurePassword,
-                              decoration: const InputDecoration(
-                                labelText: 'Nhập lại mật khẩu *',
-                              ),
-                              validator: (v) {
-                                if (v != _passwordController.text) {
-                                  return 'Mật khẩu nhập lại không khớp';
-                                }
-                                return null;
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    // Section 1 & Section 2: 2 cột song song trên Desktop, xếp dọc trên Mobile
+                    if (isDesktop)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: _buildClanInfoCard()),
+                          const SizedBox(width: 20),
+                          Expanded(child: _buildCreatorInfoCard()),
+                        ],
+                      )
+                    else ...[
+                      _buildClanInfoCard(),
+                      const SizedBox(height: 16),
+                      _buildCreatorInfoCard(),
+                    ],
                     const SizedBox(height: 14),
 
                     // Agreement
@@ -549,6 +281,297 @@ class _RegisterCreatorScreenState extends ConsumerState<RegisterCreatorScreen> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildClanInfoCard() {
+    return Card(
+      elevation: 0,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFFE8DFD8)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.account_tree, color: Color(0xFF7A1518), size: 20),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '1. Thông Tin Dòng Họ',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF7A1518),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 24),
+            TextFormField(
+              controller: _clanNameController,
+              decoration: const InputDecoration(
+                labelText: 'Tên Dòng Họ *',
+                hintText: 'VD: Nguyễn Tộc, Trần Tộc, Lê Đại Gia',
+              ),
+              validator: (v) => v == null || v.trim().isEmpty
+                  ? 'Vui lòng nhập tên dòng họ'
+                  : null,
+            ),
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: _ancestorNameController,
+              decoration: const InputDecoration(
+                labelText: 'Danh tính Thủy Tổ (nếu rõ)',
+                hintText: 'VD: Cụ Thủy Tổ Nguyễn Quý Công',
+              ),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: TextFormField(
+                    controller: _originLocationController,
+                    decoration: const InputDecoration(
+                      labelText: 'Quê quán / Gốc tích',
+                      hintText: 'VD: Thái Bình',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 1,
+                  child: TextFormField(
+                    controller: _establishedYearController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Năm khởi lập',
+                      hintText: '1820',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: _descriptionController,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                labelText: 'Mô tả / Lời răn dạy của dòng họ',
+                hintText: 'Tộc ước, phương châm gia phong...',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCreatorInfoCard() {
+    return Card(
+      elevation: 0,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFFE8DFD8)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.person, color: Color(0xFF7A1518), size: 20),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '2. Thông Tin Trưởng Tộc',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF7A1518),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 24),
+            TextFormField(
+              controller: _fullNameController,
+              decoration: const InputDecoration(
+                labelText: 'Họ và tên Trưởng tộc *',
+                hintText: 'VD: Nguyễn Trọng Hoàng',
+              ),
+              validator: (v) => v == null || v.trim().isEmpty
+                  ? 'Vui lòng nhập họ và tên'
+                  : null,
+            ),
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: _phoneController,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
+                labelText: 'Số điện thoại đăng nhập *',
+                hintText: '0901234567',
+              ),
+              validator: (v) => v == null || v.trim().length < 8
+                  ? 'SĐT phải từ 8-15 ký tự'
+                  : null,
+            ),
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'Email nhận thông báo',
+                hintText: 'truongtoc@example.com',
+              ),
+            ),
+            const SizedBox(height: 14),
+            // Gender Selection
+            const Text(
+              'Giới tính *',
+              style: TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: ChoiceChip(
+                    label: const Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.male, size: 18),
+                          SizedBox(width: 4),
+                          Text('Nam'),
+                        ],
+                      ),
+                    ),
+                    selected: _gender == 'Male',
+                    selectedColor: const Color(0xFF7A1518),
+                    labelStyle: TextStyle(
+                      color: _gender == 'Male'
+                          ? Colors.white
+                          : const Color(0xFF2B1810),
+                    ),
+                    onSelected: (val) {
+                      if (val) setState(() => _gender = 'Male');
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ChoiceChip(
+                    label: const Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.female, size: 18),
+                          SizedBox(width: 4),
+                          Text('Nữ'),
+                        ],
+                      ),
+                    ),
+                    selected: _gender == 'Female',
+                    selectedColor: const Color(0xFF7A1518),
+                    labelStyle: TextStyle(
+                      color: _gender == 'Female'
+                          ? Colors.white
+                          : const Color(0xFF2B1810),
+                    ),
+                    onSelected: (val) {
+                      if (val) {
+                        setState(() => _gender = 'Female');
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            // Date of birth picker
+            InkWell(
+              onTap: () async {
+                final now = DateTime.now();
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime(now.year - 40),
+                  firstDate: DateTime(1900),
+                  lastDate: now,
+                );
+                if (picked != null) {
+                  setState(() => _selectedDob = picked);
+                }
+              },
+              child: InputDecorator(
+                decoration: const InputDecoration(
+                  labelText: 'Ngày tháng năm sinh',
+                  suffixIcon: Icon(Icons.calendar_month),
+                ),
+                child: Text(
+                  _selectedDob != null
+                      ? "${_selectedDob!.day}/${_selectedDob!.month}/${_selectedDob!.year}"
+                      : 'Chọn ngày sinh',
+                  style: TextStyle(
+                    color: _selectedDob != null
+                        ? const Color(0xFF2B1810)
+                        : Colors.grey,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: _passwordController,
+              obscureText: _obscurePassword,
+              decoration: InputDecoration(
+                labelText: 'Mật khẩu bảo vệ *',
+                hintText: 'Tối thiểu 6 ký tự',
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                  ),
+                  onPressed: () =>
+                      setState(() => _obscurePassword = !_obscurePassword),
+                ),
+              ),
+              validator: (v) => v == null || v.trim().length < 6
+                  ? 'Mật khẩu tối thiểu 6 ký tự'
+                  : null,
+            ),
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: _confirmPasswordController,
+              obscureText: _obscurePassword,
+              decoration: const InputDecoration(
+                labelText: 'Nhập lại mật khẩu *',
+              ),
+              validator: (v) {
+                if (v != _passwordController.text) {
+                  return 'Mật khẩu nhập lại không khớp';
+                }
+                return null;
+              },
+            ),
+          ],
         ),
       ),
     );

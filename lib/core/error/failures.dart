@@ -6,6 +6,15 @@ sealed class Failure {
   const Failure({required this.message, this.statusCode});
 }
 
+class MediaFailure extends Failure {
+  final String code;
+  const MediaFailure({
+    required super.message,
+    required this.code,
+    super.statusCode,
+  });
+}
+
 class ServerFailure extends Failure {
   const ServerFailure({required super.message, super.statusCode});
 }

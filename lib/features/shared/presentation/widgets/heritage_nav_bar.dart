@@ -1,9 +1,11 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/security/rbac_models.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../notification/presentation/providers/notification_providers.dart';
+import '../../../notification/presentation/widgets/notification_center_dialog.dart';
 
 /// Item trong thanh điều hướng Stitch FamilyFund
 class HeritageNavItem {
@@ -79,6 +81,8 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(dualRbacSessionProvider);
     final authState = ref.watch(authStateProvider);
+    final notifState = ref.watch(notificationListProvider);
+    final unreadSummary = notifState.unreadSummary;
 
     final fullName = authState.user?.fullName.isNotEmpty == true
         ? authState.user!.fullName
@@ -87,7 +91,10 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
         ? 'Trưởng Tộc • Chi Gốc'
         : (session.branchName.isNotEmpty ? session.branchName : 'Chi 2 (Đời 5)');
 
-    final isWide = MediaQuery.of(context).size.width >= 860;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWide = screenWidth >= 860;
+    final isUltraWide = screenWidth >= 1280;
+    final isMediumWide = screenWidth >= 1100;
 
     return Container(
       height: 68,
@@ -113,146 +120,165 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
             child: Row(
               children: [
                 // 1. Brand Logo & Name
-                InkWell(
-                  onTap: () => context.go('/home'),
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF8B1E1E), Color(0xFF6B1414)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                Flexible(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 280),
+                    child: InkWell(
+                    onTap: () => context.go('/home'),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF8B1E1E), Color(0xFF6B1414)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                  color: const Color(0xFFD4A017), width: 1.2),
                             ),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                                color: const Color(0xFFD4A017), width: 1.2),
-                          ),
-                          child: const Center(
-                            child: Icon(
-                              Icons.account_balance,
-                              color: Color(0xFFD4A017),
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text(
-                              'FamilyFund',
-                              style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF2B1810),
-                                letterSpacing: -0.3,
+                            child: const Center(
+                              child: Icon(
+                                Icons.account_balance,
+                                color: Color(0xFFD4A017),
+                                size: 20,
                               ),
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 1.5),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF0EDEB),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                    color: const Color(0xFFDAC1BA), width: 0.8),
-                              ),
-                              child: Text(
-                                fullName.startsWith('Nguyễn')
-                                    ? 'DÒNG HỌ NGUYỄN VIỆT NAM'
-                                    : (fullName.startsWith('Lê')
-                                        ? 'DÒNG HỌ LÊ VIỆT NAM'
-                                        : 'GIA TỘC VIỆT NAM'),
-                                style: const TextStyle(
-                                  fontFamily: 'monospace',
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.6,
-                                  color: Color(0xFF8B1E1E),
+                          ),
+                          const SizedBox(width: 10),
+                          Flexible(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  customTitle ?? 'FamilyFund',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF2B1810),
+                                    letterSpacing: -0.3,
+                                  ),
                                 ),
-                              ),
+                                if (isUltraWide)
+                                  Container(
+                                    margin: const EdgeInsets.only(top: 1.5),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 1.5),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF0EDEB),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                          color: const Color(0xFFDAC1BA), width: 0.8),
+                                    ),
+                                    child: Text(
+                                      fullName.startsWith('Nguyễn')
+                                          ? 'DÒNG HỌ NGUYỄN VIỆT NAM'
+                                          : (fullName.startsWith('Lê')
+                                              ? 'DÒNG HỌ LÊ VIỆT NAM'
+                                              : 'GIA TỘC VIỆT NAM'),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontFamily: 'monospace',
+                                        fontSize: 9.0,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
+                                        color: Color(0xFF8B1E1E),
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
+                ),
 
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
 
-                // 2. Navigation items (Horizontal scrollable row on wide screens)
+                // 2. Navigation items (FittedBox with scaleDown to never overlap or clip behind right actions)
                 if (isWide)
                   Expanded(
-                    child: Center(
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: kHeritageNavItems.map((item) {
-                            final isActive = currentRoute == item.route;
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 2),
-                              child: InkWell(
-                                onTap: () {
-                                  if (!isActive) {
-                                    context.go(item.route);
-                                  }
-                                },
-                                borderRadius: BorderRadius.circular(8),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 9, vertical: 7),
-                                  decoration: BoxDecoration(
-                                    color: isActive
-                                        ? const Color(0xFFF5EBE6)
-                                        : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: isActive
-                                        ? Border.all(
-                                            color: const Color(0xFF8B1E1E)
-                                                .withAlpha(60),
-                                            width: 1)
-                                        : null,
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        isActive ? item.activeIcon : item.icon,
-                                        size: 16,
-                                        color: isActive
-                                            ? const Color(0xFF8B1E1E)
-                                            : const Color(0xFF54433E),
-                                      ),
-                                      const SizedBox(width: 5),
-                                      Text(
-                                        item.label,
-                                        style: TextStyle(
-                                          fontSize: 12.5,
-                                          fontWeight: isActive
-                                              ? FontWeight.bold
-                                              : FontWeight.w500,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: Center(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.center,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: kHeritageNavItems.map((item) {
+                              final isActive = currentRoute == item.route;
+                              final displayLabel =
+                                  isMediumWide ? item.label : item.shortLabel;
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 2),
+                                child: InkWell(
+                                  onTap: () {
+                                    if (!isActive) {
+                                      context.go(item.route);
+                                    }
+                                  },
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 7.5, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: isActive
+                                          ? const Color(0xFFF5EBE6)
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: isActive
+                                          ? Border.all(
+                                              color: const Color(0xFF8B1E1E)
+                                                  .withAlpha(60),
+                                              width: 1)
+                                          : null,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          isActive ? item.activeIcon : item.icon,
+                                          size: 15,
                                           color: isActive
                                               ? const Color(0xFF8B1E1E)
                                               : const Color(0xFF54433E),
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          displayLabel,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: isActive
+                                                ? FontWeight.bold
+                                                : FontWeight.w500,
+                                            color: isActive
+                                                ? const Color(0xFF8B1E1E)
+                                                : const Color(0xFF54433E),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                            );
-                          }).toList(),
+                              );
+                            }).toList(),
+                          ),
                         ),
                       ),
                     ),
@@ -260,44 +286,106 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                 else
                   const Spacer(),
 
+                const SizedBox(width: 6),
+
                 // 3. Status Pill & User Profile
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // Verified Pill
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF006E2A).withAlpha(18),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                            color: const Color(0xFF006E2A).withAlpha(40),
-                            width: 1),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.verified,
-                              size: 14, color: Color(0xFF006E2A)),
-                          SizedBox(width: 4),
-                          Text(
-                            'Niêm Phong 2026',
-                            style: TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF006E2A),
+                    if (isWide) ...[
+                      if (screenWidth >= 1180) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF006E2A).withAlpha(18),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                                color: const Color(0xFF006E2A).withAlpha(40),
+                                width: 1),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.verified,
+                                  size: 14, color: Color(0xFF006E2A)),
+                              SizedBox(width: 4),
+                              Text(
+                                'Niêm Phong 2026',
+                                style: TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF006E2A),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ] else if (screenWidth >= 960) ...[
+                        Tooltip(
+                          message:
+                              'Sổ cái & Hồ sơ gia phả đã được niêm phong số 2026',
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 3.5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF006E2A).withAlpha(18),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                  color: const Color(0xFF006E2A).withAlpha(40),
+                                  width: 1),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.verified,
+                                    size: 13, color: Color(0xFF006E2A)),
+                                SizedBox(width: 3),
+                                Text(
+                                  '2026',
+                                  style: TextStyle(
+                                    fontFamily: 'monospace',
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF006E2A),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
-                    ),
+                        ),
+                      ],
+                      const SizedBox(width: 8),
+                      Container(
+                          width: 1, height: 24, color: const Color(0xFFE6DFD8)),
+                      const SizedBox(width: 8),
+                    ],
 
-                    const SizedBox(width: 10),
-                    Container(
-                        width: 1, height: 26, color: const Color(0xFFE6DFD8)),
-                    const SizedBox(width: 10),
+                    // Notification Bell Button (US-08 & US-39)
+                    IconButton(
+                      tooltip: 'Trung tâm thông báo & Cảnh báo tiến độ',
+                      icon: Badge(
+                        isLabelVisible: unreadSummary.hasUnread,
+                        label: Text(
+                          '${unreadSummary.total}',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        backgroundColor: const Color(0xFFBA1A1A),
+                        child: const Icon(
+                          Icons.notifications_outlined,
+                          size: 21,
+                          color: Color(0xFF54433E),
+                        ),
+                      ),
+                      onPressed: () => NotificationCenterDialog.show(context),
+                    ),
+                    const SizedBox(width: 4),
 
                     // User Profile & Logout Popover
                     PopupMenuButton<String>(
@@ -356,6 +444,151 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                           ),
                         ),
                         const PopupMenuDivider(),
+                        PopupMenuItem(
+                          value: '/roles',
+                          child: Row(
+                            children: [
+                              Icon(Icons.admin_panel_settings_outlined,
+                                  size: 18,
+                                  color: currentRoute == '/roles'
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF54433E)),
+                              const SizedBox(width: 10),
+                              Text(
+                                'Phân Quyền Vai Trò',
+                                style: TextStyle(
+                                  fontWeight: currentRoute == '/roles'
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  color: currentRoute == '/roles'
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF2B1810),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: '/join-requests',
+                          child: Row(
+                            children: [
+                              Icon(Icons.how_to_reg_outlined,
+                                  size: 18,
+                                  color: currentRoute == '/join-requests'
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF54433E)),
+                              const SizedBox(width: 10),
+                              Text(
+                                'Quản Lý Đơn Gia Nhập',
+                                style: TextStyle(
+                                  fontWeight: currentRoute == '/join-requests'
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  color: currentRoute == '/join-requests'
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF2B1810),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: '/notifications',
+                          child: Row(
+                            children: [
+                              Icon(Icons.notifications_active_outlined,
+                                  size: 18,
+                                  color: currentRoute == '/notifications'
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF54433E)),
+                              const SizedBox(width: 10),
+                              Text(
+                                'Trung Tâm Thông Báo',
+                                style: TextStyle(
+                                  fontWeight: currentRoute == '/notifications'
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  color: currentRoute == '/notifications'
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF2B1810),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: '/audit-logs',
+                          child: Row(
+                            children: [
+                              Icon(Icons.history_edu_outlined,
+                                  size: 18,
+                                  color: currentRoute == '/audit-logs'
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF54433E)),
+                              const SizedBox(width: 10),
+                              Text(
+                                'Nhật Ký Thao Tác (Audit Log)',
+                                style: TextStyle(
+                                  fontWeight: currentRoute == '/audit-logs'
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  color: currentRoute == '/audit-logs'
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF2B1810),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: '/profile',
+                          child: Row(
+                            children: [
+                              Icon(Icons.person_outline,
+                                  size: 18,
+                                  color: currentRoute == '/profile'
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF54433E)),
+                              const SizedBox(width: 10),
+                              Text(
+                                'Hồ Sơ Cá Nhân',
+                                style: TextStyle(
+                                  fontWeight: currentRoute == '/profile'
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  color: currentRoute == '/profile'
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF2B1810),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: '/privacy-settings',
+                          child: Row(
+                            children: [
+                              Icon(Icons.shield_outlined,
+                                  size: 18,
+                                  color: currentRoute == '/privacy-settings'
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF54433E)),
+                              const SizedBox(width: 10),
+                              Text(
+                                'Quyền Riêng Tư Cá Nhân',
+                                style: TextStyle(
+                                  fontWeight: currentRoute == '/privacy-settings'
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  color: currentRoute == '/privacy-settings'
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF2B1810),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuDivider(),
                         const PopupMenuItem(
                           value: 'logout',
                           child: Row(
@@ -372,7 +605,7 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (isWide) ...[
+                          if (isWide && screenWidth >= 1060) ...[
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -386,13 +619,14 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                                     color: Color(0xFF2B1810),
                                   ),
                                 ),
-                                Text(
-                                  branchRole,
-                                  style: const TextStyle(
-                                    fontSize: 10.5,
-                                    color: Color(0xFF6B584E),
+                                if (isUltraWide)
+                                  Text(
+                                    branchRole,
+                                    style: const TextStyle(
+                                      fontSize: 10.5,
+                                      color: Color(0xFF6B584E),
+                                    ),
                                   ),
-                                ),
                               ],
                             ),
                             const SizedBox(width: 8),
