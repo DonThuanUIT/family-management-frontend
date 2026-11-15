@@ -174,11 +174,13 @@ class ContributionRepositoryImpl implements ContributionRepository {
     required double amount,
     required String content,
     String? referenceCode,
+    List<MemberAllocationDto> allocations = const [],
   }) {
     return _remoteDataSource.simulatePaymentWebhook(
       amount: amount,
       content: content,
       referenceCode: referenceCode,
+      allocations: allocations,
     );
   }
 

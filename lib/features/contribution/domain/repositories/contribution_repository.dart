@@ -87,6 +87,7 @@ abstract class ContributionRepository {
     required double amount,
     required String content,
     String? referenceCode,
+    List<MemberAllocationDto> allocations = const [],
   });
 
   Future<BranchRecursiveContributionDto> getBranchRecursiveContributionSummary(

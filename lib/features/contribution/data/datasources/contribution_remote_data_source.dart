@@ -91,6 +91,7 @@ abstract class ContributionRemoteDataSource {
     required double amount,
     required String content,
     String? referenceCode,
+    List<MemberAllocationDto> allocations = const [],
   });
 
   Future<BranchRecursiveContributionDto> getBranchRecursiveContributionSummary(
@@ -366,11 +367,14 @@ class ContributionRemoteDataSourceImpl implements ContributionRemoteDataSource {
     required double amount,
     required String content,
     String? referenceCode,
+    List<MemberAllocationDto> allocations = const [],
   }) async {
     final payload = {
       'transferAmount': amount,
       'content': content,
       'referenceCode': referenceCode ?? 'DEV_SIM_${DateTime.now().millisecondsSinceEpoch}',
+      if (allocations.isNotEmpty)
+        'allocations': allocations.map((e) => e.toJson()).toList(),
     };
     final response = await _dio.post('contributions/vietqr/webhook', data: payload);
     return response.data as Map<String, dynamic>;

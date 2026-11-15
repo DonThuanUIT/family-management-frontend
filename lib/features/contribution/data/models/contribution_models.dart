@@ -89,6 +89,7 @@ class MemberAllocationDto {
     return {
       'memberId': memberId,
       'memberName': memberName,
+      'amount': amount,
       'recordedAmount': amount,
     };
   }
