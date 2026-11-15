@@ -83,6 +83,12 @@ abstract class ContributionRepository {
   Future<ClanBankingInfoDto> getClanBankingInfo();
   Future<ClanBankingInfoDto> updateClanBankingInfo(UpdateClanBankingRequestDto request);
 
+  Future<Map<String, dynamic>> simulatePaymentWebhook({
+    required double amount,
+    required String content,
+    String? referenceCode,
+  });
+
   Future<BranchRecursiveContributionDto> getBranchRecursiveContributionSummary(
     String branchId, {
     String? eventId,

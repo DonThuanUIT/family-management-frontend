@@ -87,6 +87,12 @@ abstract class ContributionRemoteDataSource {
   Future<ClanBankingInfoDto> getClanBankingInfo();
   Future<ClanBankingInfoDto> updateClanBankingInfo(UpdateClanBankingRequestDto request);
 
+  Future<Map<String, dynamic>> simulatePaymentWebhook({
+    required double amount,
+    required String content,
+    String? referenceCode,
+  });
+
   Future<BranchRecursiveContributionDto> getBranchRecursiveContributionSummary(
     String branchId, {
     String? eventId,
@@ -353,6 +359,21 @@ class ContributionRemoteDataSourceImpl implements ContributionRemoteDataSource {
     final response = await _dio.put('clans/banking-info', data: request.toJson());
     final data = response.data['data'] as Map<String, dynamic>;
     return ClanBankingInfoDto.fromJson(data);
+  }
+
+  @override
+  Future<Map<String, dynamic>> simulatePaymentWebhook({
+    required double amount,
+    required String content,
+    String? referenceCode,
+  }) async {
+    final payload = {
+      'transferAmount': amount,
+      'content': content,
+      'referenceCode': referenceCode ?? 'DEV_SIM_${DateTime.now().millisecondsSinceEpoch}',
+    };
+    final response = await _dio.post('contributions/vietqr/webhook', data: payload);
+    return response.data as Map<String, dynamic>;
   }
 
   @override

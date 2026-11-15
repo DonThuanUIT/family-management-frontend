@@ -45,6 +45,8 @@ class _OnlineContributionScreenState
     10000000,
   ];
 
+  bool _isVerifyingPayment = false;
+
   @override
   void initState() {
     super.initState();
@@ -597,9 +599,106 @@ class _OnlineContributionScreenState
                             ],
                           ),
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 18),
 
-                        // Nút hành động
+                        // Khối xác nhận & đối soát tự động
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF0FDF4),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFF86EFAC)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const Row(
+                                children: [
+                                  Icon(Icons.info_outline, color: Color(0xFF15803D), size: 18),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Sau khi chuyển khoản thành công qua App ngân hàng, hệ thống cổng Napas/Webhook sẽ tự động đối soát. Bạn cũng có thể bấm xác nhận bên dưới để hoàn tất cấp phiếu thu ngay tức thì.',
+                                      style: TextStyle(fontSize: 12, color: Color(0xFF166534), height: 1.4),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              ElevatedButton.icon(
+                                onPressed: _isVerifyingPayment
+                                    ? null
+                                    : () async {
+                                        setState(() => _isVerifyingPayment = true);
+                                        try {
+                                          final repo = ref.read(contributionRepositoryProvider);
+                                          final res = await repo.simulatePaymentWebhook(
+                                            amount: _generatedQr!.amount,
+                                            content: _generatedQr!.transferContent,
+                                          );
+                                          ref.invalidate(contributionUiProvider);
+                                          if (context.mounted) {
+                                            final receiptNo = res['data']?['receiptNumber'] ?? '';
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Row(
+                                                  children: [
+                                                    const Icon(Icons.check_circle, color: Colors.white, size: 20),
+                                                    const SizedBox(width: 8),
+                                                    Expanded(
+                                                      child: Text(
+                                                        'Đối soát thành công! Đã cấp phiếu thu điện tử số ${receiptNo.isNotEmpty ? receiptNo : "mới"} và ghi vào Sổ Cái Tài Chính.',
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                backgroundColor: const Color(0xFF006E2A),
+                                                behavior: SnackBarBehavior.floating,
+                                                duration: const Duration(seconds: 4),
+                                              ),
+                                            );
+                                            context.push('/contributions/my-history');
+                                          }
+                                        } catch (e) {
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text('Lỗi khi đối soát chuyển khoản: $e'),
+                                                backgroundColor: const Color(0xFF9B1C1C),
+                                                behavior: SnackBarBehavior.floating,
+                                              ),
+                                            );
+                                          }
+                                        } finally {
+                                          if (mounted) {
+                                            setState(() => _isVerifyingPayment = false);
+                                          }
+                                        }
+                                      },
+                                icon: _isVerifyingPayment
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                      )
+                                    : const Icon(Icons.verified, size: 18),
+                                label: Text(
+                                  _isVerifyingPayment ? 'Đang đối soát hệ thống...' : 'Xác Nhận Đã Chuyển Khoản & Cấp Phiếu Thu',
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF006E2A),
+                                  foregroundColor: Colors.white,
+                                  minimumSize: const Size.fromHeight(46),
+                                  elevation: 1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+
+                        // Nút hành động phụ
                         Row(
                           children: [
                             Expanded(
@@ -616,16 +715,16 @@ class _OnlineContributionScreenState
                             ),
                             const SizedBox(width: 14),
                             Expanded(
-                              child: ElevatedButton.icon(
+                              child: OutlinedButton.icon(
                                 onPressed: () {
                                   // Chuyển hướng sang màn hình lịch sử đóng góp để xem phiếu thu
                                   context.push('/contributions/my-history');
                                 },
                                 icon: const Icon(Icons.receipt_long, size: 18),
                                 label: const Text('Xem Phiếu Thu Của Tôi'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF006E2A),
-                                  foregroundColor: Colors.white,
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFF006E2A),
+                                  side: const BorderSide(color: Color(0xFF006E2A)),
                                   minimumSize: const Size.fromHeight(48),
                                 ),
                               ),

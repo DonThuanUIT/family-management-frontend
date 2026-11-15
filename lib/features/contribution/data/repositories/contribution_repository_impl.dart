@@ -170,6 +170,19 @@ class ContributionRepositoryImpl implements ContributionRepository {
   }
 
   @override
+  Future<Map<String, dynamic>> simulatePaymentWebhook({
+    required double amount,
+    required String content,
+    String? referenceCode,
+  }) {
+    return _remoteDataSource.simulatePaymentWebhook(
+      amount: amount,
+      content: content,
+      referenceCode: referenceCode,
+    );
+  }
+
+  @override
   Future<BranchRecursiveContributionDto> getBranchRecursiveContributionSummary(
     String branchId, {
     String? eventId,
