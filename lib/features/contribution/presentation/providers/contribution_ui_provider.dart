@@ -286,6 +286,12 @@ class ContributionUiNotifier extends Notifier<ContributionUiState> {
     );
     await fetchFromBackend();
   }
+
+  Future<ClanBankingInfoDto> updateClanBankingInfo(UpdateClanBankingRequestDto request) async {
+    final updated = await _repository.updateClanBankingInfo(request);
+    ref.invalidate(clanBankingInfoProvider);
+    return updated;
+  }
 }
 
 final contributionUiProvider =

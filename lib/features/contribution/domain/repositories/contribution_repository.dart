@@ -81,6 +81,7 @@ abstract class ContributionRepository {
   Future<EventPendingInKindCheckResponseDto> checkPendingInKindContributions(String eventId);
 
   Future<ClanBankingInfoDto> getClanBankingInfo();
+  Future<ClanBankingInfoDto> updateClanBankingInfo(UpdateClanBankingRequestDto request);
 
   Future<BranchRecursiveContributionDto> getBranchRecursiveContributionSummary(
     String branchId, {

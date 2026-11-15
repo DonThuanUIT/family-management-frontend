@@ -753,4 +753,26 @@ class ClanBankingInfoDto {
   }
 }
 
+/// Request DTO cập nhật tài khoản ngân hàng thụ hưởng của dòng họ
+class UpdateClanBankingRequestDto {
+  final String bankBin;
+  final String bankAccountNumber;
+  final String bankAccountName;
+  final String qrTemplate;
+
+  const UpdateClanBankingRequestDto({
+    required this.bankBin,
+    required this.bankAccountNumber,
+    required this.bankAccountName,
+    this.qrTemplate = 'compact2',
+  });
+
+  Map<String, dynamic> toJson() => {
+    'bankBin': bankBin,
+    'bankAccountNumber': bankAccountNumber,
+    'bankAccountName': bankAccountName,
+    'qrTemplate': qrTemplate,
+  };
+}
+
 

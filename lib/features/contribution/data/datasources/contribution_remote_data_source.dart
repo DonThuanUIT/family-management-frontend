@@ -85,6 +85,7 @@ abstract class ContributionRemoteDataSource {
   Future<EventPendingInKindCheckResponseDto> checkPendingInKindContributions(String eventId);
 
   Future<ClanBankingInfoDto> getClanBankingInfo();
+  Future<ClanBankingInfoDto> updateClanBankingInfo(UpdateClanBankingRequestDto request);
 
   Future<BranchRecursiveContributionDto> getBranchRecursiveContributionSummary(
     String branchId, {
@@ -343,6 +344,13 @@ class ContributionRemoteDataSourceImpl implements ContributionRemoteDataSource {
   @override
   Future<ClanBankingInfoDto> getClanBankingInfo() async {
     final response = await _dio.get('clans/banking-info');
+    final data = response.data['data'] as Map<String, dynamic>;
+    return ClanBankingInfoDto.fromJson(data);
+  }
+
+  @override
+  Future<ClanBankingInfoDto> updateClanBankingInfo(UpdateClanBankingRequestDto request) async {
+    final response = await _dio.put('clans/banking-info', data: request.toJson());
     final data = response.data['data'] as Map<String, dynamic>;
     return ClanBankingInfoDto.fromJson(data);
   }

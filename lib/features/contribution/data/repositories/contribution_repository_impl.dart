@@ -165,6 +165,11 @@ class ContributionRepositoryImpl implements ContributionRepository {
   }
 
   @override
+  Future<ClanBankingInfoDto> updateClanBankingInfo(UpdateClanBankingRequestDto request) {
+    return _remoteDataSource.updateClanBankingInfo(request);
+  }
+
+  @override
   Future<BranchRecursiveContributionDto> getBranchRecursiveContributionSummary(
     String branchId, {
     String? eventId,
