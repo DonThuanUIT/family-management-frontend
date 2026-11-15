@@ -1,7 +1,8 @@
-// ignore_for_file: deprecated_member_use
+﻿// ignore_for_file: deprecated_member_use
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/utils/vietnamese_money_converter.dart';
@@ -176,11 +177,14 @@ class _ReceiveContributionScreenState
         ],
       ),
       child: LayoutBuilder(builder: (context, constraints) {
-        final isNarrow = constraints.maxWidth < 720;
+        final isNarrow = constraints.maxWidth < 1180;
         final infoColumn = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 4,
               children: [
                 Container(
                   padding:
@@ -214,7 +218,6 @@ class _ReceiveContributionScreenState
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
                 const Text(
                   'Hạch toán tự động qua VietQR & Sổ cái',
                   style: TextStyle(
@@ -257,59 +260,104 @@ class _ReceiveContributionScreenState
           ],
         );
 
-        final actionBtn = ElevatedButton.icon(
-          onPressed: () => _showAddContributionModal(context),
-          icon: const Icon(Icons.post_add, size: 20),
-          label: const Text('Tiếp Nhận Đóng Góp'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF8B1E1E),
-            foregroundColor: Colors.white,
-            minimumSize: const Size(170, 46),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+        final actionButtons = Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ElevatedButton.icon(
+              onPressed: () => _showAddContributionModal(context),
+              icon: const Icon(Icons.post_add, size: 18),
+              label: const Text('Tiếp Nhận Tại Bàn'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF8B1E1E),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
             ),
+            OutlinedButton.icon(
+              onPressed: () => context.push('/contributions/online'),
+              icon: const Icon(Icons.qr_code_2, size: 18),
+              label: const Text('Đóng Góp VietQR'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF3F51B5),
+                side: const BorderSide(color: Color(0xFF3F51B5)),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => context.push('/contributions/reconcile'),
+              icon: const Icon(Icons.rule, size: 18),
+              label: const Text('Đối Soát Chuyển Khoản'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF006E2A),
+                side: const BorderSide(color: Color(0xFF006E2A)),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => context.push('/contributions/my-history'),
+              icon: const Icon(Icons.history_edu, size: 18),
+              label: const Text('Đóng Góp Của Tôi'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF8B1E1E),
+                side: const BorderSide(color: Color(0xFF8B1E1E)),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ],
+        );
+
+        final headerIcon = Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF8B1E1E), Color(0xFF6B1414)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x208B1E1E),
+                blurRadius: 8,
+                offset: Offset(0, 3),
+              ),
+            ],
           ),
+          child: const Icon(Icons.celebration,
+              color: Color(0xFFD4A017), size: 30),
         );
 
         if (isNarrow) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              infoColumn,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  headerIcon,
+                  const SizedBox(width: 14),
+                  Expanded(child: infoColumn),
+                ],
+              ),
               const SizedBox(height: 16),
-              actionBtn,
+              actionButtons,
             ],
           );
         }
 
         return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF8B1E1E), Color(0xFF6B1414)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x208B1E1E),
-                    blurRadius: 8,
-                    offset: Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: const Icon(Icons.celebration,
-                  color: Color(0xFFD4A017), size: 30),
-            ),
+            headerIcon,
             const SizedBox(width: 18),
             Expanded(child: infoColumn),
             const SizedBox(width: 18),
-            actionBtn,
+            Flexible(child: actionButtons),
           ],
         );
       }),
@@ -1867,7 +1915,7 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
   bool _isCashCustomMember = false;
   final _cashCustomPayerController = TextEditingController();
   final _cashAmountController = TextEditingController();
-  PaymentMethod _paymentMethod = PaymentMethod.BankTransfer;
+  PaymentMethod _paymentMethod = PaymentMethod.Cash;
   String _liveCashWords = '';
 
   // Form hiện vật
@@ -2021,7 +2069,7 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
                 indicatorWeight: 3,
                 labelStyle: const TextStyle(fontWeight: FontWeight.bold),
                 tabs: const [
-                  Tab(icon: Icon(Icons.payments, size: 18), text: 'Tiền Mặt / VietQR'),
+                  Tab(icon: Icon(Icons.payments, size: 18), text: 'Tiền Mặt'),
                   Tab(icon: Icon(Icons.inventory_2, size: 18), text: 'Hiện Vật Dâng Lễ'),
                 ],
               ),
@@ -2095,27 +2143,28 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
           ],
           const SizedBox(height: 16),
 
-          DropdownButtonFormField<PaymentMethod>(
-            value: _paymentMethod,
-            decoration: const InputDecoration(
-              labelText: 'Phương thức thanh toán *',
-              prefixIcon: Icon(Icons.account_balance_wallet,
-                  color: Color(0xFF8B1E1E)),
-              border: OutlineInputBorder(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFAF9F6),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFDAC1BA)),
             ),
-            items: const [
-              DropdownMenuItem(
-                value: PaymentMethod.Cash,
-                child: Text('Tiền Mặt Tại Bàn Tiếp Nhận'),
-              ),
-              DropdownMenuItem(
-                value: PaymentMethod.BankTransfer,
-                child: Text('Chuyển Khoản Tự Động (VietQR Khớp Số)'),
-              ),
-            ],
-            onChanged: (val) {
-              if (val != null) setState(() => _paymentMethod = val);
-            },
+            child: const Row(
+              children: [
+                Icon(Icons.payments_outlined, color: Color(0xFF8B1E1E), size: 20),
+                SizedBox(width: 10),
+                Text(
+                  'Hình thức: Tiếp Nhận Tiền Mặt Tại Bàn',
+                  style: TextStyle(
+                    fontFamily: 'Be Vietnam Pro',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF2B1810),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
 

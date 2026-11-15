@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+﻿import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -94,6 +94,24 @@ class _FakeGenealogyRepository implements GenealogyRepository {
 
   @override
   Future<FamilyBranchDetail> updateRootBranch(UpdateRootBranchRequestDto request) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> assignMemberToBranch(String memberId, String branchId) async {}
+
+  @override
+  Future<List<MemberSearchDto>> searchMembers({
+    String? keyword,
+    String? memberId,
+    String? fullName,
+    int? generation,
+    String? branchId,
+    int page = 0,
+    int size = 20,
+  }) async => const [];
+
+  @override
+  Future<BranchDetailDto> updateBranch(String branchId, UpdateBranchRequestDto request) =>
       throw UnimplementedError();
 }
 

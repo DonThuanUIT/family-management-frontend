@@ -16,6 +16,9 @@ import '../../features/auth/presentation/screens/welcome_screen.dart';
 import '../../features/audit/presentation/screens/system_audit_log_screen.dart';
 import '../../features/contribution/presentation/screens/clan_asset_inventory_screen.dart';
 import '../../features/contribution/presentation/screens/receive_contribution_screen.dart';
+import '../../features/contribution/presentation/screens/my_contribution_history_screen.dart';
+import '../../features/contribution/presentation/screens/bank_reconciliation_screen.dart';
+import '../../features/contribution/presentation/screens/online_contribution_screen.dart';
 import '../../features/event/presentation/screens/event_budget_dashboard_screen.dart';
 import '../../features/event/presentation/screens/event_list_screen.dart';
 import '../../features/event/presentation/screens/event_logistics_dashboard_screen.dart';
@@ -250,6 +253,32 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/contributions',
         name: 'contributions',
         builder: (context, state) => const ReceiveContributionScreen(),
+        routes: [
+          // US-49 Task #175: Mục 'Đóng góp của tôi'
+          GoRoute(
+            path: 'my-history',
+            name: 'my-contribution-history',
+            builder: (context, state) => const MyContributionHistoryScreen(),
+          ),
+          // US-50 Task #178: Màn hình Đối soát Chuyển khoản cho Thủ quỹ
+          GoRoute(
+            path: 'reconcile',
+            name: 'bank-reconciliation',
+            builder: (context, state) {
+              final eventId = state.uri.queryParameters['eventId'];
+              return BankReconciliationScreen(eventId: eventId);
+            },
+          ),
+          // US-53 Task #187: Giao diện 'Đóng góp trực tuyến' cho con cháu ở xa
+          GoRoute(
+            path: 'online',
+            name: 'online-contribution',
+            builder: (context, state) {
+              final eventId = state.uri.queryParameters['eventId'];
+              return OnlineContributionScreen(initialEventId: eventId);
+            },
+          ),
+        ],
       ),
 
       // 13. Kho Hiện Vật & Bảo Vật Từ Đường (Task #74)

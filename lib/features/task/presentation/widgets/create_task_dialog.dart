@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme.dart';
@@ -276,7 +276,7 @@ class _CreateTaskDialogState extends ConsumerState<CreateTaskDialog> {
                         ),
                       ),
                       Text(
-                        'Phân hệ Ban tổ chức sự kiện (US-07)',
+                        'Phân hệ Ban tổ chức sự kiện',
                         style: TextStyle(
                           fontSize: 11,
                           color: Color(0xFF6B5E55),

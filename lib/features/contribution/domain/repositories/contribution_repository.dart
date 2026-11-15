@@ -1,4 +1,4 @@
-﻿import '../../data/models/branch_recursive_contribution_models.dart';
+﻿import 'dart:typed_data';
 import '../../data/models/contribution_models.dart';
 
 abstract class ContributionRepository {
@@ -63,4 +63,28 @@ abstract class ContributionRepository {
   Future<ElectronicReceiptDto> getCashReceiptByNumber(String receiptNumber);
 
   Future<InKindElectronicReceiptDto> getInKindReceiptByNumber(String receiptNumber);
+
+  Future<MemberContributionHistoryResponseDto> getMyContributionHistory({bool includeFamily = false});
+
+  Future<Uint8List> downloadReceiptPdf(String receiptNumber);
+
+  Future<List<UnreconciledContributionDto>> getUnreconciledContributions({String? eventId});
+
+  Future<void> reconcileContribution(String contributionId, ReconcileContributionRequestDto request);
+
+  Future<void> auditClanAsset(String assetId, AuditClanAssetRequestDto request);
+
+  Future<List<ClanAssetAuditResponseDto>> getClanAssetAudits(String assetId);
+
+  Future<VietQrResponseDto> generateVietQr(GenerateVietQrRequestDto request);
+
+  Future<EventPendingInKindCheckResponseDto> checkPendingInKindContributions(String eventId);
+
+  Future<ClanBankingInfoDto> getClanBankingInfo();
+
+  Future<BranchRecursiveContributionDto> getBranchRecursiveContributionSummary(
+    String branchId, {
+    String? eventId,
+    int? year,
+  });
 }

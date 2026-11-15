@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../data/models/event_models.dart';
@@ -283,7 +283,7 @@ class EventCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     IconButton(
-                      tooltip: 'Bảng điều khiển ngân sách (US-37)',
+                      tooltip: 'Bảng điều khiển ngân sách',
                       onPressed: () =>
                           context.push('/events/${event.eventId}/budget'),
                       icon: const Icon(Icons.account_balance_wallet_outlined, size: 18),
@@ -298,7 +298,7 @@ class EventCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     IconButton(
-                      tooltip: 'Công việc chuẩn bị (US-07)',
+                      tooltip: 'Công việc chuẩn bị',
                       onPressed: () =>
                           context.push('/events/${event.eventId}/tasks'),
                       icon: const Icon(Icons.assignment_outlined, size: 18),

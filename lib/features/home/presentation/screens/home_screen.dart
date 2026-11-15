@@ -1,3 +1,5 @@
+﻿import 'dart:async';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,7 +9,9 @@ import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../shared/presentation/widgets/heritage_nav_bar.dart';
 import '../../../genealogy/presentation/providers/genealogy_providers.dart';
 import '../../../genealogy/presentation/widgets/branch_detail_sidebar.dart';
+import '../../../genealogy/presentation/widgets/transfer_node_dialog.dart';
 import '../../../genealogy/data/models/branch_models.dart';
+import '../../../genealogy/data/repositories/genealogy_repository_impl.dart';
 import '../../../contribution/presentation/providers/branch_recursive_contribution_providers.dart';
 import '../../../contribution/presentation/widgets/branch_contribution_pill.dart';
 import '../../../event/presentation/providers/event_providers.dart';
@@ -48,8 +52,9 @@ class TreeForkPainter extends CustomPainter {
 }
 
 /// Màn hình Cây Phả Hệ Trực Quan Đa Chi Phái (Stitch Warm Editorial Heritage)
-/// Nối 100% Full API Backend thực tế (GET /api/v1/branches/tree, GET /api/v1/branches/{id}/members)
-/// Tuyệt đối không dùng dữ liệu cứng / seed data giả lập.
+/// Hỗ trợ Pan & Zoom, Đóng/Mở nhánh con, Popover tóm tắt (US-29, Task #110)
+/// Thanh tìm kiếm thông minh kèm bộ lọc thế hệ, auto-pan/focus & highlight (US-30, Task #112)
+/// Điều chuyển nhánh/thành viên kèm cảnh báo lỗi đệ quy (US-28, Task #108)
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -58,14 +63,278 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  // Bộ điều khiển Pan & Zoom (InteractiveViewer) (US-29, Task #110)
+  final TransformationController _transformationController = TransformationController();
+
+  // Danh sách các chi nhánh đang bị thu gọn (Collapse/Expand theo từng nhánh) (US-29, Task #110)
+  final Set<String> _collapsedBranchIds = {};
+
   // Trạng thái hiển thị mở rộng toàn bộ các đời phả hệ
-  bool _isFullTreeExpanded = false;
+  bool _isFullTreeExpanded = true;
 
   // ID của chi/nhánh đang được chọn
   String? _selectedBranchId;
 
   // Thành viên cụ thể đang được chọn (nếu click vào thẻ thành viên)
   BranchMemberItem? _selectedMember;
+
+  // Trạng thái hiển thị Sidebar chi tiết (trên màn hình rộng)
+  bool _isSidebarOpen = true;
+
+  // ID thành viên & chi nhánh đang được highlight do tìm kiếm (US-30, Task #112)
+  String? _highlightedMemberId;
+  String? _highlightedBranchId;
+
+  // Bộ điều khiển tìm kiếm thông minh (US-30, Task #112)
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _searchDebounce;
+  List<MemberSearchDto> _searchResults = [];
+  bool _isSearching = false;
+  bool _showSearchOverlay = false;
+  int? _selectedGenerationFilter;
+  String? _selectedBranchFilter;
+
+  @override
+  void dispose() {
+    _transformationController.dispose();
+    _searchController.dispose();
+    _searchDebounce?.cancel();
+    super.dispose();
+  }
+
+  // Thu phóng Pan & Zoom
+  void _zoomIn() {
+    final matrix = _transformationController.value.clone();
+    matrix.scale(1.25);
+    _transformationController.value = matrix;
+  }
+
+  void _zoomOut() {
+    final matrix = _transformationController.value.clone();
+    matrix.scale(0.8);
+    _transformationController.value = matrix;
+  }
+
+  void _resetZoom() {
+    _transformationController.value = Matrix4.identity();
+  }
+
+  // Đóng/mở từng nhánh con (US-29, Task #110)
+  void _toggleBranchCollapse(String branchId) {
+    setState(() {
+      if (_collapsedBranchIds.contains(branchId)) {
+        _collapsedBranchIds.remove(branchId);
+      } else {
+        _collapsedBranchIds.add(branchId);
+      }
+    });
+  }
+
+  // Tìm kiếm thông minh nối API thực tế `GET /api/v1/members/search` (US-30, Task #112)
+  void _onSearchChanged(String query) {
+    _searchDebounce?.cancel();
+    if (query.trim().isEmpty && _selectedGenerationFilter == null && _selectedBranchFilter == null) {
+      setState(() {
+        _searchResults = [];
+        _isSearching = false;
+        _showSearchOverlay = false;
+      });
+      return;
+    }
+
+    _searchDebounce = Timer(const Duration(milliseconds: 300), () async {
+      setState(() => _isSearching = true);
+      try {
+        final repo = ref.read(genealogyRepositoryProvider);
+        final results = await repo.searchMembers(
+          keyword: query.trim().isNotEmpty ? query.trim() : null,
+          generation: _selectedGenerationFilter,
+          branchId: _selectedBranchFilter,
+        );
+        if (mounted) {
+          setState(() {
+            _searchResults = results;
+            _isSearching = false;
+            _showSearchOverlay = results.isNotEmpty;
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isSearching = false;
+            _searchResults = [];
+          });
+        }
+      }
+    });
+  }
+
+  // Khi chọn một kết quả tìm kiếm: auto-expand, auto-focus & highlight (US-30, Task #112)
+  void _selectSearchResult(MemberSearchDto member, BranchTreeNodeDto tree, bool isWide) {
+    setState(() {
+      _showSearchOverlay = false;
+      _highlightedMemberId = member.memberId;
+      _highlightedBranchId = member.branchId;
+
+      // Mở rộng tất cả các nhánh để hiện thành viên này
+      if (member.branchId != null) {
+        _collapsedBranchIds.remove(member.branchId!);
+      }
+      _isFullTreeExpanded = true;
+
+      // Tự động cuộn & focus lại trung tâm khung nhìn
+      _transformationController.value = Matrix4.identity();
+
+      // Cập nhật selected member
+      _selectedMember = BranchMemberItem(
+        memberId: member.memberId,
+        fullName: member.fullName,
+        generation: member.generation,
+        birthDeathInfo: member.dateOfBirth != null ? 'Sinh ${member.dateOfBirth!.split('-').first}' : null,
+        roleInBranch: 'Đời ${member.generation}',
+        isActivated: !member.isPlaceholder,
+      );
+      if (member.branchId != null) {
+        _selectedBranchId = member.branchId;
+      }
+      _isSidebarOpen = true;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Đã định vị & làm nổi bật: ${member.fullName} (Đời ${member.generation})'),
+        backgroundColor: const Color(0xFF006E2A),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  // Mở hộp thoại Popover xem tóm tắt khi click nút (US-29, Task #110)
+  void _showNodePopover(BuildContext context, BranchUiDetail detail, BranchTreeNodeDto rootTree) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFFFFFDFB),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0xFFDAC1BA)),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF8F482F).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.account_tree, color: Color(0xFF8F482F), size: 22),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    detail.name,
+                    style: const TextStyle(
+                      fontFamily: 'Merriweather',
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1C1C1A),
+                    ),
+                  ),
+                  Text(
+                    detail.badge,
+                    style: const TextStyle(
+                      fontFamily: 'JetBrains Mono',
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF8F482F),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _popoverRow(Icons.person, 'Người đại diện', detail.representative),
+            const SizedBox(height: 8),
+            _popoverRow(Icons.groups, 'Tổng thành viên', '${detail.memberCount} thành viên (${detail.activatedMemberCount} đã kích hoạt)'),
+            const SizedBox(height: 8),
+            _popoverRow(Icons.qr_code, 'Mã chi phái', detail.code),
+            const SizedBox(height: 8),
+            _popoverRow(Icons.info_outline, 'Mô tả', detail.description),
+          ],
+        ),
+        actions: [
+          OutlinedButton.icon(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _showTransferDialog(rootTree, initialBranchId: detail.id);
+            },
+            icon: const Icon(Icons.swap_horiz, size: 16),
+            label: const Text('Điều Chuyển Nhánh'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF8F482F),
+              side: const BorderSide(color: Color(0xFF8F482F)),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              setState(() {
+                _selectedBranchId = detail.id;
+                _selectedMember = null;
+                _isSidebarOpen = true;
+              });
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF8F482F),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Xem Danh Sách'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _popoverRow(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: const Color(0xFF8F482F)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              style: const TextStyle(fontFamily: 'Plus Jakarta Sans', fontSize: 13, color: Color(0xFF1C1C1A)),
+              children: [
+                TextSpan(text: '$label: ', style: const TextStyle(fontWeight: FontWeight.bold)),
+                TextSpan(text: value),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Mở hộp thoại điều chuyển (US-28, Task #108)
+  void _showTransferDialog(BranchTreeNodeDto rootTree, {String? initialBranchId, BranchMemberItem? initialMember}) {
+    showDialog(
+      context: context,
+      builder: (_) => TransferNodeDialog(
+        rootTree: rootTree,
+        initialBranchId: initialBranchId,
+        initialMember: initialMember,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +352,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     const kPrimaryColor = Color(0xFF8F482F);
     const kBgColor = Color(0xFFFCF9F6);
-    const kSurfaceColor = Color(0xFFFFFFFF);
     const kBorderColor = Color(0xFFDAC1BA);
 
     final isWide = MediaQuery.of(context).size.width >= 900;
@@ -148,6 +416,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           final activeBranchMembersAsync = ref.watch(branchMembersProvider(activeBranchId));
           final activeBranchMembers = activeBranchMembersAsync.value ?? [];
 
+          final rootMembersAsync = ref.watch(branchMembersProvider(tree.branchId));
+          final rootMembers = rootMembersAsync.value ?? [];
+
+          // Tự động phân giải tên Khởi Tổ thông minh nếu backend chưa set representativeName
+          final effectiveRootRepresentative = (tree.representativeName != null && tree.representativeName!.trim().isNotEmpty)
+              ? tree.representativeName!
+              : (rootMembers.firstWhereOrNull((m) => m.generation == 1)?.fullName ??
+                  (rootMembers.isNotEmpty ? rootMembers.first.fullName : 'Chưa cập nhật'));
+
           // Xác định nhánh được chọn để hiển thị ở Sidebar
           final BranchUiDetail selectedDetail;
           if (_selectedMember != null) {
@@ -168,38 +445,52 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           } else if (activeBranchId == tree.branchId) {
             final isRootCurrentUser = isClanHead ||
                 currentMemberId == tree.representativeId ||
-                currentUserName == tree.representativeName;
+                currentUserName == tree.representativeName ||
+                currentUserName == effectiveRootRepresentative;
             selectedDetail = BranchUiDetail(
               id: tree.branchId,
               name: tree.branchName,
               badge: isRootCurrentUser ? '★ VỊ TRÍ CỦA BẠN • TRƯỞNG TỘC' : 'CỤ KHỞI TỔ • ĐỜI 1',
               code: tree.branchId,
-              representative: tree.representativeName ?? 'Chưa cập nhật',
+              representative: effectiveRootRepresentative,
               representativeSubtext: 'Trưởng Tộc • Đại diện Dòng họ',
               representativeId: tree.representativeId,
               memberCount: tree.memberCount,
-              activatedMemberCount: activeBranchMembers.where((m) => m.isActivated).isNotEmpty
-                  ? activeBranchMembers.where((m) => m.isActivated).length
+              activatedMemberCount: rootMembers.where((m) => m.isActivated).isNotEmpty
+                  ? rootMembers.where((m) => m.isActivated).length
                   : tree.memberCount,
               fundAmount: '0 đ',
               description: rootBranchState.branch?.description ??
                   'Chi nhánh gốc khởi lập gia phả dòng họ, nơi quy tụ toàn thể con cháu.',
-              successionChain: [tree.representativeName ?? 'Khởi Tổ'],
-              members: activeBranchMembers,
+              successionChain: [effectiveRootRepresentative],
+              members: rootMembers,
               isRoot: true,
             );
           } else {
             // Nhánh phụ được chọn
             BranchTreeNodeDto? foundChild;
-            for (final c in tree.children) {
-              if (c.branchId == activeBranchId) {
-                foundChild = c;
-                break;
+            void searchNode(BranchTreeNodeDto n) {
+              if (n.branchId == activeBranchId) {
+                foundChild = n;
+                return;
+              }
+              for (final c in n.children) {
+                searchNode(c);
               }
             }
+            searchNode(tree);
+
             final childNode = foundChild ?? (tree.children.isNotEmpty ? tree.children.first : tree);
+            final childMembersAsync = ref.watch(branchMembersProvider(childNode.branchId));
+            final childMembers = childMembersAsync.value ?? [];
+            final effectiveChildRep = (childNode.representativeName != null && childNode.representativeName!.trim().isNotEmpty)
+                ? childNode.representativeName!
+                : (childMembers.firstWhereOrNull((m) => m.roleInBranch.contains('Trưởng') || m.generation == childNode.generationLevel)?.fullName ??
+                    (childMembers.isNotEmpty ? childMembers.first.fullName : 'Chưa cập nhật'));
+
             final isChildCurrentUser = currentMemberId == childNode.representativeId ||
-                currentUserName == childNode.representativeName;
+                currentUserName == childNode.representativeName ||
+                currentUserName == effectiveChildRep;
 
             selectedDetail = BranchUiDetail(
               id: childNode.branchId,
@@ -208,7 +499,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ? '★ VỊ TRÍ CỦA BẠN • TRƯỞNG CHI'
                   : 'Chi ${childNode.branchName} • Đời ${childNode.generationLevel}',
               code: childNode.branchId,
-              representative: childNode.representativeName ?? 'Chưa cập nhật',
+              representative: effectiveChildRep,
               representativeSubtext: 'Đại diện Chi • Đời ${childNode.generationLevel}',
               representativeId: childNode.representativeId,
               memberCount: childNode.memberCount,
@@ -217,60 +508,57 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   : childNode.memberCount,
               fundAmount: '0 đ',
               description: 'Chi nhánh trực thuộc phả hệ dòng họ ${tree.clanName}.',
-              successionChain: [tree.representativeName ?? 'Khởi Tổ', childNode.representativeName ?? 'Trưởng Chi'],
+              successionChain: [effectiveRootRepresentative, effectiveChildRep],
               members: activeBranchMembers,
               isRoot: false,
             );
           }
 
-          // Kiểm tra xem người dùng hiện tại có phải là Trưởng tộc tại nhánh gốc không
           final isRootCurrentUser = isClanHead ||
               currentMemberId == tree.representativeId ||
-              currentUserName == tree.representativeName;
+              currentUserName == tree.representativeName ||
+              currentUserName == effectiveRootRepresentative;
 
           final rootUiDetail = BranchUiDetail(
             id: tree.branchId,
             name: tree.branchName,
             badge: isRootCurrentUser ? '★ VỊ TRÍ CỦA BẠN • TRƯỞNG TỘC' : 'CỤ KHỞI TỔ • ĐỜI 1',
             code: tree.branchId,
-            representative: tree.representativeName ?? 'Chưa cập nhật',
+            representative: effectiveRootRepresentative,
             representativeSubtext: 'Trưởng Tộc • Đại diện Dòng họ',
             representativeId: tree.representativeId,
             memberCount: tree.memberCount,
-            activatedMemberCount: tree.memberCount,
+            activatedMemberCount: rootMembers.where((m) => m.isActivated).length > 0
+                ? rootMembers.where((m) => m.isActivated).length
+                : tree.memberCount,
             fundAmount: '0 đ',
             description: rootBranchState.branch?.description ??
                 'Chi nhánh gốc khởi lập gia phả dòng họ, nơi quy tụ toàn thể con cháu.',
-            members: activeBranchId == tree.branchId ? activeBranchMembers : const [],
+            members: rootMembers,
             isRoot: true,
           );
 
           return Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 1. VÙNG CANVAS CHÍNH HIỂN THỊ CÂY PHẢ HỆ
+              // VÙNG CANVAS HIỂN THỊ CÂY PHẢ HỆ
               Expanded(
-                child: SingleChildScrollView(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1040),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                        child: Column(
-                          children: [
-                            // Thanh công cụ: Thông tin xuất xứ + Nút Toggle [Thu gọn / Hiện đầy đủ]
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: kSurfaceColor,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: kBorderColor),
-                              ),
-                              child: Wrap(
-                                alignment: WrapAlignment.spaceBetween,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                spacing: 12,
-                                runSpacing: 8,
+                child: Stack(
+                  children: [
+                    Column(
+                      children: [
+                        // THANH TÌM KIẾM THÔNG MINH KÈM BỘ LỌC (US-30, Task #112)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            border: Border(bottom: BorderSide(color: kBorderColor, width: 1)),
+                          ),
+                          child: Column(
+                            children: [
+                              // Dòng 1: Tên Dòng Họ + Các Nút Action (Thu gọn/Mở rộng, US-11 Công đức đệ quy, Online badge)
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Row(
                                     mainAxisSize: MainAxisSize.min,
@@ -357,10 +645,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                                   backgroundColor: isEnabled
                                                       ? const Color(0xFF8B1E1E)
                                                       : Colors.white,
-                                                  side: BorderSide(
-                                                    color: isEnabled
-                                                        ? const Color(0xFF8B1E1E)
-                                                        : const Color(0xFF8B1E1E),
+                                                  side: const BorderSide(
+                                                    color: Color(0xFF8B1E1E),
                                                   ),
                                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -448,187 +734,301 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   ),
                                 ],
                               ),
-                            ),
-                            const SizedBox(height: 12),
+                              const SizedBox(height: 12),
 
-                            // [US-23] Demo Bar: Kiểm thử phân quyền phạm vi chi nhánh (Branch Scope Guard)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: kBorderColor),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.02),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
+
+                              // Dòng 3: THANH TÌM KIẾM THÀNH VIÊN VÀ ĐIỀU CHUYỂN
+                              Row(
                                 children: [
-                                  const Icon(Icons.security, size: 18, color: kPrimaryColor),
-                                  const SizedBox(width: 8),
-                                  const Text(
-                                    'GIẢ LẬP VAI TRÒ (US-23):',
-                                    style: TextStyle(
-                                      fontFamily: 'JetBrains Mono',
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: kPrimaryColor,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
                                   Expanded(
-                                    child: SingleChildScrollView(
-                                      scrollDirection: Axis.horizontal,
-                                      child: Row(
-                                        children: [
-                                          _buildPersonaChip(
-                                            ref: ref,
-                                            label: 'Trưởng Tộc (Toàn quyền)',
-                                            personaKey: 'CLAN_HEAD',
-                                            isSelected: session.isClanHead,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          _buildPersonaChip(
-                                            ref: ref,
-                                            label: 'Trưởng Chi 2 (Chỉ quản lý Chi 2)',
-                                            personaKey: 'BRANCH_HEAD_CHI_2',
-                                            isSelected: session.isBranchHead && !session.isClanHead,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          _buildPersonaChip(
-                                            ref: ref,
-                                            label: 'Thành Viên (Chỉ xem)',
-                                            personaKey: 'MEMBER',
-                                            isSelected: !session.isClanHead && !session.isBranchHead,
-                                          ),
-                                        ],
+                                    child: TextField(
+                                      controller: _searchController,
+                                      onChanged: _onSearchChanged,
+                                      decoration: InputDecoration(
+                                        hintText: 'Tìm kiếm thành viên theo tên, mã thành viên, đời thứ...',
+                                        hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
+                                        prefixIcon: _isSearching
+                                            ? const Padding(
+                                                padding: EdgeInsets.all(12),
+                                                child: SizedBox(
+                                                  width: 16,
+                                                  height: 16,
+                                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                                ),
+                                              )
+                                            : const Icon(Icons.search, color: kPrimaryColor, size: 20),
+                                        suffixIcon: _searchController.text.isNotEmpty
+                                            ? IconButton(
+                                                icon: const Icon(Icons.clear, size: 18),
+                                                onPressed: () {
+                                                  _searchController.clear();
+                                                  _onSearchChanged('');
+                                                },
+                                              )
+                                            : null,
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                          borderSide: const BorderSide(color: kBorderColor),
+                                        ),
+                                        filled: true,
+                                        fillColor: const Color(0xFFFAF9F6),
                                       ),
                                     ),
                                   ),
+                                  const SizedBox(width: 10),
+
+                                  // Bộ lọc Thế Hệ / Đời
+                                  DropdownButton<int?>(
+                                    value: _selectedGenerationFilter,
+                                    hint: const Text('Tất cả đời', style: TextStyle(fontSize: 12.5)),
+                                    items: [
+                                      const DropdownMenuItem(value: null, child: Text('Tất cả đời')),
+                                      for (int g = 1; g <= 10; g++)
+                                        DropdownMenuItem(value: g, child: Text('Đời $g')),
+                                    ],
+                                    onChanged: (val) {
+                                      setState(() => _selectedGenerationFilter = val);
+                                      _onSearchChanged(_searchController.text);
+                                    },
+                                  ),
+                                  const SizedBox(width: 8),
+
+                                  // Nút điều chuyển nhanh (US-28)
+                                  ElevatedButton.icon(
+                                    onPressed: () => _showTransferDialog(tree),
+                                    icon: const Icon(Icons.swap_horiz, size: 16),
+                                    label: const Text('Điều Chuyển'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: kPrimaryColor,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                      textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
                                 ],
                               ),
-                            ),
-                            const SizedBox(height: 18),
+                            ],
+                          ),
+                        ),
 
-                            // ROOT ANCESTOR NODE (Cụ Khởi Tổ • Đời 1 - Nhánh Gốc)
-                            _buildRootAncestorCard(
-                              context: context,
-                              detail: rootUiDetail,
-                              isSelected: activeBranchId == tree.branchId && _selectedMember == null,
-                              isCurrentUser: isRootCurrentUser,
-                              onTap: () => _handleSelectBranch(tree.branchId, selectedDetail, isWide),
-                            ),
+                        // CANVAS INTERACTIVE VIEWER HỖ TRỢ PAN & ZOOM (US-29, Task #110)
+                        Expanded(
+                          child: InteractiveViewer(
+                            transformationController: _transformationController,
+                            boundaryMargin: const EdgeInsets.all(1200),
+                            minScale: 0.25,
+                            maxScale: 2.5,
+                            constrained: false,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 40),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // ROOT ANCESTOR NODE
+                                  _buildRootAncestorCard(
+                                    context: context,
+                                    detail: rootUiDetail,
+                                    isSelected: activeBranchId == tree.branchId && _selectedMember == null,
+                                    isCurrentUser: isRootCurrentUser,
+                                    isHighlighted: _highlightedBranchId == tree.branchId,
+                                    onTap: () => _handleSelectBranch(tree.branchId, selectedDetail, isWide),
+                                    onShowPopover: () => _showNodePopover(context, rootUiDetail, tree),
+                                  ),
 
-                            // Hiển thị các chi nhánh con
-                            if (tree.children.isEmpty) ...[
-                              const SizedBox(height: 24),
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: kBorderColor.withValues(alpha: 0.6)),
-                                ),
-                                child: const Text(
-                                  'Dòng họ hiện tại chưa có chi nhánh con. Bạn có thể thêm chi nhánh mới từ phân hệ quản lý.',
-                                  style: TextStyle(fontFamily: 'Plus Jakarta Sans', fontSize: 13, color: Color(0xFF6B584E)),
-                                ),
-                              ),
-                            ] else if (tree.children.length == 1) ...[
-                              // 1 Chi nhánh con trực thuộc
-                              Container(
-                                width: 2,
-                                height: 28,
-                                color: kPrimaryColor,
-                              ),
-                              _buildChildBranchColumn(
-                                context: context,
-                                child: tree.children.first,
-                                isWide: isWide,
-                                currentMemberId: currentMemberId,
-                                currentUserName: currentUserName,
-                                activeBranchId: activeBranchId,
-                              ),
-                            ] else ...[
-                              // 2 Chi nhánh con trở lên (chạc chữ T phân nhánh)
-                              SizedBox(
-                                width: (tree.children.length * 354.0) / 2,
-                                height: 36,
-                                child: const CustomPaint(
-                                  painter: TreeForkPainter(color: kPrimaryColor, strokeWidth: 2),
-                                ),
-                              ),
-                              SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    for (int i = 0; i < tree.children.length; i++) ...[
-                                      if (i > 0) const SizedBox(width: 34),
+
+                                  // HIỂN THỊ CÁC CHI NHÁNH CON
+                                  if (tree.children.isNotEmpty) ...[
+                                    if (tree.children.length == 1) ...[
+                                      Container(width: 2, height: 28, color: kPrimaryColor),
                                       _buildChildBranchColumn(
                                         context: context,
-                                        child: tree.children[i],
+                                        child: tree.children.first,
                                         isWide: isWide,
                                         currentMemberId: currentMemberId,
                                         currentUserName: currentUserName,
                                         activeBranchId: activeBranchId,
+                                        rootTree: tree,
+                                      ),
+                                    ] else ...[
+                                      SizedBox(
+                                        width: (tree.children.length * 360.0) / 1.8,
+                                        height: 36,
+                                        child: const CustomPaint(
+                                          painter: TreeForkPainter(color: kPrimaryColor, strokeWidth: 2),
+                                        ),
+                                      ),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          for (int i = 0; i < tree.children.length; i++) ...[
+                                            if (i > 0) const SizedBox(width: 32),
+                                            _buildChildBranchColumn(
+                                              context: context,
+                                              child: tree.children[i],
+                                              isWide: isWide,
+                                              currentMemberId: currentMemberId,
+                                              currentUserName: currentUserName,
+                                              activeBranchId: activeBranchId,
+                                              rootTree: tree,
+                                            ),
+                                          ],
+                                        ],
                                       ),
                                     ],
                                   ],
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // OVERLAY KẾT QUẢ TÌM KIẾM THÔNG MINH (US-30, Task #112)
+                    if (_showSearchOverlay && _searchResults.isNotEmpty)
+                      Positioned(
+                        top: 60,
+                        left: 16,
+                        right: 16,
+                        child: Material(
+                          elevation: 8,
+                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.white,
+                          child: Container(
+                            constraints: const BoxConstraints(maxHeight: 320),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: kPrimaryColor),
+                            ),
+                            child: ListView.separated(
+                              shrinkWrap: true,
+                              itemCount: _searchResults.length,
+                              separatorBuilder: (_, __) => const Divider(height: 1),
+                              itemBuilder: (ctx, i) {
+                                final m = _searchResults[i];
+                                return ListTile(
+                                  dense: true,
+                                  leading: CircleAvatar(
+                                    backgroundColor: kPrimaryColor.withValues(alpha: 0.1),
+                                    child: Text(
+                                      '${m.generation}',
+                                      style: const TextStyle(fontWeight: FontWeight.bold, color: kPrimaryColor),
+                                    ),
+                                  ),
+                                  title: Text(
+                                    m.fullName,
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                                  ),
+                                  subtitle: Text(
+                                    'Mã: ${m.memberId} • Đời ${m.generation} • Chi: ${m.branchName ?? 'Chưa gán'}',
+                                    style: const TextStyle(fontSize: 11.5),
+                                  ),
+                                  trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: kPrimaryColor),
+                                  onTap: () => _selectSearchResult(m, tree, isWide),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+
+                    // THANH ĐIỀU KHIỂN PAN & ZOOM (US-29, Task #110)
+                    Positioned(
+                      bottom: 20,
+                      right: 20,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: kBorderColor),
+                          boxShadow: const [
+                            BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              onPressed: _zoomIn,
+                              tooltip: 'Phóng to (+)',
+                              icon: const Icon(Icons.add, size: 20, color: kPrimaryColor),
+                            ),
+                            IconButton(
+                              onPressed: _zoomOut,
+                              tooltip: 'Thu nhỏ (-)',
+                              icon: const Icon(Icons.remove, size: 20, color: kPrimaryColor),
+                            ),
+                            IconButton(
+                              onPressed: _resetZoom,
+                              tooltip: 'Khôi phục tỷ lệ (1:1)',
+                              icon: const Icon(Icons.center_focus_strong, size: 20, color: kPrimaryColor),
+                            ),
+                            if (isWide)
+                              IconButton(
+                                onPressed: () => setState(() => _isSidebarOpen = !_isSidebarOpen),
+                                tooltip: _isSidebarOpen ? 'Thu gọn bảng chi tiết' : 'Mở bảng chi tiết',
+                                icon: Icon(
+                                  _isSidebarOpen ? Icons.view_sidebar : Icons.view_sidebar_outlined,
+                                  size: 20,
+                                  color: kPrimaryColor,
                                 ),
                               ),
-                            ],
+                          ],
+                        ),
+                      ),
+                    ),
 
-                            const SizedBox(height: 36),
-
-                            // Ghi chú chỉ dẫn phía dưới
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF6F3F1),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: kBorderColor.withValues(alpha: 0.5)),
-                              ),
-                              child: const Row(
+                    // Nút mở nhanh bảng chi tiết chi khi đang đóng trên màn hình rộng
+                    if (isWide && !_isSidebarOpen)
+                      Positioned(
+                        top: 16,
+                        right: 16,
+                        child: Material(
+                          elevation: 3,
+                          borderRadius: BorderRadius.circular(20),
+                          color: Colors.white,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(20),
+                            onTap: () => setState(() => _isSidebarOpen = true),
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.lightbulb_outline, size: 18, color: kPrimaryColor),
-                                  SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      'Mẹo: Nhấp vào bất kỳ thẻ nào trên sơ đồ cây để xem toàn bộ danh sách thành viên thực tế, thông tin quản lý và phân cấp thế hệ từ hệ thống Backend.',
-                                      style: TextStyle(
-                                        fontFamily: 'Plus Jakarta Sans',
-                                        fontSize: 12,
-                                        color: Color(0xFF54433E),
-                                      ),
+                                  Icon(Icons.view_sidebar_outlined, size: 18, color: kPrimaryColor),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'Mở bảng chi tiết chi',
+                                    style: TextStyle(
+                                      fontFamily: 'Be Vietnam Pro',
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: kPrimaryColor,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
-                  ),
+                  ],
                 ),
               ),
 
-              // 2. BẢNG SIDEBAR BÊN PHẢI (HIỂN THỊ TRÊN MÀN HÌNH RỘNG >= 900px)
-              if (isWide)
+              // BẢNG SIDEBAR BÊN PHẢI (HIỂN THỊ TRÊN MÀN HÌNH RỘNG >= 900px)
+              if (isWide && _isSidebarOpen)
                 BranchDetailSidebar(
                   branch: selectedDetail,
                   onClose: () => setState(() {
+                    _isSidebarOpen = false;
                     _selectedMember = null;
                   }),
                   onEdit: selectedDetail.isRoot
                       ? () => context.push('/branches/root/edit')
-                      : null,
+                      : () => _showTransferDialog(tree, initialBranchId: selectedDetail.id),
                 ),
             ],
           );
@@ -637,7 +1037,202 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  /// Xây dựng cột phả hệ của một Chi Nhánh Con cùng các đời con cháu thực tế
+  void _handleSelectBranch(String branchId, BranchUiDetail detail, bool isWide) {
+    setState(() {
+      _selectedBranchId = branchId;
+      _selectedMember = null;
+      _isSidebarOpen = true;
+    });
+
+    if (!isWide) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (ctx) => FractionallySizedBox(
+          heightFactor: 0.85,
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: BranchDetailSidebar(
+              branch: detail,
+              onClose: () => Navigator.of(ctx).pop(),
+              onEdit: detail.isRoot ? () => context.push('/branches/root/edit') : null,
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  // 1. Thẻ Nhánh Gốc (Root Ancestor Node)
+  Widget _buildRootAncestorCard({
+    required BuildContext context,
+    required BranchUiDetail detail,
+    required bool isSelected,
+    required bool isCurrentUser,
+    required VoidCallback onTap,
+    required VoidCallback onShowPopover,
+    bool isHighlighted = false,
+  }) {
+    const kPrimaryColor = Color(0xFF8F482F);
+
+    return InkWell(
+      onTap: onTap,
+      onDoubleTap: onShowPopover,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: 360,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF2C1E1A), Color(0xFF4A342E)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isHighlighted
+                ? const Color(0xFFFFD700)
+                : (isCurrentUser ? const Color(0xFF006E2A) : const Color(0xFFD4A017)),
+            width: isHighlighted ? 3 : (isCurrentUser || isSelected ? 2.5 : 1.5),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isHighlighted
+                  ? const Color(0xFFFFD700).withValues(alpha: 0.4)
+                  : Colors.black.withValues(alpha: 0.25),
+              blurRadius: isHighlighted ? 20 : 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFD4A017),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          detail.badge,
+                          style: const TextStyle(
+                            fontFamily: 'JetBrains Mono',
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2C1E1A),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: onShowPopover,
+                        icon: const Icon(Icons.info_outline, color: Color(0xFFFFB59D), size: 18),
+                        tooltip: 'Xem tóm tắt (Popover)',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 22,
+                        backgroundColor: const Color(0xFFD4A017),
+                        child: const Icon(Icons.account_balance, color: Color(0xFF2C1E1A), size: 24),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              detail.representative,
+                              style: const TextStyle(
+                                fontFamily: 'Merriweather',
+                                fontSize: 16.5,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              detail.name,
+                              style: const TextStyle(
+                                fontFamily: 'Plus Jakarta Sans',
+                                fontSize: 12.5,
+                                color: Color(0xFFFFB59D),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            // [US-11] Thống kê đóng góp đệ quy trên Nhánh Gốc (Thủy Tổ)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: BranchContributionPill(
+                branchId: detail.id,
+                branchName: detail.name,
+                isRootBranch: true,
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.2),
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '${detail.memberCount} Thành viên',
+                    style: const TextStyle(fontSize: 11.5, color: Color(0xFFFFB59D), fontWeight: FontWeight.bold),
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextButton.icon(
+                        onPressed: onShowPopover,
+                        icon: const Icon(Icons.visibility, size: 14, color: Colors.white),
+                        label: const Text('Tóm tắt', style: TextStyle(fontSize: 11, color: Colors.white)),
+                      ),
+                      const SizedBox(width: 4),
+                      ElevatedButton.icon(
+                        onPressed: () => context.push('/branches/root/edit'),
+                        icon: const Icon(Icons.edit, size: 14),
+                        label: const Text('Chỉnh sửa', style: TextStyle(fontSize: 11)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: kPrimaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 2. Thẻ Chi Nhánh Con Hỗ Trợ Thu Gọn / Mở Rộng (Collapse/Expand) (US-29, Task #110)
   Widget _buildChildBranchColumn({
     required BuildContext context,
     required BranchTreeNodeDto child,
@@ -645,22 +1240,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     required String currentMemberId,
     required String currentUserName,
     required String activeBranchId,
+    required BranchTreeNodeDto rootTree,
   }) {
     const kPrimaryColor = Color(0xFF8F482F);
-    final isChildCurrentUser = currentMemberId == child.representativeId ||
-        currentUserName == child.representativeName;
+    final isCollapsed = _collapsedBranchIds.contains(child.branchId);
 
-    // Tải thành viên thực tế của chi nhánh từ API
     final childMembersAsync = ref.watch(branchMembersProvider(child.branchId));
     final childMembers = childMembersAsync.value ?? [];
 
-    // Các thành viên đời dưới chi nhánh (không tính người đại diện chi đã hiện ở thẻ chi)
-    final subMembers = childMembers.where((m) => m.memberId != child.representativeId).toList()
-      ..sort((a, b) {
-        final genCmp = a.generation.compareTo(b.generation);
-        if (genCmp != 0) return genCmp;
-        return a.fullName.compareTo(b.fullName);
-      });
+    final effectiveRepresentative = (child.representativeName != null && child.representativeName!.trim().isNotEmpty)
+        ? child.representativeName!
+        : (childMembers.firstWhereOrNull((m) => m.roleInBranch.contains('Trưởng') || m.generation == child.generationLevel)?.fullName ??
+            (childMembers.isNotEmpty ? childMembers.first.fullName : 'Chưa cập nhật'));
+
+    final isChildCurrentUser = currentMemberId == child.representativeId ||
+        currentUserName == child.representativeName ||
+        currentUserName == effectiveRepresentative;
+
+    final subMembers = childMembers.where((m) => m.memberId != child.representativeId && m.fullName != effectiveRepresentative).toList()
+      ..sort((a, b) => a.generation.compareTo(b.generation));
 
     final childUiDetail = BranchUiDetail(
       id: child.branchId,
@@ -669,7 +1267,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ? '★ VỊ TRÍ CỦA BẠN • TRƯỞNG CHI'
           : 'Chi ${child.branchName} • Đời ${child.generationLevel}',
       code: child.branchId,
-      representative: child.representativeName ?? 'Chưa cập nhật',
+      representative: effectiveRepresentative,
       representativeSubtext: 'Đại diện Chi • Đời ${child.generationLevel}',
       representativeId: child.representativeId,
       memberCount: child.memberCount,
@@ -693,389 +1291,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             isSelected: activeBranchId == child.branchId && _selectedMember == null,
             isWide: isWide,
             isCurrentUser: isChildCurrentUser,
+            isCollapsed: isCollapsed,
+            isHighlighted: _highlightedBranchId == child.branchId,
             onSelect: () => _handleSelectBranch(child.branchId, childUiDetail, isWide),
+            onToggleCollapse: () => _toggleBranchCollapse(child.branchId),
+            onShowPopover: () => _showNodePopover(context, childUiDetail, rootTree),
+            onTransfer: () => _showTransferDialog(rootTree, initialBranchId: child.branchId),
           ),
 
-          if (_isFullTreeExpanded) ...[
-            if (subMembers.isEmpty) ...[
-              Container(width: 2, height: 16, color: kPrimaryColor),
-              Container(
-                width: 320,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFDAC1BA).withValues(alpha: 0.5)),
-                ),
-                child: const Text(
-                  'Chi nhánh chưa có thành viên đời tiếp theo',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'Plus Jakarta Sans',
-                    fontSize: 11,
-                    fontStyle: FontStyle.italic,
-                    color: Color(0xFF6B584E),
-                  ),
-                ),
-              ),
-            ] else ...[
+          // Render nhánh con và thành viên nếu KHÔNG bị thu gọn (Collapse/Expand)
+          if (!isCollapsed && _isFullTreeExpanded) ...[
+            if (subMembers.isNotEmpty) ...[
               for (final member in subMembers) ...[
-                // Đường nối dọc
-                Container(width: 2, height: 20, color: kPrimaryColor),
-
-                // Thẻ thành viên đời kế tiếp từ Database
+                Container(width: 2, height: 16, color: kPrimaryColor),
                 _buildSubGenerationCard(
-                  generation: 'ĐỜI ${member.generation}',
+                  generation: 'Đời ${member.generation}',
                   title: member.fullName,
-                  subtitle: member.birthDeathInfo ?? (member.isActivated ? 'Đã xác thực hồ sơ' : 'Chờ xác thực'),
-                  color: member.generation == 3
-                      ? const Color(0xFF8F482F)
-                      : (member.generation == 4 ? const Color(0xFFAD5F45) : const Color(0xFFC27B66)),
+                  subtitle: member.birthDeathInfo ?? 'Thành viên phả hệ',
+                  color: kPrimaryColor,
                   isSelected: _selectedMember?.memberId == member.memberId,
-                  isCurrentUser: member.memberId == currentMemberId || member.fullName == currentUserName,
-                  currentUserBadge: '★ VỊ TRÍ CỦA BẠN • ĐỜI ${member.generation}',
-                  onTap: () => _handleSelectMember(child.branchId, member, isWide),
+                  isHighlighted: _highlightedMemberId == member.memberId,
+                  onTap: () {
+                    setState(() {
+                      _selectedMember = member;
+                      _selectedBranchId = child.branchId;
+                      _isSidebarOpen = true;
+                    });
+                  },
                 ),
               ],
             ],
+
+            // Đệ quy nhánh cháu chắt nếu có
+            if (child.children.isNotEmpty) ...[
+              Container(width: 2, height: 20, color: kPrimaryColor),
+              for (final grandChild in child.children)
+                _buildChildBranchColumn(
+                  context: context,
+                  child: grandChild,
+                  isWide: isWide,
+                  currentMemberId: currentMemberId,
+                  currentUserName: currentUserName,
+                  activeBranchId: activeBranchId,
+                  rootTree: rootTree,
+                ),
+            ],
           ],
         ],
-      ),
-    );
-  }
-
-  void _handleSelectBranch(String branchId, BranchUiDetail detail, bool isWide) {
-    setState(() {
-      _selectedBranchId = branchId;
-      _selectedMember = null;
-    });
-
-    if (!isWide) {
-      _showMobileSheet(detail);
-    }
-  }
-
-  void _handleSelectMember(String branchId, BranchMemberItem member, bool isWide) {
-    setState(() {
-      _selectedBranchId = branchId;
-      _selectedMember = member;
-    });
-
-    if (!isWide) {
-      final memberDetail = BranchUiDetail(
-        id: member.memberId,
-        name: 'Hồ Sơ: ${member.fullName}',
-        badge: 'ĐỜI ${member.generation}',
-        code: member.memberId,
-        representative: member.fullName,
-        representativeSubtext: member.birthDeathInfo ?? 'Thành viên Đời ${member.generation}',
-        memberCount: 1,
-        activatedMemberCount: member.isActivated ? 1 : 0,
-        fundAmount: '0 đ',
-        description: 'Hồ sơ thành viên chính thức thuộc phả hệ dòng họ.',
-        members: [member],
-        isRoot: false,
-      );
-      _showMobileSheet(memberDetail);
-    }
-  }
-
-  void _showMobileSheet(BranchUiDetail detail) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.75,
-        minChildSize: 0.4,
-        maxChildSize: 0.95,
-        builder: (_, scrollController) => ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          child: BranchDetailSidebar(
-            branch: detail,
-            isMobileSheet: true,
-            onClose: () => Navigator.of(ctx).pop(),
-            onEdit: detail.isRoot
-                ? () {
-                    Navigator.of(ctx).pop();
-                    context.push('/branches/root/edit');
-                  }
-                : null,
-          ),
-        ),
-      ),
-    );
-  }
-
-  // 1. Root Ancestor Node (Cụ Khởi Tổ)
-  Widget _buildRootAncestorCard({
-    required BuildContext context,
-    required BranchUiDetail detail,
-    required bool isSelected,
-    required VoidCallback onTap,
-    bool isCurrentUser = false,
-  }) {
-    const kPrimaryColor = Color(0xFF8F482F);
-    const kDarkSurface = Color(0xFF31302F);
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        width: double.infinity,
-        constraints: const BoxConstraints(maxWidth: 540),
-        decoration: BoxDecoration(
-          color: kDarkSurface,
-          borderRadius: BorderRadius.circular(16),
-          border: isCurrentUser
-              ? Border.all(color: const Color(0xFF006E2A), width: 2)
-              : (isSelected ? Border.all(color: const Color(0xFFFFB59D), width: 2) : null),
-          boxShadow: [
-            BoxShadow(
-              color: isCurrentUser
-                  ? const Color(0xFF006E2A).withValues(alpha: 0.3)
-                  : Colors.black.withValues(alpha: isSelected ? 0.25 : 0.12),
-              blurRadius: isCurrentUser || isSelected ? 24 : 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Wrap(
-                    alignment: WrapAlignment.spaceBetween,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: isCurrentUser
-                              ? const Color(0xFF006E2A)
-                              : kPrimaryColor.withValues(alpha: 0.4),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              isCurrentUser ? Icons.stars : Icons.military_tech,
-                              size: 14,
-                              color: isCurrentUser ? Colors.white : const Color(0xFFFFB59D),
-                            ),
-                            const SizedBox(width: 6),
-                            Flexible(
-                              child: Text(
-                                isCurrentUser
-                                    ? '★ VỊ TRÍ CỦA BẠN • TRƯỞNG TỘC'
-                                    : detail.badge,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontFamily: 'JetBrains Mono',
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: isCurrentUser ? Colors.white : const Color(0xFFFFB59D),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Wrap(
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: 8,
-                        children: [
-                          if (isCurrentUser)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF006E2A),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Text(
-                                '● Đang quản trị',
-                                style: TextStyle(
-                                  fontFamily: 'JetBrains Mono',
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          if (isSelected)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFB59D),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Text(
-                                'Đang xem',
-                                style: TextStyle(
-                                  fontFamily: 'JetBrains Mono',
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF31302F),
-                                ),
-                              ),
-                            ),
-                          Text(
-                            'MÃ: ${detail.code}',
-                            style: const TextStyle(
-                              fontFamily: 'JetBrains Mono',
-                              fontSize: 11,
-                              color: Color(0xFFDAC1BA),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFF54433E),
-                          border: Border.all(
-                            color: isCurrentUser ? const Color(0xFF006E2A) : const Color(0xFFFFB59D),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            detail.representative.isNotEmpty
-                                ? detail.representative.replaceAll('Cụ ', '').replaceAll('Bác ', '')[0]
-                                : 'H',
-                            style: TextStyle(
-                              fontFamily: 'Merriweather',
-                              color: isCurrentUser ? Colors.white : const Color(0xFFFFB59D),
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              detail.representative,
-                              style: const TextStyle(
-                                fontFamily: 'Merriweather',
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFFFCF9F6),
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              detail.name,
-                              style: const TextStyle(
-                                fontFamily: 'Plus Jakarta Sans',
-                                fontSize: 13,
-                                color: Color(0xFFFFB59D),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    detail.description,
-                    style: const TextStyle(
-                      fontFamily: 'Plus Jakarta Sans',
-                      fontSize: 12.5,
-                      color: Color(0xFFE5E2E0),
-                      height: 1.4,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            // [US-11] Thống kê đóng góp đệ quy trên Nhánh Gốc (Thủy Tổ)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child: BranchContributionPill(
-                branchId: detail.id,
-                branchName: detail.name,
-                isRootBranch: true,
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.25),
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
-              ),
-              child: Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 12,
-                runSpacing: 10,
-                children: [
-                  InkWell(
-                    onTap: onTap,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.group, size: 15, color: Color(0xFFFFB59D)),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            '${detail.memberCount} Thành viên (Xem chi tiết →)',
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontFamily: 'Plus Jakarta Sans',
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFFFFB59D),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () => context.push('/branches/root/edit'),
-                    icon: const Icon(Icons.edit_note, size: 18, color: Colors.white),
-                    label: const Text(
-                      'Chỉnh Sửa Nhánh Gốc',
-                      style: TextStyle(
-                        fontFamily: 'Plus Jakarta Sans',
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kPrimaryColor,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -1086,108 +1348,104 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     required BranchUiDetail detail,
     required bool isSelected,
     required bool isWide,
+    required bool isCollapsed,
     required VoidCallback onSelect,
+    required VoidCallback onToggleCollapse,
+    required VoidCallback onShowPopover,
+    required VoidCallback onTransfer,
     bool isCurrentUser = false,
+    bool isHighlighted = false,
   }) {
     const kPrimaryColor = Color(0xFF8F482F);
     const kBorderColor = Color(0xFFDAC1BA);
 
-    return InkWell(
-      onTap: onSelect,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        width: 320,
-        decoration: BoxDecoration(
-          color: isCurrentUser ? const Color(0xFFFCF6F3) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isCurrentUser
-                ? const Color(0xFF006E2A)
-                : (isSelected ? kPrimaryColor : kBorderColor),
-            width: isCurrentUser || isSelected ? 2 : 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isCurrentUser
-                  ? const Color(0xFF006E2A).withValues(alpha: 0.15)
-                  : (isSelected ? kPrimaryColor.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.04)),
-              blurRadius: isCurrentUser || isSelected ? 16 : 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
+    return Container(
+      width: 320,
+      decoration: BoxDecoration(
+        color: isCurrentUser ? const Color(0xFFFCF6F3) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isHighlighted
+              ? const Color(0xFFFFD700)
+              : (isCurrentUser
+                  ? const Color(0xFF006E2A)
+                  : (isSelected ? kPrimaryColor : kBorderColor)),
+          width: isHighlighted ? 3 : (isCurrentUser || isSelected ? 2 : 1),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Top Badge Bar
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: isCurrentUser
-                            ? const Color(0xFF006E2A)
-                            : (isSelected
-                                ? kPrimaryColor
-                                : const Color(0xFF8F482F).withValues(alpha: 0.1)),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        detail.badge,
-                        style: TextStyle(
-                          fontFamily: 'JetBrains Mono',
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: (isCurrentUser || isSelected) ? Colors.white : kPrimaryColor,
+        boxShadow: [
+          BoxShadow(
+            color: isHighlighted
+                ? const Color(0xFFFFD700).withValues(alpha: 0.4)
+                : Colors.black.withValues(alpha: 0.05),
+            blurRadius: isHighlighted ? 16 : 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    detail.badge,
+                    style: const TextStyle(
+                      fontFamily: 'JetBrains Mono',
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: kPrimaryColor,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                // Nút Collapse/Expand theo từng nhánh (US-29, Task #110)
+                InkWell(
+                  onTap: onToggleCollapse,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isCollapsed ? const Color(0xFFE8DEF8) : const Color(0xFFF0EDEB),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isCollapsed ? Icons.add_circle_outline : Icons.remove_circle_outline,
+                          size: 13,
+                          color: kPrimaryColor,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                        const SizedBox(width: 3),
+                        Text(
+                          isCollapsed ? 'Mở nhánh' : 'Thu gọn',
+                          style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: kPrimaryColor),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  if (isSelected)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF006E2A),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Text(
-                        'Đang xem',
-                        style: TextStyle(
-                          fontSize: 9.5,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    )
-                  else
-                    Text(
-                      detail.code,
-                      style: const TextStyle(
-                        fontFamily: 'JetBrains Mono',
-                        fontSize: 10,
-                        color: Colors.grey,
-                      ),
-                    ),
-                ],
-              ),
+                ),
+              ],
             ),
+          ),
 
-            // Representative & Name
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
+          // Main Info
+          InkWell(
+            onTap: onSelect,
+            onDoubleTap: onShowPopover,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               child: Row(
                 children: [
                   CircleAvatar(
                     radius: 18,
                     backgroundColor: const Color(0xFFF0EDEB),
-                    child: const Icon(Icons.person, color: kPrimaryColor, size: 22),
+                    child: const Icon(Icons.person, color: kPrimaryColor, size: 20),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -1198,7 +1456,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           detail.representative,
                           style: const TextStyle(
                             fontFamily: 'Merriweather',
-                            fontSize: 13.5,
+                            fontSize: 13,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF1C1C1A),
                           ),
@@ -1207,7 +1465,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           detail.name,
                           style: const TextStyle(
                             fontFamily: 'Plus Jakarta Sans',
-                            fontSize: 11.5,
+                            fontSize: 11,
                             color: Color(0xFF6B584E),
                           ),
                         ),
@@ -1217,88 +1475,61 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ],
               ),
             ),
+          ),
 
-            const SizedBox(height: 10),
-
-            // Info Box: Thành viên
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF9F7F5),
-                  borderRadius: BorderRadius.circular(8),
+          // Member stats & Actions
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: const BoxDecoration(
+              border: Border(top: BorderSide(color: Color(0xFFF0EDEB))),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${detail.memberCount} thành viên',
+                  style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF54433E)),
                 ),
-                child: Row(
+                Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Thành viên',
-                            style: TextStyle(
-                              fontFamily: 'Plus Jakarta Sans',
-                              fontSize: 11,
-                              color: Color(0xFF6B584E),
-                            ),
-                          ),
-                          Text(
-                            '${detail.memberCount} người',
-                            style: const TextStyle(
-                              fontFamily: 'JetBrains Mono',
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1C1C1A),
-                            ),
-                          ),
-                        ],
-                      ),
+                    IconButton(
+                      icon: const Icon(Icons.info_outline, size: 16, color: kPrimaryColor),
+                      onPressed: onShowPopover,
+                      tooltip: 'Xem tóm tắt (Popover)',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
                     ),
-                    const VerticalDivider(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Trạng thái',
-                            style: TextStyle(
-                              fontFamily: 'Plus Jakarta Sans',
-                              fontSize: 11,
-                              color: Color(0xFF6B584E),
-                            ),
-                          ),
-                          Text(
-                            '${detail.activatedMemberCount} đã kích hoạt',
-                            style: const TextStyle(
-                              fontFamily: 'JetBrains Mono',
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF006E2A),
-                            ),
-                          ),
-                        ],
-                      ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.swap_horiz, size: 17, color: kPrimaryColor),
+                      onPressed: onTransfer,
+                      tooltip: 'Điều chuyển nhánh',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
                     ),
                   ],
                 ),
-              ),
+              ],
             ),
+          ),
 
-            const SizedBox(height: 10),
+          const SizedBox(height: 6),
 
-            // [US-11] Thống kê đóng góp đệ quy trên Nút Nhánh Chi
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              child: BranchContributionPill(
-                branchId: detail.id,
-                branchName: detail.name,
-                isRootBranch: false,
-              ),
+          // [US-11] Thống kê đóng góp đệ quy trên Nút Nhánh Chi
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: BranchContributionPill(
+              branchId: detail.id,
+              branchName: detail.name,
+              isRootBranch: false,
             ),
+          ),
 
-            // Footer Button
-            Container(
+          // Footer Button
+          InkWell(
+            onTap: onSelect,
+            child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: const BoxDecoration(
                 border: Border(top: BorderSide(color: Color(0xFFF0EDEB))),
@@ -1319,13 +1550,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  // 3. Sub-Generation Cards (Đời con cháu kế tiếp từ Database)
+  // 3. Sub-Generation Cards
   Widget _buildSubGenerationCard({
     required String generation,
     required String title,
@@ -1333,57 +1564,48 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     required Color color,
     required bool isSelected,
     required VoidCallback onTap,
-    bool isCurrentUser = false,
-    String? currentUserBadge,
+    bool isHighlighted = false,
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(10),
       child: Container(
         width: 320,
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isCurrentUser ? const Color(0xFFFCF6F3) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: isHighlighted
+              ? const Color(0xFFFFF9E6)
+              : (isSelected ? const Color(0xFFFCF6F3) : Colors.white),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isCurrentUser
-                ? const Color(0xFF006E2A)
-                : (isSelected ? const Color(0xFF8F482F) : const Color(0xFFDAC1BA)),
-            width: isCurrentUser || isSelected ? 2 : 1,
+            color: isHighlighted
+                ? const Color(0xFFFFD700)
+                : (isSelected ? color : const Color(0xFFDAC1BA)),
+            width: isHighlighted ? 2.5 : (isSelected ? 2 : 1),
           ),
           boxShadow: [
             BoxShadow(
-              color: isCurrentUser
-                  ? const Color(0xFF006E2A).withValues(alpha: 0.15)
-                  : (isSelected
-                      ? const Color(0xFF8F482F).withValues(alpha: 0.12)
-                      : Colors.black.withValues(alpha: 0.03)),
-              blurRadius: isCurrentUser || isSelected ? 12 : 8,
-              offset: const Offset(0, 2),
+              color: isHighlighted
+                  ? const Color(0xFFFFD700).withValues(alpha: 0.3)
+                  : Colors.black.withValues(alpha: 0.03),
+              blurRadius: isHighlighted ? 12 : 4,
             ),
           ],
         ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: isCurrentUser
-                    ? const Color(0xFF006E2A).withValues(alpha: 0.12)
-                    : color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(6),
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
                 generation,
-                style: TextStyle(
-                  fontFamily: 'JetBrains Mono',
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: isCurrentUser ? const Color(0xFF006E2A) : color,
-                ),
+                style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 10, fontWeight: FontWeight.bold, color: color),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1392,113 +1614,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     title,
                     style: const TextStyle(
                       fontFamily: 'Merriweather',
-                      fontSize: 13,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF1C1C1A),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 1),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      fontFamily: 'Plus Jakarta Sans',
-                      fontSize: 10.5,
-                      color: Color(0xFF6B584E),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 10.5, color: Color(0xFF6B584E)),
                   ),
-                  if (isCurrentUser) ...[
-                    const SizedBox(height: 3),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF006E2A),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        currentUserBadge ?? '★ VỊ TRÍ CỦA BẠN',
-                        style: const TextStyle(
-                          fontFamily: 'JetBrains Mono',
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
-            if (isSelected)
+            if (isHighlighted)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF006E2A),
+                  color: const Color(0xFFFFD700),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
-                  'Đang xem',
-                  style: TextStyle(fontSize: 9.5, color: Colors.white, fontWeight: FontWeight.bold),
-                ),
+                child: const Text('Tìm kiếm', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),
               )
-            else
-              const Icon(Icons.chevron_right, size: 18, color: Color(0xFF8F482F)),
+            else if (isSelected)
+              const Icon(Icons.check_circle, size: 16, color: Color(0xFF006E2A)),
           ],
         ),
       ),
     );
   }
 
-  /// [US-23] Widget Chip chuyển đổi Persona giả lập vai trò trên cây gia phả
-  Widget _buildPersonaChip({
-    required WidgetRef ref,
-    required String label,
-    required String personaKey,
-    required bool isSelected,
-  }) {
-    return InkWell(
-      onTap: () {
-        ref.read(dualRbacSessionProvider.notifier).simulatePersona(personaKey);
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.badge_outlined, color: Colors.white, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text('Đã chuyển vai trò giả lập sang: $label'),
-                ),
-              ],
-            ),
-            backgroundColor: const Color(0xFF8F482F),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      },
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF8F482F) : const Color(0xFFF0EDEB),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF8F482F) : const Color(0xFFDAC1BA),
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Plus Jakarta Sans',
-            fontSize: 11,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            color: isSelected ? Colors.white : const Color(0xFF54433E),
-          ),
-        ),
-      ),
-    );
-  }
 }

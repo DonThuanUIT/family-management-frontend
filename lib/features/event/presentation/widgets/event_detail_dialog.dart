@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -208,7 +208,7 @@ class EventDetailDialog extends ConsumerWidget {
                   context.push('/events/${event.eventId}/tasks');
                 },
                 icon: const Icon(Icons.assignment_outlined, size: 16),
-                label: const Text('Xem & Phân Công Công Việc (US-07)'),
+                label: const Text('Xem & Phân Công Công Việc'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF7A1518),
                   foregroundColor: Colors.white,
@@ -220,14 +220,14 @@ class EventDetailDialog extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
 
-              // Nút mở Bảng Điều Khiển Ngân Sách Sự Kiện (US-37)
+              // Nút mở Bảng Điều Khiển Ngân Sách Sự Kiện
               ElevatedButton.icon(
                 onPressed: () {
                   Navigator.pop(context);
                   context.push('/events/${event.eventId}/budget');
                 },
                 icon: const Icon(Icons.account_balance_wallet_outlined, size: 16),
-                label: const Text('Bảng Điều Khiển Ngân Sách (US-37)'),
+                label: const Text('Bảng Điều Khiển Ngân Sách'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF8B1E1E),
                   foregroundColor: Colors.white,
@@ -239,14 +239,14 @@ class EventDetailDialog extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
 
-              // Nút mở Dashboard Hậu Cần Sự Kiện cho BTC (US-42)
+              // Nút mở Dashboard Hậu Cần Sự Kiện cho BTC
               ElevatedButton.icon(
                 onPressed: () {
                   Navigator.pop(context);
                   context.push('/events/${event.eventId}/logistics');
                 },
                 icon: const Icon(Icons.analytics_outlined, size: 16),
-                label: const Text('Dashboard Hậu Cần & Chia Cỗ (US-42)'),
+                label: const Text('Dashboard Hậu Cần & Chia Cỗ'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1B5E20),
                   foregroundColor: Colors.white,
@@ -273,7 +273,7 @@ class EventDetailDialog extends ConsumerWidget {
                       },
                       icon: const Icon(Icons.notifications_active_outlined,
                           size: 16),
-                      label: const Text('Thông Báo (US-22)',
+                      label: const Text('Thông Báo',
                           style: TextStyle(fontSize: 11)),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 10),

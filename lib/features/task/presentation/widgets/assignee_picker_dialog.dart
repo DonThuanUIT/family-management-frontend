@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_client.dart';
@@ -237,7 +237,7 @@ class _AssigneePickerDialogState extends ConsumerState<AssigneePickerDialog>
                         ),
                       ),
                       Text(
-                        'Tuân thủ bảo mật US-25: Không để lộ SĐT, email, ngày sinh',
+                        'Tuân thủ bảo mật: Không để lộ SĐT, email, ngày sinh',
                         style: TextStyle(
                           fontSize: 11,
                           color: Colors.grey.shade600,

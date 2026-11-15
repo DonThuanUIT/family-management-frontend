@@ -153,26 +153,47 @@ final genealogyMemberListProvider = FutureProvider<List<BranchMemberItem>>((ref)
     if (list.isNotEmpty) return list;
   } catch (_) {}
 
-  return const [
-    BranchMemberItem(
-      memberId: 'MEM_TRUONG_TOC',
-      fullName: 'Nguyễn Trọng Hoàng',
-      generation: 1,
-      roleInBranch: 'Khởi Tổ / Trưởng Tộc • Đời 1',
-    ),
-    BranchMemberItem(
-      memberId: 'MEM_TRUONG_CHI',
-      fullName: 'Nguyễn Văn An',
-      generation: 2,
-      roleInBranch: 'Trưởng Chi 2 • Đời 2',
-    ),
-    BranchMemberItem(
-      memberId: 'MEM_MAI_ANH',
-      fullName: 'Nguyễn Thị Mai Anh',
-      generation: 3,
-      roleInBranch: 'Chi 2 • Đời 3',
-    ),
-  ];
+  return const [];
+});
+
+/// State quản lý tìm kiếm thành viên thông minh trên cây phả hệ (US-30, Task #112)
+class MemberSearchQueryNotifier extends Notifier<String> {
+  @override
+  String build() => '';
+  void set(String val) => state = val;
+}
+final memberSearchQueryProvider =
+    NotifierProvider<MemberSearchQueryNotifier, String>(MemberSearchQueryNotifier.new);
+
+class MemberSearchGenerationNotifier extends Notifier<int?> {
+  @override
+  int? build() => null;
+  void set(int? val) => state = val;
+}
+final memberSearchGenerationProvider =
+    NotifierProvider<MemberSearchGenerationNotifier, int?>(MemberSearchGenerationNotifier.new);
+
+class MemberSearchBranchIdNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+  void set(String? val) => state = val;
+}
+final memberSearchBranchIdProvider =
+    NotifierProvider<MemberSearchBranchIdNotifier, String?>(MemberSearchBranchIdNotifier.new);
+
+final memberSearchResultsProvider = FutureProvider<List<MemberSearchDto>>((ref) async {
+  final query = ref.watch(memberSearchQueryProvider);
+  final gen = ref.watch(memberSearchGenerationProvider);
+  final branchId = ref.watch(memberSearchBranchIdProvider);
+  if (query.trim().isEmpty && gen == null && branchId == null) {
+    return [];
+  }
+  final repo = ref.watch(genealogyRepositoryProvider);
+  return repo.searchMembers(
+    keyword: query.isNotEmpty ? query : null,
+    generation: gen,
+    branchId: branchId,
+  );
 });
 
 /// Provider quản lý thao tác cập nhật tình trạng sinh/tử (US-27)
