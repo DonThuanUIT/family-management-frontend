@@ -217,6 +217,9 @@ class AuditRemoteDataSource {
 
   /// Lấy chi tiết bản ghi kiểm toán kèm Diff (GET /api/v1/audit-logs/{auditId})
   Future<AuditLogDetailModel> fetchAuditLogDetail(String auditId) async {
+    if (_mockDetails.containsKey(auditId)) {
+      return _mockDetails[auditId]!;
+    }
     try {
       final response = await _dio.get('audit-logs/$auditId');
       final apiResponse = ApiResponse.fromJson(
@@ -227,9 +230,9 @@ class AuditRemoteDataSource {
       if (apiResponse.data != null) {
         return apiResponse.data!;
       }
-      return _mockDetails[auditId] ?? _mockDetails.values.first;
+      return _mockDetails.values.first;
     } on DioException {
-      return _mockDetails[auditId] ?? _mockDetails.values.first;
+      return _mockDetails.values.first;
     }
   }
 
