@@ -20,10 +20,12 @@ import '../../../event/presentation/providers/event_providers.dart';
 class TreeForkPainter extends CustomPainter {
   final Color color;
   final double strokeWidth;
+  final List<double>? dropXs;
 
   const TreeForkPainter({
     required this.color,
     this.strokeWidth = 2.0,
+    this.dropXs,
   });
 
   @override
@@ -38,17 +40,31 @@ class TreeForkPainter extends CustomPainter {
 
     // Đường đứng từ trên xuống điểm giữa (center stem up)
     canvas.drawLine(Offset(centerX, 0), Offset(centerX, midY), paint);
-    // Thanh ngang nối từ mép trái sang mép phải (crossbar)
-    canvas.drawLine(Offset(0, midY), Offset(size.width, midY), paint);
-    // Đường đứng mép trái xuống tâm Chi 1 (left drop)
-    canvas.drawLine(Offset(0, midY), Offset(0, size.height), paint);
-    // Đường đứng mép phải xuống tâm Chi 2 (right drop)
-    canvas.drawLine(Offset(size.width, midY), Offset(size.width, size.height), paint);
+
+    if (dropXs != null && dropXs!.isNotEmpty) {
+      final minX = dropXs!.reduce((a, b) => a < b ? a : b);
+      final maxX = dropXs!.reduce((a, b) => a > b ? a : b);
+      // Thanh ngang từ tâm cột ngoài cùng bên trái sang tâm cột ngoài cùng bên phải
+      canvas.drawLine(Offset(minX, midY), Offset(maxX, midY), paint);
+      // Đường đứng mép nối từ thanh ngang xuống đỉnh từng cột
+      for (final x in dropXs!) {
+        canvas.drawLine(Offset(x, midY), Offset(x, size.height), paint);
+      }
+    } else {
+      // Thanh ngang nối từ mép trái sang mép phải (crossbar)
+      canvas.drawLine(Offset(0, midY), Offset(size.width, midY), paint);
+      // Đường đứng mép trái xuống tâm Chi 1 (left drop)
+      canvas.drawLine(Offset(0, midY), Offset(0, size.height), paint);
+      // Đường đứng mép phải xuống tâm Chi 2 (right drop)
+      canvas.drawLine(Offset(size.width, midY), Offset(size.width, size.height), paint);
+    }
   }
 
   @override
   bool shouldRepaint(covariant TreeForkPainter oldDelegate) =>
-      oldDelegate.color != color || oldDelegate.strokeWidth != strokeWidth;
+      oldDelegate.color != color ||
+      oldDelegate.strokeWidth != strokeWidth ||
+      oldDelegate.dropXs != dropXs;
 }
 
 /// Màn hình Cây Phả Hệ Trực Quan Đa Chi Phái (Stitch Warm Editorial Heritage)
@@ -180,6 +196,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       if (member.branchId != null) {
         _collapsedBranchIds.remove(member.branchId!);
       }
+      _collapsedBranchIds.remove('ROOT_SUBMEMBERS');
       _isFullTreeExpanded = true;
 
       // Tự động cuộn & focus lại trung tâm khung nhìn
@@ -528,7 +545,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             representativeSubtext: 'Trưởng Tộc • Đại diện Dòng họ',
             representativeId: tree.representativeId,
             memberCount: tree.memberCount,
-            activatedMemberCount: rootMembers.where((m) => m.isActivated).length > 0
+            activatedMemberCount: rootMembers.where((m) => m.isActivated).isNotEmpty
                 ? rootMembers.where((m) => m.isActivated).length
                 : tree.memberCount,
             fundAmount: '0 đ',
@@ -537,6 +554,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             members: rootMembers,
             isRoot: true,
           );
+
+          final rootSubMembers = rootMembers
+              .where((m) => m.fullName != rootUiDetail.representative && m.memberId != tree.representativeId)
+              .toList()
+            ..sort((a, b) => a.generation.compareTo(b.generation));
+          final totalColumns = (rootSubMembers.isNotEmpty ? 1 : 0) + tree.children.length;
 
           return Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -837,44 +860,77 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   ),
 
 
-                                  // HIỂN THỊ CÁC CHI NHÁNH CON
-                                  if (tree.children.isNotEmpty) ...[
-                                    if (tree.children.length == 1) ...[
+                                  // HIỂN THỊ CÁC CỘT HẠ THỰC THẾ (GỒM THÀNH VIÊN CHI GỐC VÀ CÁC CHI NHÁNH CON)
+                                  if (totalColumns > 0) ...[
+                                    if (totalColumns == 1) ...[
                                       Container(width: 2, height: 28, color: kPrimaryColor),
-                                      _buildChildBranchColumn(
-                                        context: context,
-                                        child: tree.children.first,
-                                        isWide: isWide,
-                                        currentMemberId: currentMemberId,
-                                        currentUserName: currentUserName,
-                                        activeBranchId: activeBranchId,
-                                        rootTree: tree,
-                                      ),
-                                    ] else ...[
-                                      SizedBox(
-                                        width: (tree.children.length * 360.0) / 1.8,
-                                        height: 36,
-                                        child: const CustomPaint(
-                                          painter: TreeForkPainter(color: kPrimaryColor, strokeWidth: 2),
+                                      if (rootSubMembers.isNotEmpty)
+                                        _buildRootSubMembersColumn(
+                                          context: context,
+                                          members: rootSubMembers,
+                                          branchId: tree.branchId,
+                                          isWide: isWide,
+                                        )
+                                      else
+                                        _buildChildBranchColumn(
+                                          context: context,
+                                          child: tree.children.first,
+                                          isWide: isWide,
+                                          currentMemberId: currentMemberId,
+                                          currentUserName: currentUserName,
+                                          activeBranchId: activeBranchId,
+                                          rootTree: tree,
                                         ),
-                                      ),
-                                      Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          for (int i = 0; i < tree.children.length; i++) ...[
-                                            if (i > 0) const SizedBox(width: 32),
-                                            _buildChildBranchColumn(
-                                              context: context,
-                                              child: tree.children[i],
-                                              isWide: isWide,
-                                              currentMemberId: currentMemberId,
-                                              currentUserName: currentUserName,
-                                              activeBranchId: activeBranchId,
-                                              rootTree: tree,
-                                            ),
-                                          ],
-                                        ],
+                                    ] else ...[
+                                      // Nhiều nhánh (>= 2): Vẽ đường chẽ fork chuẩn pixel-perfect đến tâm từng cột
+                                      Builder(
+                                        builder: (ctx) {
+                                          final forkWidth = totalColumns * 320.0 + (totalColumns - 1) * 32.0;
+                                          final dropXs = List.generate(totalColumns, (i) => i * 352.0 + 160.0);
+                                          return Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              SizedBox(
+                                                width: forkWidth,
+                                                height: 36,
+                                                child: CustomPaint(
+                                                  painter: TreeForkPainter(
+                                                    color: kPrimaryColor,
+                                                    strokeWidth: 2,
+                                                    dropXs: dropXs,
+                                                  ),
+                                                ),
+                                              ),
+                                              Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  if (rootSubMembers.isNotEmpty) ...[
+                                                    _buildRootSubMembersColumn(
+                                                      context: context,
+                                                      members: rootSubMembers,
+                                                      branchId: tree.branchId,
+                                                      isWide: isWide,
+                                                    ),
+                                                    if (tree.children.isNotEmpty) const SizedBox(width: 32),
+                                                  ],
+                                                  for (int i = 0; i < tree.children.length; i++) ...[
+                                                    if (i > 0) const SizedBox(width: 32),
+                                                    _buildChildBranchColumn(
+                                                      context: context,
+                                                      child: tree.children[i],
+                                                      isWide: isWide,
+                                                      currentMemberId: currentMemberId,
+                                                      currentUserName: currentUserName,
+                                                      activeBranchId: activeBranchId,
+                                                      rootTree: tree,
+                                                    ),
+                                                  ],
+                                                ],
+                                              ),
+                                            ],
+                                          );
+                                        },
                                       ),
                                     ],
                                   ],
@@ -1228,6 +1284,174 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // 1.1 Cột Thành Viên Chi Gốc (Đại Tôn) tiếp nối
+  Widget _buildRootSubMembersColumn({
+    required BuildContext context,
+    required List<BranchMemberItem> members,
+    required String branchId,
+    required bool isWide,
+  }) {
+    const kPrimaryColor = Color(0xFF8F482F);
+    const kBorderColor = Color(0xFFDAC1BA);
+    final isCollapsed = _collapsedBranchIds.contains('ROOT_SUBMEMBERS');
+
+    return SizedBox(
+      width: 320,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header card cho nhánh Chi Gốc (Đại Tôn)
+          Container(
+            width: 320,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: _selectedBranchId == branchId && _selectedMember == null
+                    ? kPrimaryColor
+                    : kBorderColor,
+                width: _selectedBranchId == branchId && _selectedMember == null ? 2 : 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: const Color(0xFFD4A017).withValues(alpha: 0.15),
+                        child: const Icon(Icons.account_balance, color: Color(0xFF8F482F), size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFD4A017).withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'CHI GỐC • ĐẠI TÔN',
+                                style: TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF8F482F),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Hậu Duệ Chi Gốc',
+                              style: TextStyle(
+                                fontFamily: 'Merriweather',
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF2B1810),
+                              ),
+                            ),
+                            Text(
+                              '${members.length} thành viên tiếp nối',
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                color: Color(0xFF755B53),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          isCollapsed ? Icons.add_circle_outline : Icons.remove_circle_outline,
+                          color: kPrimaryColor,
+                          size: 20,
+                        ),
+                        tooltip: isCollapsed ? 'Mở rộng' : 'Thu gọn',
+                        onPressed: () {
+                          setState(() {
+                            if (isCollapsed) {
+                              _collapsedBranchIds.remove('ROOT_SUBMEMBERS');
+                            } else {
+                              _collapsedBranchIds.add('ROOT_SUBMEMBERS');
+                            }
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      _selectedBranchId = branchId;
+                      _selectedMember = null;
+                      _isSidebarOpen = true;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: const BoxDecoration(
+                      border: Border(top: BorderSide(color: Color(0xFFF0EDEB))),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Xem bảng chi tiết chi',
+                          style: TextStyle(
+                            fontFamily: 'Plus Jakarta Sans',
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: kPrimaryColor,
+                          ),
+                        ),
+                        Icon(Icons.arrow_forward, size: 14, color: kPrimaryColor),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Danh sách thành viên Chi Gốc (Quản Trị Viên, Nguyễn Văn QA Role, Nguyễn Thị E2E Join, ...)
+          if (!isCollapsed && _isFullTreeExpanded) ...[
+            for (final member in members) ...[
+              Container(width: 2, height: 16, color: kPrimaryColor),
+              _buildSubGenerationCard(
+                generation: 'Đời ${member.generation}',
+                title: member.fullName,
+                subtitle: member.birthDeathInfo ?? (member.generation == 1 ? 'Khởi Tổ / Tiền Hiền' : 'Thành viên Chi Gốc'),
+                color: kPrimaryColor,
+                isSelected: _selectedMember?.memberId == member.memberId,
+                isHighlighted: _highlightedMemberId == member.memberId,
+                onTap: () {
+                  setState(() {
+                    _selectedMember = member;
+                    _selectedBranchId = branchId;
+                    _isSidebarOpen = true;
+                  });
+                },
+              ),
+            ],
+          ],
+        ],
       ),
     );
   }
