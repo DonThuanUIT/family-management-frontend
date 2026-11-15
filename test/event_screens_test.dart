@@ -1,4 +1,5 @@
 import 'package:familyfund_app/core/router/app_router.dart';
+import 'package:familyfund_app/core/security/rbac_models.dart';
 import 'package:familyfund_app/features/event/presentation/screens/event_list_screen.dart';
 import 'package:familyfund_app/features/event/presentation/widgets/create_event_sheet.dart';
 import 'package:familyfund_app/features/shared/presentation/widgets/heritage_nav_bar.dart';
@@ -232,4 +233,62 @@ void main() {
     expect(find.byType(Dialog), findsOneWidget);
     expect(find.byType(CreateEventSheet), findsOneWidget);
   });
+
+  testWidgets(
+      'EventListScreen and EventDetailDialog hide admin/operation actions for plain ROLE_MEMBER',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          initialLocationProvider.overrideWithValue('/events'),
+          dualRbacSessionProvider.overrideWith(_MemberOnlyRbacNotifier.new),
+        ],
+        child: const FamilyFundApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Mobile FAB & Tạo Lễ Mới must be hidden for regular ROLE_MEMBER
+    expect(find.byType(FloatingActionButton), findsNothing);
+    expect(find.text('Tạo Lễ Mới'), findsNothing);
+    expect(find.byTooltip('Chỉ định nhân sự BTC'), findsNothing);
+    expect(find.text('Chuyển Bước →'), findsNothing);
+
+    // Desktop viewport check too
+    tester.view.physicalSize = const Size(1440, 900);
+    await tester.pumpAndSettle();
+    expect(find.text('Tạo Lễ Mới'), findsNothing);
+    expect(find.byTooltip('Chỉ định nhân sự BTC'), findsNothing);
+    expect(find.text('Chuyển Bước →'), findsNothing);
+
+    // Open EventDetailDialog and ensure Phân công & Đổi Lịch Trình are hidden
+    await tester.tap(find.text('Đại Lễ Giỗ Tiền Tổ & Thượng Điền'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Phân công'), findsNothing);
+    expect(find.text('Đổi Lịch Trình'), findsNothing);
+    expect(find.text('Thông Báo (US-22)'), findsOneWidget);
+  });
+}
+
+class _MemberOnlyRbacNotifier extends DualRbacSessionNotifier {
+  @override
+  DualRbacSession build() {
+    return const DualRbacSession(
+      accountId: 'ACC_MEMBER',
+      memberId: 'MEM_MAI_ANH',
+      fullName: 'Nguyễn Thị Mai Anh',
+      branchName: 'Chi 2 - Nhánh Giáp',
+      managedBranchId: '',
+      globalRoles: {SystemRole.roleMember},
+      eventRolesByEventId: {},
+      activePortalMode: PortalWorkspaceMode.memberPortal,
+    );
+  }
 }

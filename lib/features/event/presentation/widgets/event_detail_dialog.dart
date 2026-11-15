@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/security/rbac_models.dart';
 import '../../../../core/widgets/adaptive_modal.dart';
 import '../../data/models/event_models.dart';
 import 'assign_personnel_dialog.dart';
@@ -8,13 +10,13 @@ import 'edit_event_sheet.dart';
 import 'event_notifications_dialog.dart';
 import 'event_registration_section.dart';
 
-class EventDetailDialog extends StatelessWidget {
+class EventDetailDialog extends ConsumerWidget {
   final EventModel event;
 
   const EventDetailDialog({super.key, required this.event});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Container(
@@ -100,19 +102,23 @@ class EventDetailDialog extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  TextButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      showDialog(
-                        context: context,
-                        builder: (_) => AssignPersonnelDialog(event: event),
-                      );
-                    },
-                    icon: const Icon(Icons.person_add_alt_1, size: 14),
-                    label: const Text('Phân công',
-                        style: TextStyle(fontSize: 11.5)),
-                  ),
+                  if (ref
+                      .watch(dualRbacSessionProvider)
+                      .canManageEventLifecycleAndPersonnel) ...[
+                    const SizedBox(width: 8),
+                    TextButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        showDialog(
+                          context: context,
+                          builder: (_) => AssignPersonnelDialog(event: event),
+                        );
+                      },
+                      icon: const Icon(Icons.person_add_alt_1, size: 14),
+                      label: const Text('Phân công',
+                          style: TextStyle(fontSize: 11.5)),
+                    ),
+                  ],
                 ],
               ),
               const SizedBox(height: 8),
@@ -274,27 +280,33 @@ class EventDetailDialog extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        showAdaptiveSheetOrDialog(
-                          context: context,
-                          maxDesktopWidth: 680,
-                          builder: (_) => EditEventSheet(event: event),
-                        );
-                      },
-                      icon: const Icon(Icons.edit_calendar, size: 16),
-                      label: const Text('Đổi Lịch Trình',
-                          style: TextStyle(fontSize: 11)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF7A1518),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 10),
+                  if (!event.isClosed &&
+                      ref.watch(dualRbacSessionProvider).canOperateEvent(
+                            personnel: event.personnel,
+                            eventId: event.eventId,
+                          )) ...[
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          showAdaptiveSheetOrDialog(
+                            context: context,
+                            maxDesktopWidth: 680,
+                            builder: (_) => EditEventSheet(event: event),
+                          );
+                        },
+                        icon: const Icon(Icons.edit_calendar, size: 16),
+                        label: const Text('Đổi Lịch Trình',
+                            style: TextStyle(fontSize: 11)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF7A1518),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ],

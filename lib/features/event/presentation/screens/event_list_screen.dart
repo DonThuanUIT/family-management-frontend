@@ -159,6 +159,8 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
   @override
   Widget build(BuildContext context) {
     final eventState = ref.watch(eventListProvider);
+    final rbacSession = ref.watch(dualRbacSessionProvider);
+    final canCreateEvent = rbacSession.canManageEventLifecycleAndPersonnel;
     final isDesktop = isDesktopViewport(context);
     const clanName = 'Vũ Tộc Tiên Lạc';
 
@@ -192,7 +194,11 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
                     padding: EdgeInsets.symmetric(
                       horizontal: isDesktop ? 24 : 16,
                     ),
-                    child: _buildActionAndFilterBar(eventState, isDesktop),
+                    child: _buildActionAndFilterBar(
+                      eventState,
+                      isDesktop,
+                      canCreateEvent: canCreateEvent,
+                    ),
                   ),
 
                   SizedBox(height: isDesktop ? 20 : 14),
@@ -202,7 +208,11 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
                     padding: EdgeInsets.symmetric(
                       horizontal: isDesktop ? 24 : 16,
                     ),
-                    child: _buildEventsContent(eventState, isDesktop),
+                    child: _buildEventsContent(
+                      eventState,
+                      isDesktop,
+                      rbacSession,
+                    ),
                   ),
 
                   SizedBox(height: isDesktop ? 24 : 18),
@@ -220,7 +230,7 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
           ),
         ),
       ),
-      floatingActionButton: isDesktop
+      floatingActionButton: (isDesktop || !canCreateEvent)
           ? null
           : FloatingActionButton.extended(
               onPressed: _openCreateEventSheet,
@@ -613,7 +623,11 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
     );
   }
 
-  Widget _buildActionAndFilterBar(EventListState eventState, bool isDesktop) {
+  Widget _buildActionAndFilterBar(
+    EventListState eventState,
+    bool isDesktop, {
+    required bool canCreateEvent,
+  }) {
     final searchField = TextField(
       controller: _searchController,
       onChanged: (val) =>
@@ -711,8 +725,10 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
                 Expanded(flex: 4, child: searchField),
                 const SizedBox(width: 16),
                 Expanded(flex: 5, child: filterTabs),
-                const SizedBox(width: 12),
-                createBtn,
+                if (canCreateEvent) ...[
+                  const SizedBox(width: 12),
+                  createBtn,
+                ],
               ],
             )
           : Column(
@@ -721,8 +737,10 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
                 Row(
                   children: [
                     Expanded(child: searchField),
-                    const SizedBox(width: 8),
-                    createBtn,
+                    if (canCreateEvent) ...[
+                      const SizedBox(width: 8),
+                      createBtn,
+                    ],
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -732,7 +750,11 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
     );
   }
 
-  Widget _buildEventsContent(EventListState eventState, bool isDesktop) {
+  Widget _buildEventsContent(
+    EventListState eventState,
+    bool isDesktop,
+    DualRbacSession rbacSession,
+  ) {
     if (eventState.isLoading) {
       return const Center(
         child: Padding(
@@ -766,11 +788,18 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
     }
 
     Widget buildCard(EventModel event) {
+      final canAssign = rbacSession.canManageEventLifecycleAndPersonnel;
+      final canOperate = rbacSession.canOperateEvent(
+        personnel: event.personnel,
+        eventId: event.eventId,
+      );
       return EventCard(
         event: event,
         onTap: () => _openEventDetail(event),
         onAssignPersonnel: () => _openAssignPersonnel(event),
         onChangeStatus: () => _showStatusTransitionDialog(event),
+        canAssignPersonnel: canAssign,
+        canChangeStatus: canOperate,
       );
     }
 

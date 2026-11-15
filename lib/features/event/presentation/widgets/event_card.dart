@@ -8,6 +8,8 @@ class EventCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onAssignPersonnel;
   final VoidCallback onChangeStatus;
+  final bool canAssignPersonnel;
+  final bool canChangeStatus;
 
   const EventCard({
     super.key,
@@ -15,6 +17,8 @@ class EventCard extends StatelessWidget {
     required this.onTap,
     required this.onAssignPersonnel,
     required this.onChangeStatus,
+    this.canAssignPersonnel = true,
+    this.canChangeStatus = true,
   });
 
   @override
@@ -307,42 +311,46 @@ class EventCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      tooltip: 'Chỉ định nhân sự BTC',
-                      onPressed: onAssignPersonnel,
-                      icon: const Icon(Icons.group_outlined, size: 18),
-                      color: const Color(0xFF5C4A42),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        side: const BorderSide(color: Color(0xFFD4C8BE)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: onChangeStatus,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF7A1518),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          elevation: 0,
+                    if (canAssignPersonnel) ...[
+                      const SizedBox(width: 8),
+                      IconButton(
+                        tooltip: 'Chỉ định nhân sự BTC',
+                        onPressed: onAssignPersonnel,
+                        icon: const Icon(Icons.group_outlined, size: 18),
+                        color: const Color(0xFF5C4A42),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          side: const BorderSide(color: Color(0xFFD4C8BE)),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        child: Text(
-                          isClosed ? 'Xem Sổ Bộ' : 'Chuyển Bước →',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+                      ),
+                    ],
+                    if (canChangeStatus || isClosed) ...[
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: onChangeStatus,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF7A1518),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: Text(
+                            isClosed ? 'Xem Sổ Bộ' : 'Chuyển Bước →',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
