@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -64,7 +64,7 @@ class _BankReconciliationScreenState
                         ),
                       ),
                       Text(
-                        'US-50: Thủ quỹ đối soát với sao kê ngân hàng & đính kèm ảnh',
+                        'Thủ quỹ đối soát với sao kê ngân hàng & đính kèm ảnh',
                         style: TextStyle(fontSize: 11, color: Color(0xFF6B584E)),
                       ),
                     ],
@@ -326,7 +326,7 @@ class _BankReconciliationScreenState
                                   ),
                                 ),
                                 Text(
-                                  'US-50: Đối soát khoản chuyển khoản với sao kê và đính kèm ảnh biên lai',
+                                  'Đối soát khoản chuyển khoản với sao kê và đính kèm ảnh biên lai',
                                   style: TextStyle(
                                     fontFamily: 'Plus Jakarta Sans',
                                     fontSize: 12,

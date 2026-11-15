@@ -277,7 +277,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               _showTransferDialog(rootTree, initialBranchId: detail.id);
             },
             icon: const Icon(Icons.swap_horiz, size: 16),
-            label: const Text('Điều Chuyển Nhánh (US-28)'),
+            label: const Text('Điều Chuyển Nhánh'),
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF8F482F),
               side: const BorderSide(color: Color(0xFF8F482F)),
@@ -736,68 +736,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               ),
                               const SizedBox(height: 12),
 
-                              // Dòng 2: [US-23] Demo Bar: Kiểm thử phân quyền phạm vi chi nhánh (Branch Scope Guard)
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: kBorderColor),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.02),
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.security, size: 18, color: kPrimaryColor),
-                                    const SizedBox(width: 8),
-                                    const Text(
-                                      'GIẢ LẬP VAI TRÒ (US-23):',
-                                      style: TextStyle(
-                                        fontFamily: 'JetBrains Mono',
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: kPrimaryColor,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: SingleChildScrollView(
-                                        scrollDirection: Axis.horizontal,
-                                        child: Row(
-                                          children: [
-                                            _buildPersonaChip(
-                                              ref: ref,
-                                              label: 'Trưởng Tộc (Toàn quyền)',
-                                              personaKey: 'CLAN_HEAD',
-                                              isSelected: session.isClanHead,
-                                            ),
-                                            const SizedBox(width: 8),
-                                            _buildPersonaChip(
-                                              ref: ref,
-                                              label: 'Trưởng Chi 2 (Chỉ quản lý Chi 2)',
-                                              personaKey: 'BRANCH_HEAD_CHI_2',
-                                              isSelected: session.isBranchHead && !session.isClanHead,
-                                            ),
-                                            const SizedBox(width: 8),
-                                            _buildPersonaChip(
-                                              ref: ref,
-                                              label: 'Thành Viên (Chỉ xem)',
-                                              personaKey: 'MEMBER',
-                                              isSelected: !session.isClanHead && !session.isBranchHead,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 12),
 
                               // Dòng 3: THANH TÌM KIẾM THÀNH VIÊN VÀ ĐIỀU CHUYỂN
                               Row(
@@ -807,7 +745,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       controller: _searchController,
                                       onChanged: _onSearchChanged,
                                       decoration: InputDecoration(
-                                        hintText: 'Tìm kiếm thành viên theo tên, mã thành viên, đời thứ (US-30)...',
+                                        hintText: 'Tìm kiếm thành viên theo tên, mã thành viên, đời thứ...',
                                         hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
                                         prefixIcon: _isSearching
                                             ? const Padding(
@@ -860,7 +798,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   ElevatedButton.icon(
                                     onPressed: () => _showTransferDialog(tree),
                                     icon: const Icon(Icons.swap_horiz, size: 16),
-                                    label: const Text('Điều Chuyển (US-28)'),
+                                    label: const Text('Điều Chuyển'),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: kPrimaryColor,
                                       foregroundColor: Colors.white,
@@ -1566,7 +1504,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     IconButton(
                       icon: const Icon(Icons.swap_horiz, size: 17, color: kPrimaryColor),
                       onPressed: onTransfer,
-                      tooltip: 'Điều chuyển nhánh (US-28)',
+                      tooltip: 'Điều chuyển nhánh',
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),
@@ -1705,53 +1643,4 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  /// [US-23] Widget Chip chuyển đổi Persona giả lập vai trò trên cây gia phả
-  Widget _buildPersonaChip({
-    required WidgetRef ref,
-    required String label,
-    required String personaKey,
-    required bool isSelected,
-  }) {
-    return InkWell(
-      onTap: () {
-        ref.read(dualRbacSessionProvider.notifier).simulatePersona(personaKey);
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.badge_outlined, color: Colors.white, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text('Đã chuyển vai trò giả lập sang: $label'),
-                ),
-              ],
-            ),
-            backgroundColor: const Color(0xFF8F482F),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      },
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF8F482F) : const Color(0xFFF0EDEB),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF8F482F) : const Color(0xFFDAC1BA),
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Plus Jakarta Sans',
-            fontSize: 11,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            color: isSelected ? Colors.white : const Color(0xFF54433E),
-          ),
-        ),
-      ),
-    );
-  }
 }

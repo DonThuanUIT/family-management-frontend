@@ -237,7 +237,7 @@ class _TransferNodeDialogState extends ConsumerState<TransferNodeDialog> {
                           ),
                         ),
                         Text(
-                          'US-28: Chuyển một thành viên hoặc cả nhánh sang nhánh cha khác',
+                          'Chuyển một thành viên hoặc cả nhánh sang nhánh cha khác',
                           style: TextStyle(
                             fontFamily: 'Plus Jakarta Sans',
                             fontSize: 11.5,

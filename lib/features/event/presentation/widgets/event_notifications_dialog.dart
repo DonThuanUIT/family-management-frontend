@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/event_providers.dart';
@@ -49,7 +49,7 @@ class EventNotificationsDialog extends ConsumerWidget {
                         ),
                       ),
                       Text(
-                        'Lịch sử phát tin đến bà con dòng họ (US-22)',
+                        'Lịch sử phát tin đến bà con dòng họ',
                         style: TextStyle(
                           fontSize: 11,
                           color: Color(0xFF8A7A70),

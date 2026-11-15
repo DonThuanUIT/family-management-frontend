@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -154,7 +154,7 @@ class _EditEventSheetState extends ConsumerState<EditEventSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(success
-              ? 'Đã cập nhật sự kiện thành công! Nếu có thay đổi lịch trình, thông báo đã được phát (US-22).'
+              ? 'Đã cập nhật sự kiện thành công! Nếu có thay đổi lịch trình, thông báo đã được phát.'
               : 'Lỗi khi cập nhật sự kiện!'),
           backgroundColor:
               success ? const Color(0xFF1B5E20) : Colors.red,
@@ -224,7 +224,7 @@ class _EditEventSheetState extends ConsumerState<EditEventSheet> {
                           ),
                         ),
                         Text(
-                          'API PUT /api/v1/events/{id} • Tự động phát thông báo khi đổi ngày/giờ/địa điểm (US-22)',
+                          'Tự động phát thông báo khi đổi ngày/giờ/địa điểm',
                           style: TextStyle(
                             fontSize: 11,
                             color: Color(0xFF7A6A60),
@@ -412,7 +412,7 @@ class _EditEventSheetState extends ConsumerState<EditEventSheet> {
                         ),
                       )
                     : const Text(
-                        'Lưu Cập Nhật & Phát Thông Báo (US-22)',
+                        'Lưu Cập Nhật & Phát Thông Báo',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,

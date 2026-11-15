@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -414,7 +414,7 @@ class _TaskBudgetBreakdownSectionState
                       },
                       icon: const Icon(Icons.arrow_forward, size: 14),
                       label: const Text(
-                        'Xem chi tiết công việc (US-07)',
+                        'Xem chi tiết công việc',
                         style: TextStyle(
                           fontFamily: 'Be Vietnam Pro',
                           fontSize: 11,

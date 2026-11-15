@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -144,7 +144,7 @@ class EventBudgetDashboardScreen extends ConsumerWidget {
             },
             icon: const Icon(Icons.assignment_outlined, size: 16),
             label: const Text(
-              'Quản Lý Phiếu Chi (US-07)',
+              'Quản Lý Phiếu Chi',
               style: TextStyle(
                 fontFamily: 'Be Vietnam Pro',
                 fontSize: 12.5,

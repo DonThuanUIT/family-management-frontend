@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -893,7 +893,7 @@ class _ClanAssetInventoryScreenState
               OutlinedButton.icon(
                 onPressed: () => _showAssetAuditModal(asset),
                 icon: const Icon(Icons.edit_calendar, size: 16),
-                label: const Text('Kiểm Kê (US-52)'),
+                label: const Text('Kiểm Kê Hiện Trạng'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF006E2A),
                   side: const BorderSide(color: Color(0xFF006E2A)),
@@ -1063,7 +1063,7 @@ class _ClanAssetInventoryScreenState
               ElevatedButton.icon(
                 onPressed: () => _showClosureCheckModal(context),
                 icon: const Icon(Icons.verified_outlined, size: 16),
-                label: const Text('Kiểm Tra Chốt Sự Kiện (US-51)'),
+                label: const Text('Kiểm Tra Chốt Sự Kiện'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF8B1E1E),
                   foregroundColor: Colors.white,
@@ -2388,7 +2388,7 @@ class _ClanAssetInventoryScreenState
                         ),
                       ),
                       Text(
-                        'US-52: Dành cho Trưởng tộc & Thủ quỹ cập nhật hiện trạng',
+                        'Dành cho Trưởng tộc & Thủ quỹ cập nhật hiện trạng',
                         style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
                       ),
                     ],
@@ -2682,7 +2682,7 @@ class _ClanAssetInventoryScreenState
                       Text(
                         check.warningMessage.isNotEmpty
                             ? check.warningMessage
-                            : 'Theo quy định US-51: Trước khi kết thúc đại lễ dòng họ, toàn bộ đồ lễ cúng tiến phải được chốt rõ hướng xử lý (Tiêu hao cỗ bàn, Hoàn trả gia chủ, hoặc Nhập kho từ đường).',
+                            : 'Theo quy định: Trước khi kết thúc đại lễ dòng họ, toàn bộ đồ lễ cúng tiến phải được chốt rõ hướng xử lý (Tiêu hao cỗ bàn, Hoàn trả gia chủ, hoặc Nhập kho từ đường).',
                         style: const TextStyle(fontSize: 12.5, color: Color(0xFF54433E), height: 1.4),
                       ),
                     ],

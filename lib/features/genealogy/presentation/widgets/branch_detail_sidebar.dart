@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -263,7 +263,7 @@ class _BranchDetailSidebarState extends ConsumerState<BranchDetailSidebar> {
                   SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Phạm vi chỉ đọc: Bạn đang xem chi nhánh ngoài phạm vi phụ trách. Các nút Thêm, Sửa, Điều chuyển đã tự động bị khóa theo phân quyền (US-23).',
+                      'Phạm vi chỉ đọc: Bạn đang xem chi nhánh ngoài phạm vi phụ trách. Các nút Thêm, Sửa, Điều chuyển đã tự động bị khóa theo phân quyền.',
                       style: TextStyle(
                         fontFamily: 'Plus Jakarta Sans',
                         fontSize: 11.5,
@@ -1347,7 +1347,7 @@ class _BranchDetailSidebarState extends ConsumerState<BranchDetailSidebar> {
                                 size: 17,
                                 color: Color(0xFF8F482F),
                               ),
-                              tooltip: 'Ghi nhận sinh / tử (US-27)',
+                              tooltip: 'Ghi nhận sinh / tử',
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                               onPressed: () async {

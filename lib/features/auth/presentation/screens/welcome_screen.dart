@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -242,25 +242,6 @@ class WelcomeScreen extends ConsumerWidget {
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 20),
-                  OutlinedButton.icon(
-                    onPressed: () => context.go('/contributions'),
-                    icon: const Icon(Icons.account_balance_wallet, color: Color(0xFF2E8B43)),
-                    label: const Text(
-                      'Vào Thẳng Bàn Tiếp Nhận & Kho Bảo Vật (#71, #74)',
-                      style: TextStyle(
-                        color: Color(0xFF2E8B43),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFF2E8B43), width: 1.5),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
                   ),
                   const SizedBox(height: 28),
 

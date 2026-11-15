@@ -210,7 +210,7 @@ class _OnlineContributionScreenState
                             ),
                           ),
                           Text(
-                            'US-53: Dành cho con cháu ở xa dâng lễ & nhận phiếu thu điện tử tự động',
+                            'Dành cho con cháu ở xa dâng lễ & nhận phiếu thu điện tử tự động',
                             style: TextStyle(
                               fontFamily: 'Plus Jakarta Sans',
                               fontSize: 12.5,
