@@ -226,6 +226,38 @@ class DualRbacSession {
     return false;
   }
 
+  /// Quyền khởi tạo sự kiện mới hoặc chỉ định nhân sự BTC/Thủ quỹ sự kiện:
+  /// Chỉ Trưởng tộc (`ROLE_CLAN_HEAD`) hoặc Quản trị hệ thống (`ROLE_ADMIN`).
+  bool get canManageEventLifecycleAndPersonnel => isAdmin || isClanHead;
+
+  /// Kiểm tra người dùng có quyền điều hành sự kiện (Cập nhật lịch trình, chuyển trạng thái vòng đời) hay không.
+  /// Ràng buộc: Trưởng tộc (`ROLE_CLAN_HEAD`), Quản trị hệ thống (`ROLE_ADMIN`), hoặc Trưởng BTC (`HeadOfOrganizer`).
+  bool canOperateEvent({
+    List<dynamic>? personnel,
+    String? eventId,
+  }) {
+    if (isAdmin || isClanHead) return true;
+    if (eventId != null && eventRolesByEventId.containsKey(eventId)) {
+      final ctx = eventRolesByEventId[eventId]!;
+      if (!ctx.isEffectiveReadOnly &&
+          ctx.role == EventContextualRole.headOfOrganizer) {
+        return true;
+      }
+    }
+    if (personnel != null) {
+      for (final p in personnel) {
+        final pMemberId = p is Map ? p['memberId'] : (p.memberId as String?);
+        final pRole = p is Map ? p['eventRole'] : (p.eventRole as String?);
+        final pReadOnly =
+            p is Map ? p['isReadOnly'] == true : (p.isReadOnly == true);
+        if (pMemberId == memberId && !pReadOnly && pRole == 'HeadOfOrganizer') {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   DualRbacSession copyWith({
     String? accountId,
     String? memberId,
