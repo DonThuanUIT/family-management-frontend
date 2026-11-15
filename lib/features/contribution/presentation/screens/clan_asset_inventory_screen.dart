@@ -2550,6 +2550,19 @@ class _ClanAssetInventoryScreenState
     );
   }
 
+  Widget _buildAssetAuditHistoryRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2.5),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF6B584E))),
+          Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2B1810))),
+        ],
+      ),
+    );
+  }
+
   // Xem lịch sử kiểm kê tài sản (US-52, Task #184)
   void _showAssetAuditHistoryModal(ClanAssetDto asset) {
     showDialog(
@@ -2579,25 +2592,84 @@ class _ClanAssetInventoryScreenState
                 error: (e, _) => Center(child: Text('Lỗi tải lịch sử kiểm kê: $e', style: const TextStyle(color: Colors.red))),
                 data: (audits) {
                   if (audits.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Center(
-                        child: Text('Chưa có ghi chép kiểm kê nào cho bảo vật này.'),
+                    return Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFDFBF7),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFE8DFD8)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Row(
+                                  children: [
+                                    Icon(Icons.inventory_2_outlined, color: Color(0xFF8B1E1E), size: 18),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Hồ sơ khởi tạo bảo vật ban đầu',
+                                      style: TextStyle(
+                                        fontFamily: 'Plus Jakarta Sans',
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF2B1810),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const Divider(height: 16),
+                                _buildAssetAuditHistoryRow('Số lượng bàn giao ban đầu:', '${asset.quantity} ${asset.unit}'),
+                                _buildAssetAuditHistoryRow('Tình trạng tiếp nhận:', 'Nguyên vẹn (Good)'),
+                                _buildAssetAuditHistoryRow('Vị trí lưu kho:', asset.storageLocation),
+                                _buildAssetAuditHistoryRow(
+                                  'Ngày tiếp nhận vào kho:',
+                                  DateFormat('dd/MM/yyyy HH:mm').format(asset.createdAt),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          const Text(
+                            'Bảo vật chưa có đợt kiểm kê hiện trạng định kỳ nào phát sinh.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 12, color: Color(0xFF755B53)),
+                          ),
+                          const SizedBox(height: 14),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.of(ctx).pop();
+                              _showAssetAuditModal(asset);
+                            },
+                            icon: const Icon(Icons.edit_calendar, size: 16),
+                            label: const Text('Tiến Hành Kiểm Kê Hiện Trạng Ngay'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF006E2A),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   }
                   return ListView.separated(
                     shrinkWrap: true,
                     itemCount: audits.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    separatorBuilder: (_, _) => const Divider(height: 1),
                     itemBuilder: (_, i) {
                       final a = audits[i];
                       final dateStr = a.auditDate != null ? DateFormat('dd/MM/yyyy HH:mm').format(a.auditDate!) : 'Gần đây';
                       return ListTile(
                         dense: true,
                         leading: CircleAvatar(
-                          backgroundColor: const Color(0xFF8B1E1E).withValues(alpha: 0.1),
-                          child: const Icon(Icons.checklist, color: Color(0xFF8B1E1E), size: 18),
+                          backgroundColor: const Color(0xFF006E2A).withValues(alpha: 0.1),
+                          child: const Icon(Icons.verified, color: Color(0xFF006E2A), size: 18),
                         ),
                         title: Text('SL thực tế: ${a.actualQuantity} • Tình trạng: ${a.conditionStatus}', style: const TextStyle(fontWeight: FontWeight.bold)),
                         subtitle: Text('Ngày: $dateStr\nVị trí: ${a.storageLocation ?? 'Chưa rõ'}${a.notes != null ? ' • Ghi chú: ${a.notes}' : ''}'),

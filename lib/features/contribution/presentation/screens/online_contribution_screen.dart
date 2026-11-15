@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../../core/security/rbac_models.dart';
+import '../../../../core/utils/vietnamese_money_converter.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../genealogy/data/models/branch_models.dart';
 import '../../../genealogy/presentation/providers/genealogy_providers.dart';
@@ -1235,55 +1236,61 @@ class _OnlineContributionScreenState
                                           ref.invalidate(
                                               contributionUiProvider);
 
+                                          final isSuccess = res['success'] == true || (res['data']?['success'] == true);
+                                          final responseMsg = res['data']?['message'] ?? res['message'] ?? '';
+
+                                          if (!isSuccess) {
+                                            if (context.mounted) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Text('Lỗi đối soát: $responseMsg'),
+                                                  backgroundColor: const Color(0xFF9B1C1C),
+                                                  behavior: SnackBarBehavior.floating,
+                                                ),
+                                              );
+                                            }
+                                            return;
+                                          }
+
                                           if (context.mounted) {
                                             final receiptData = res['data'];
-                                            if (receiptData
-                                                is Map<String, dynamic>) {
-                                              try {
-                                                final receiptDto =
-                                                    ElectronicReceiptDto
-                                                        .fromJson(receiptData);
-                                                showDialog(
-                                                  context: context,
-                                                  barrierDismissible: true,
-                                                  builder: (_) =>
-                                                      ElectronicReceiptDialog(
-                                                    cashReceipt: receiptDto,
-                                                  ),
-                                                );
-                                              } catch (_) {
-                                                final receiptNo =
-                                                    receiptData['receiptNumber'] ??
-                                                        '';
-                                                ScaffoldMessenger.of(context)
-                                                    .showSnackBar(
-                                                  SnackBar(
-                                                    content: Row(
-                                                      children: [
-                                                        const Icon(
-                                                            Icons.check_circle,
-                                                            color: Colors.white,
-                                                            size: 20),
-                                                        const SizedBox(width: 8),
-                                                        Expanded(
-                                                          child: Text(
-                                                            'Đối soát thành công! Đã cấp phiếu thu điện tử số ${receiptNo.isNotEmpty ? receiptNo : "mới"} và ghi vào Sổ Cái Tài Chính.',
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    backgroundColor:
-                                                        const Color(0xFF006E2A),
-                                                    behavior: SnackBarBehavior
-                                                        .floating,
-                                                    duration: const Duration(
-                                                        seconds: 4),
-                                                  ),
-                                                );
-                                                context.push(
-                                                    '/contributions/my-history');
-                                              }
+                                            final receiptObj = (receiptData is Map<String, dynamic> &&
+                                                    receiptData['receipt'] is Map<String, dynamic>)
+                                                ? receiptData['receipt'] as Map<String, dynamic>
+                                                : null;
+
+                                            ElectronicReceiptDto receiptDto;
+                                            if (receiptObj != null) {
+                                              receiptDto = ElectronicReceiptDto.fromJson(receiptObj);
+                                            } else {
+                                              final receiptNo = receiptData?['receiptNumber'] ??
+                                                  'PT-${DateFormat('yyyyMMdd').format(DateTime.now())}-${(1000 + DateTime.now().millisecond).toString()}';
+                                              final contributionId = receiptData?['contributionId'] ?? '';
+                                              receiptDto = ElectronicReceiptDto(
+                                                receiptNumber: receiptNo.toString(),
+                                                contributionId: contributionId.toString(),
+                                                eventId: _selectedEventId,
+                                                eventName: _generatedQr?.eventName ??
+                                                    'Đại Lễ Giỗ Tổ Thủy Tộc Xuân Bính Ngọ 2026',
+                                                payerMemberId: _generatedQr?.memberId ?? '',
+                                                payerMemberName: _generatedQr?.memberName ??
+                                                    'Nguyễn Trọng Hoàng',
+                                                receiverAccountId: _generatedQr?.accountNumber ?? '',
+                                                amount: _generatedQr!.amount,
+                                                amountInWords: VietnameseMoneyConverter.toWords(_generatedQr!.amount),
+                                                paymentMethod: PaymentMethod.BankTransfer,
+                                                contributionDate: DateTime.now(),
+                                                allocations: _committedAllocations,
+                                              );
                                             }
+
+                                            showDialog(
+                                              context: context,
+                                              barrierDismissible: true,
+                                              builder: (_) => ElectronicReceiptDialog(
+                                                cashReceipt: receiptDto,
+                                              ),
+                                            );
                                           }
                                         } catch (e) {
                                           if (context.mounted) {

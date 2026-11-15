@@ -267,6 +267,7 @@ class ContributionUiNotifier extends Notifier<ContributionUiState> {
         notes: notes,
       ),
     );
+    ref.invalidate(clanAssetAuditsProvider(assetId));
     await fetchFromBackend();
   }
 
