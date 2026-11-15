@@ -156,7 +156,7 @@ class _RejectJoinRequestDialogState extends ConsumerState<RejectJoinRequestDialo
                       SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Theo quy chuẩn AC-06: Khi từ chối, tài khoản tạm của ứng viên sẽ bị vô hiệu hóa an toàn và lý do sẽ được lưu vào biên bản kiểm toán.',
+                          'Khi từ chối, tài khoản tạm của ứng viên sẽ bị vô hiệu hóa an toàn và lý do sẽ được lưu vào biên bản kiểm toán.',
                           style: TextStyle(
                             fontSize: 12,
                             color: Color(0xFF93000A),
