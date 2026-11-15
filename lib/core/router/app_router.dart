@@ -26,6 +26,7 @@ import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/invitation/presentation/screens/clan_invites_screen.dart';
 import '../../features/invitation/presentation/screens/join_requests_management_screen.dart';
 import '../../features/member_media/presentation/screens/member_detail_screen.dart';
+import '../../features/notification/presentation/screens/notification_center_screen.dart';
 import '../../features/role/presentation/screens/role_management_screen.dart';
 import '../../features/task/presentation/screens/event_task_list_screen.dart';
 
@@ -276,6 +277,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final branchId = state.uri.queryParameters['branchId'];
           return JoinRequestsManagementScreen(initialBranchId: branchId);
         },
+      ),
+
+      // 20. Trung Tâm Thông Báo & Cảnh Báo Tiến Độ (US-08 & US-39)
+      GoRoute(
+        path: '/notifications',
+        name: 'notifications',
+        builder: (context, state) => const NotificationCenterScreen(),
       ),
     ],
   );
