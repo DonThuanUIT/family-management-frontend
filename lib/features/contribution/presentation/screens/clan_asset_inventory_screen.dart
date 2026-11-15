@@ -2428,18 +2428,52 @@ class _ClanAssetInventoryScreenState
                     TextField(
                       controller: qtyCtrl,
                       keyboardType: TextInputType.number,
+                      onChanged: (_) => setModalState(() {}),
                       decoration: InputDecoration(
                         suffixText: asset.unit,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       ),
                     ),
+                    Builder(builder: (_) {
+                      final currentVal = int.tryParse(qtyCtrl.text.trim()) ?? asset.quantity;
+                      if (currentVal < asset.quantity) {
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.trending_down, color: Color(0xFFBA1A1A), size: 16),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Hao hụt giảm ${asset.quantity - currentVal} ${asset.unit} so với ban đầu (${asset.quantity} ${asset.unit})',
+                                style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFFBA1A1A)),
+                              ),
+                            ],
+                          ),
+                        );
+                      } else if (currentVal > asset.quantity) {
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.trending_up, color: Color(0xFF006E2A), size: 16),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Tăng thêm ${currentVal - asset.quantity} ${asset.unit} so với ban đầu (${asset.quantity} ${asset.unit})',
+                                style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF006E2A)),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    }),
                     const SizedBox(height: 14),
 
                     const Text('Tình trạng hiện vật *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     const SizedBox(height: 6),
                     DropdownButtonFormField<String>(
-                      value: condition,
+                      initialValue: condition,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -2452,7 +2486,16 @@ class _ClanAssetInventoryScreenState
                         DropdownMenuItem(value: 'Thanh lý (Liquidated)', child: Text('Đề xuất thanh lý (Liquidated)')),
                       ],
                       onChanged: (val) {
-                        if (val != null) setModalState(() => condition = val);
+                        if (val != null) {
+                          setModalState(() {
+                            condition = val;
+                            if (val.contains('Lost') || val.contains('Liquidated')) {
+                              qtyCtrl.text = '0';
+                            } else if (qtyCtrl.text == '0' && asset.quantity > 0) {
+                              qtyCtrl.text = asset.quantity.toString();
+                            }
+                          });
+                        }
                       },
                     ),
                     const SizedBox(height: 14),
@@ -2500,6 +2543,14 @@ class _ClanAssetInventoryScreenState
                         final parsedQty = int.tryParse(qtyCtrl.text.trim());
                         if (parsedQty == null || parsedQty < 0) {
                           setModalState(() => errorText = 'Số lượng kiểm đếm không hợp lệ');
+                          return;
+                        }
+
+                        if ((condition.contains('Lost') || condition.contains('Liquidated')) &&
+                            parsedQty >= asset.quantity &&
+                            asset.quantity > 0) {
+                          setModalState(() => errorText =
+                              'Đang chọn "$condition", số lượng kiểm đếm thực tế phải giảm bớt so với định mức ban đầu (${asset.quantity} ${asset.unit})');
                           return;
                         }
 

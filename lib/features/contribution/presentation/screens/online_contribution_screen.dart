@@ -1189,151 +1189,271 @@ class _OnlineContributionScreenState
                         ),
                         const SizedBox(height: 18),
 
-                        // Khối xác nhận & đối soát tự động
+                        // Hướng dẫn Webhook tự động trong sản xuất & Giả lập môi trường Test
                         Container(
-                          padding: const EdgeInsets.all(14),
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF0FDF4),
+                            color: const Color(0xFFF9F7F5),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFF86EFAC)),
+                            border: Border.all(color: const Color(0xFFE6DFD8)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              const Row(
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Icon(Icons.info_outline,
-                                      color: Color(0xFF15803D), size: 18),
-                                  SizedBox(width: 8),
+                                  const Icon(Icons.bolt,
+                                      color: Color(0xFF006E2A), size: 20),
+                                  const SizedBox(width: 8),
                                   Expanded(
-                                    child: Text(
-                                      'Sau khi chuyển khoản thành công qua App ngân hàng, hệ thống cổng Napas/Webhook sẽ tự động đối soát. Bạn cũng có thể bấm xác nhận bên dưới để hoàn tất cấp phiếu thu ngay tức thì.',
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          color: Color(0xFF166534),
-                                          height: 1.4),
+                                    child: RichText(
+                                      text: const TextSpan(
+                                        style: TextStyle(
+                                            fontFamily: 'Plus Jakarta Sans',
+                                            fontSize: 12.5,
+                                            color: Color(0xFF2B1810),
+                                            height: 1.4),
+                                        children: [
+                                          TextSpan(
+                                            text: 'Cơ chế tự động thực tế: ',
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: Color(0xFF006E2A)),
+                                          ),
+                                          TextSpan(
+                                            text:
+                                                'Khi bạn quét mã QR và chuyển khoản thành công qua App ngân hàng, cổng Napas/VietQR sẽ tự động bắn Webhook ngầm đến máy chủ để khớp lệnh và cấp phiếu thu ngay tức thì mà không cần bấm xác nhận.',
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 12),
-                              ElevatedButton.icon(
-                                onPressed: _isVerifyingPayment
-                                    ? null
-                                    : () async {
-                                        setState(
-                                            () => _isVerifyingPayment = true);
-                                        try {
-                                          final repo = ref.read(
-                                              contributionRepositoryProvider);
-                                          final res = await repo
-                                              .simulatePaymentWebhook(
-                                            amount: _generatedQr!.amount,
-                                            content:
-                                                _generatedQr!.transferContent,
-                                            allocations: _committedAllocations,
-                                          );
-                                          ref.invalidate(
-                                              contributionUiProvider);
-
-                                          final isSuccess = res['success'] == true || (res['data']?['success'] == true);
-                                          final responseMsg = res['data']?['message'] ?? res['message'] ?? '';
-
-                                          if (!isSuccess) {
-                                            if (context.mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(
-                                                  content: Text('Lỗi đối soát: $responseMsg'),
-                                                  backgroundColor: const Color(0xFF9B1C1C),
-                                                  behavior: SnackBarBehavior.floating,
-                                                ),
-                                              );
-                                            }
-                                            return;
-                                          }
-
-                                          if (context.mounted) {
-                                            final receiptData = res['data'];
-                                            final receiptObj = (receiptData is Map<String, dynamic> &&
-                                                    receiptData['receipt'] is Map<String, dynamic>)
-                                                ? receiptData['receipt'] as Map<String, dynamic>
-                                                : null;
-
-                                            ElectronicReceiptDto receiptDto;
-                                            if (receiptObj != null) {
-                                              receiptDto = ElectronicReceiptDto.fromJson(receiptObj);
-                                            } else {
-                                              final receiptNo = receiptData?['receiptNumber'] ??
-                                                  'PT-${DateFormat('yyyyMMdd').format(DateTime.now())}-${(1000 + DateTime.now().millisecond).toString()}';
-                                              final contributionId = receiptData?['contributionId'] ?? '';
-                                              receiptDto = ElectronicReceiptDto(
-                                                receiptNumber: receiptNo.toString(),
-                                                contributionId: contributionId.toString(),
-                                                eventId: _selectedEventId,
-                                                eventName: _generatedQr?.eventName ??
-                                                    'Đại Lễ Giỗ Tổ Thủy Tộc Xuân Bính Ngọ 2026',
-                                                payerMemberId: _generatedQr?.memberId ?? '',
-                                                payerMemberName: _generatedQr?.memberName ??
-                                                    'Nguyễn Trọng Hoàng',
-                                                receiverAccountId: _generatedQr?.accountNumber ?? '',
-                                                amount: _generatedQr!.amount,
-                                                amountInWords: VietnameseMoneyConverter.toWords(_generatedQr!.amount),
-                                                paymentMethod: PaymentMethod.BankTransfer,
-                                                contributionDate: DateTime.now(),
-                                                allocations: _committedAllocations,
-                                              );
-                                            }
-
-                                            showDialog(
-                                              context: context,
-                                              barrierDismissible: true,
-                                              builder: (_) => ElectronicReceiptDialog(
-                                                cashReceipt: receiptDto,
-                                              ),
-                                            );
-                                          }
-                                        } catch (e) {
-                                          if (context.mounted) {
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                    'Lỗi khi đối soát chuyển khoản: $e'),
-                                                backgroundColor:
-                                                    const Color(0xFF9B1C1C),
-                                                behavior:
-                                                    SnackBarBehavior.floating,
-                                              ),
-                                            );
-                                          }
-                                        } finally {
-                                          if (mounted) {
-                                            setState(() =>
-                                                _isVerifyingPayment = false);
-                                          }
-                                        }
-                                      },
-                                icon: _isVerifyingPayment
-                                    ? const SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: Colors.white),
-                                      )
-                                    : const Icon(Icons.verified, size: 18),
-                                label: Text(
-                                  _isVerifyingPayment
-                                      ? 'Đang đối soát hệ thống...'
-                                      : 'Xác Nhận Đã Chuyển Khoản & Cấp Phiếu Thu',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold),
+                              const Divider(height: 20),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFFBEB),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                      color: const Color(0xFFFDE68A)),
                                 ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF006E2A),
-                                  foregroundColor: Colors.white,
-                                  minimumSize: const Size.fromHeight(46),
-                                  elevation: 1,
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    const Row(
+                                      children: [
+                                        Icon(Icons.science,
+                                            color: Color(0xFFB45309), size: 18),
+                                        SizedBox(width: 6),
+                                        Text(
+                                          'Công Cụ Giả Lập Webhook (Dành Cho Dev / Localhost)',
+                                          style: TextStyle(
+                                            fontFamily: 'Plus Jakarta Sans',
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFFB45309),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    const Text(
+                                      'Do máy chủ đang chạy localhost chưa mở tunnel đón Webhook thật từ ngân hàng, bạn có thể bấm nút dưới đây để giả lập tín hiệu ngân hàng báo về backend để test quy trình cấp phiếu thu.',
+                                      style: TextStyle(
+                                          fontSize: 11.5,
+                                          color: Color(0xFF92400E),
+                                          height: 1.35),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    ElevatedButton.icon(
+                                      onPressed: _isVerifyingPayment
+                                          ? null
+                                          : () async {
+                                              setState(() =>
+                                                  _isVerifyingPayment = true);
+                                              try {
+                                                final repo = ref.read(
+                                                    contributionRepositoryProvider);
+                                                final res = await repo
+                                                    .simulatePaymentWebhook(
+                                                  amount: _generatedQr!.amount,
+                                                  content: _generatedQr!
+                                                      .transferContent,
+                                                  allocations:
+                                                      _committedAllocations,
+                                                );
+                                                ref.invalidate(
+                                                    contributionUiProvider);
+
+                                                final isSuccess =
+                                                    res['success'] == true ||
+                                                        (res['data']?['success'] ==
+                                                            true);
+                                                final responseMsg =
+                                                    res['data']?['message'] ??
+                                                        res['message'] ??
+                                                        '';
+
+                                                if (!isSuccess) {
+                                                  if (context.mounted) {
+                                                    ScaffoldMessenger.of(context)
+                                                        .showSnackBar(
+                                                      SnackBar(
+                                                        content: Text(
+                                                            'Lỗi đối soát: $responseMsg'),
+                                                        backgroundColor:
+                                                            const Color(
+                                                                0xFF9B1C1C),
+                                                        behavior:
+                                                            SnackBarBehavior
+                                                                .floating,
+                                                      ),
+                                                    );
+                                                  }
+                                                  return;
+                                                }
+
+                                                if (context.mounted) {
+                                                  final receiptData =
+                                                      res['data'];
+                                                  final receiptObj =
+                                                      (receiptData
+                                                                  is Map<
+                                                                      String,
+                                                                      dynamic> &&
+                                                              receiptData[
+                                                                      'receipt']
+                                                                  is Map<
+                                                                      String,
+                                                                      dynamic>)
+                                                          ? receiptData['receipt']
+                                                              as Map<String,
+                                                                  dynamic>
+                                                          : null;
+
+                                                  ElectronicReceiptDto
+                                                      receiptDto;
+                                                  if (receiptObj != null) {
+                                                    receiptDto =
+                                                        ElectronicReceiptDto
+                                                            .fromJson(
+                                                                receiptObj);
+                                                  } else {
+                                                    final receiptNo =
+                                                        receiptData?[
+                                                                'receiptNumber'] ??
+                                                            'PT-${DateFormat('yyyyMMdd').format(DateTime.now())}-${(1000 + DateTime.now().millisecond).toString()}';
+                                                    final contributionId =
+                                                        receiptData?[
+                                                                'contributionId'] ??
+                                                            '';
+                                                    receiptDto =
+                                                        ElectronicReceiptDto(
+                                                      receiptNumber:
+                                                          receiptNo.toString(),
+                                                      contributionId:
+                                                          contributionId
+                                                              .toString(),
+                                                      eventId: _selectedEventId,
+                                                      eventName: _generatedQr
+                                                              ?.eventName ??
+                                                          'Đại Lễ Giỗ Tổ Thủy Tộc Xuân Bính Ngọ 2026',
+                                                      payerMemberId:
+                                                          _generatedQr
+                                                                  ?.memberId ??
+                                                              '',
+                                                      payerMemberName:
+                                                          _generatedQr
+                                                                  ?.memberName ??
+                                                              'Nguyễn Trọng Hoàng',
+                                                      receiverAccountId:
+                                                          _generatedQr
+                                                                  ?.accountNumber ??
+                                                              '',
+                                                      amount:
+                                                          _generatedQr!.amount,
+                                                      amountInWords:
+                                                          VietnameseMoneyConverter
+                                                              .toWords(
+                                                                  _generatedQr!
+                                                                      .amount),
+                                                      paymentMethod:
+                                                          PaymentMethod
+                                                              .BankTransfer,
+                                                      contributionDate:
+                                                          DateTime.now(),
+                                                      allocations:
+                                                          _committedAllocations,
+                                                    );
+                                                  }
+
+                                                  showDialog(
+                                                    context: context,
+                                                    barrierDismissible: true,
+                                                    builder: (_) =>
+                                                        ElectronicReceiptDialog(
+                                                      cashReceipt: receiptDto,
+                                                    ),
+                                                  );
+                                                }
+                                              } catch (e) {
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                          'Lỗi khi đối soát chuyển khoản: $e'),
+                                                      backgroundColor:
+                                                          const Color(
+                                                              0xFF9B1C1C),
+                                                      behavior:
+                                                          SnackBarBehavior
+                                                              .floating,
+                                                    ),
+                                                  );
+                                                }
+                                              } finally {
+                                                if (mounted) {
+                                                  setState(() =>
+                                                      _isVerifyingPayment =
+                                                          false);
+                                                }
+                                              }
+                                            },
+                                      icon: _isVerifyingPayment
+                                          ? const SizedBox(
+                                              width: 16,
+                                              height: 16,
+                                              child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  color: Colors.white),
+                                            )
+                                          : const Icon(Icons.science, size: 16),
+                                      label: Text(
+                                        _isVerifyingPayment
+                                            ? 'Đang giả lập đối soát webhook...'
+                                            : '🧪 Giả Lập Webhook Ngân Hàng Xác Nhận (Dev Test)',
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            const Color(0xFF006E2A),
+                                        foregroundColor: Colors.white,
+                                        minimumSize:
+                                            const Size.fromHeight(44),
+                                        elevation: 1,
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8)),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
