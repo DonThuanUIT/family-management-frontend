@@ -709,3 +709,135 @@ class EventPendingInKindCheckResponseDto {
   }
 }
 
+/// DTO Thông tin tài khoản ngân hàng dòng họ (Multi-tenant Clan Banking Info)
+class ClanBankingInfoDto {
+  final String clanId;
+  final String? clanName;
+  final String bankBin;
+  final String? bankName;
+  final String bankAccountNumber;
+  final String bankAccountName;
+  final String qrTemplate;
+
+  const ClanBankingInfoDto({
+    required this.clanId,
+    this.clanName,
+    required this.bankBin,
+    this.bankName,
+    required this.bankAccountNumber,
+    required this.bankAccountName,
+    required this.qrTemplate,
+  });
+
+  factory ClanBankingInfoDto.fromJson(Map<String, dynamic> json) {
+    return ClanBankingInfoDto(
+      clanId: (json['clanId'] ?? '') as String,
+      clanName: json['clanName'] as String?,
+      bankBin: (json['bankBin'] ?? '') as String,
+      bankName: json['bankName'] as String?,
+      bankAccountNumber: (json['bankAccountNumber'] ?? '') as String,
+      bankAccountName: (json['bankAccountName'] ?? '') as String,
+      qrTemplate: (json['qrTemplate'] ?? 'compact2') as String,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'bankBin': bankBin,
+      'bankAccountNumber': bankAccountNumber,
+      'bankAccountName': bankAccountName,
+      'qrTemplate': qrTemplate,
+    };
+  }
+}
+
+/// DTO Đóng góp đệ quy của chi nhánh (US-11 & US-49)
+class BranchRecursiveContributionDto {
+  final String branchId;
+  final String branchName;
+  final int? generationLevel;
+  final String? parentBranchId;
+  final String? representativeId;
+  final String? representativeName;
+  final String? eventId;
+  final String? eventName;
+  final int? year;
+  final int directMemberCount;
+  final int totalRecursiveMemberCount;
+  final int directContributingMemberCount;
+  final int totalRecursiveContributingMemberCount;
+  final int directContributionCount;
+  final double directCashAmount;
+  final double directInKindAmount;
+  final double directTotalAmount;
+  final double descendantsCashAmount;
+  final double descendantsInKindAmount;
+  final double descendantsTotalAmount;
+  final double totalRecursiveCashAmount;
+  final double totalRecursiveInKindAmount;
+  final double totalRecursiveAmount;
+  final String? totalRecursiveAmountInWords;
+  final List<BranchRecursiveContributionDto> childBranches;
+
+  const BranchRecursiveContributionDto({
+    required this.branchId,
+    required this.branchName,
+    this.generationLevel,
+    this.parentBranchId,
+    this.representativeId,
+    this.representativeName,
+    this.eventId,
+    this.eventName,
+    this.year,
+    required this.directMemberCount,
+    required this.totalRecursiveMemberCount,
+    required this.directContributingMemberCount,
+    required this.totalRecursiveContributingMemberCount,
+    required this.directContributionCount,
+    required this.directCashAmount,
+    required this.directInKindAmount,
+    required this.directTotalAmount,
+    required this.descendantsCashAmount,
+    required this.descendantsInKindAmount,
+    required this.descendantsTotalAmount,
+    required this.totalRecursiveCashAmount,
+    required this.totalRecursiveInKindAmount,
+    required this.totalRecursiveAmount,
+    this.totalRecursiveAmountInWords,
+    this.childBranches = const [],
+  });
+
+  factory BranchRecursiveContributionDto.fromJson(Map<String, dynamic> json) {
+    return BranchRecursiveContributionDto(
+      branchId: (json['branchId'] ?? '') as String,
+      branchName: (json['branchName'] ?? '') as String,
+      generationLevel: json['generationLevel'] as int?,
+      parentBranchId: json['parentBranchId'] as String?,
+      representativeId: json['representativeId'] as String?,
+      representativeName: json['representativeName'] as String?,
+      eventId: json['eventId'] as String?,
+      eventName: json['eventName'] as String?,
+      year: json['year'] as int?,
+      directMemberCount: ((json['directMemberCount'] ?? 0) as num).toInt(),
+      totalRecursiveMemberCount: ((json['totalRecursiveMemberCount'] ?? 0) as num).toInt(),
+      directContributingMemberCount: ((json['directContributingMemberCount'] ?? 0) as num).toInt(),
+      totalRecursiveContributingMemberCount: ((json['totalRecursiveContributingMemberCount'] ?? 0) as num).toInt(),
+      directContributionCount: ((json['directContributionCount'] ?? 0) as num).toInt(),
+      directCashAmount: ((json['directCashAmount'] ?? 0) as num).toDouble(),
+      directInKindAmount: ((json['directInKindAmount'] ?? 0) as num).toDouble(),
+      directTotalAmount: ((json['directTotalAmount'] ?? 0) as num).toDouble(),
+      descendantsCashAmount: ((json['descendantsCashAmount'] ?? 0) as num).toDouble(),
+      descendantsInKindAmount: ((json['descendantsInKindAmount'] ?? 0) as num).toDouble(),
+      descendantsTotalAmount: ((json['descendantsTotalAmount'] ?? 0) as num).toDouble(),
+      totalRecursiveCashAmount: ((json['totalRecursiveCashAmount'] ?? 0) as num).toDouble(),
+      totalRecursiveInKindAmount: ((json['totalRecursiveInKindAmount'] ?? 0) as num).toDouble(),
+      totalRecursiveAmount: ((json['totalRecursiveAmount'] ?? 0) as num).toDouble(),
+      totalRecursiveAmountInWords: json['totalRecursiveAmountInWords'] as String?,
+      childBranches: (json['childBranches'] as List<dynamic>?)
+              ?.map((c) => BranchRecursiveContributionDto.fromJson(c as Map<String, dynamic>))
+              .toList() ??
+          const [],
+    );
+  }
+}
+

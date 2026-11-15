@@ -72,6 +72,14 @@ abstract class ContributionRemoteDataSource {
   Future<VietQrResponseDto> generateVietQr(GenerateVietQrRequestDto request);
 
   Future<EventPendingInKindCheckResponseDto> checkPendingInKindContributions(String eventId);
+
+  Future<ClanBankingInfoDto> getClanBankingInfo();
+
+  Future<BranchRecursiveContributionDto> getBranchRecursiveContributionSummary(
+    String branchId, {
+    String? eventId,
+    int? year,
+  });
 }
 
 class ContributionRemoteDataSourceImpl implements ContributionRemoteDataSource {
@@ -319,6 +327,34 @@ class ContributionRemoteDataSourceImpl implements ContributionRemoteDataSource {
     final response = await _dio.get('contributions/in-kind/events/$eventId/pending-check');
     final data = response.data['data'] as Map<String, dynamic>;
     return EventPendingInKindCheckResponseDto.fromJson(data);
+  }
+
+  @override
+  Future<ClanBankingInfoDto> getClanBankingInfo() async {
+    final response = await _dio.get('clans/banking-info');
+    final data = response.data['data'] as Map<String, dynamic>;
+    return ClanBankingInfoDto.fromJson(data);
+  }
+
+  @override
+  Future<BranchRecursiveContributionDto> getBranchRecursiveContributionSummary(
+    String branchId, {
+    String? eventId,
+    int? year,
+  }) async {
+    final queryParams = <String, dynamic>{};
+    if (eventId != null && eventId.isNotEmpty) {
+      queryParams['eventId'] = eventId;
+    }
+    if (year != null) {
+      queryParams['year'] = year;
+    }
+    final response = await _dio.get(
+      'contributions/branches/$branchId/recursive-summary',
+      queryParameters: queryParams,
+    );
+    final data = response.data['data'] as Map<String, dynamic>;
+    return BranchRecursiveContributionDto.fromJson(data);
   }
 }
 

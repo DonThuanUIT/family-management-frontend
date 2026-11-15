@@ -68,4 +68,12 @@ abstract class ContributionRepository {
   Future<VietQrResponseDto> generateVietQr(GenerateVietQrRequestDto request);
 
   Future<EventPendingInKindCheckResponseDto> checkPendingInKindContributions(String eventId);
+
+  Future<ClanBankingInfoDto> getClanBankingInfo();
+
+  Future<BranchRecursiveContributionDto> getBranchRecursiveContributionSummary(
+    String branchId, {
+    String? eventId,
+    int? year,
+  });
 }

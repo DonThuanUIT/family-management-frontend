@@ -157,9 +157,29 @@ final genealogyMemberListProvider = FutureProvider<List<BranchMemberItem>>((ref)
 });
 
 /// State quản lý tìm kiếm thành viên thông minh trên cây phả hệ (US-30, Task #112)
-final memberSearchQueryProvider = StateProvider<String>((ref) => '');
-final memberSearchGenerationProvider = StateProvider<int?>((ref) => null);
-final memberSearchBranchIdProvider = StateProvider<String?>((ref) => null);
+class MemberSearchQueryNotifier extends Notifier<String> {
+  @override
+  String build() => '';
+  void set(String val) => state = val;
+}
+final memberSearchQueryProvider =
+    NotifierProvider<MemberSearchQueryNotifier, String>(MemberSearchQueryNotifier.new);
+
+class MemberSearchGenerationNotifier extends Notifier<int?> {
+  @override
+  int? build() => null;
+  void set(int? val) => state = val;
+}
+final memberSearchGenerationProvider =
+    NotifierProvider<MemberSearchGenerationNotifier, int?>(MemberSearchGenerationNotifier.new);
+
+class MemberSearchBranchIdNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+  void set(String? val) => state = val;
+}
+final memberSearchBranchIdProvider =
+    NotifierProvider<MemberSearchBranchIdNotifier, String?>(MemberSearchBranchIdNotifier.new);
 
 final memberSearchResultsProvider = FutureProvider<List<MemberSearchDto>>((ref) async {
   final query = ref.watch(memberSearchQueryProvider);

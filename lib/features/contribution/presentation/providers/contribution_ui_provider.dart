@@ -324,3 +324,15 @@ final eventPendingInKindCheckProvider = FutureProvider.family<EventPendingInKind
   final repo = ref.watch(contributionRepositoryProvider);
   return repo.checkPendingInKindContributions(eventId);
 });
+
+/// Provider Thông tin tài khoản ngân hàng dòng họ (Multi-tenant Clan Banking Info, US-53)
+final clanBankingInfoProvider = FutureProvider<ClanBankingInfoDto>((ref) async {
+  final repo = ref.watch(contributionRepositoryProvider);
+  return repo.getClanBankingInfo();
+});
+
+/// Provider Tổng đóng góp đệ quy của chi nhánh (US-11 & US-49)
+final branchRecursiveContributionSummaryProvider = FutureProvider.family<BranchRecursiveContributionDto, String>((ref, branchId) async {
+  final repo = ref.watch(contributionRepositoryProvider);
+  return repo.getBranchRecursiveContributionSummary(branchId);
+});

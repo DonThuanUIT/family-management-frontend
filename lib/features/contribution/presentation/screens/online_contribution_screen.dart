@@ -8,6 +8,7 @@ import '../../../../core/security/rbac_models.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../shared/presentation/widgets/heritage_nav_bar.dart';
 import '../../data/models/contribution_models.dart';
+import '../../data/repositories/contribution_repository_impl.dart';
 import '../../domain/repositories/contribution_repository.dart';
 import '../providers/contribution_ui_provider.dart';
 
@@ -72,8 +73,9 @@ class _OnlineContributionScreenState
     try {
       final authState = ref.read(authStateProvider);
       final session = ref.read(dualRbacSessionProvider);
-      final memberId = authState.user?.memberId.isNotEmpty == true
-          ? authState.user!.memberId
+      final userMemberId = authState.user?.memberId;
+      final memberId = (userMemberId != null && userMemberId.isNotEmpty)
+          ? userMemberId
           : session.memberId;
 
       final repo = ref.read(contributionRepositoryProvider);
@@ -170,6 +172,60 @@ class _OnlineContributionScreenState
                   ],
                 ),
                 const SizedBox(height: 24),
+
+                // Hiển thị tài khoản ngân hàng chính thức của Dòng họ (Multi-tenant Clan Banking Info)
+                ref.watch(clanBankingInfoProvider).when(
+                  data: (banking) => Container(
+                    margin: const EdgeInsets.only(bottom: 20),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFDFBF7),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFD4A017).withValues(alpha: 0.5)),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD4A017).withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.account_balance, color: Color(0xFF8B1E1E), size: 22),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'TÀI KHOẢN QUỸ DÒNG HỌ TIẾP NHẬN: ${banking.clanName ?? 'Gia tộc'}',
+                                style: const TextStyle(
+                                  fontFamily: 'Plus Jakarta Sans',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF8B1E1E),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${banking.bankName ?? 'Ngân hàng'} • STK: ${banking.bankAccountNumber} • Chủ TK: ${banking.bankAccountName}',
+                                style: const TextStyle(
+                                  fontFamily: 'Plus Jakarta Sans',
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF2B1810),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
+                ),
 
                 if (_generatedQr == null) ...[
                   // BƯỚC 1: NHẬP SỐ TIỀN & THÔNG TIN ĐÓNG GÓP

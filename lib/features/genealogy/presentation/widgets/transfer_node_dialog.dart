@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/branch_models.dart';
+import '../../data/repositories/genealogy_repository_impl.dart';
 import '../../domain/repositories/genealogy_repository.dart';
 import '../providers/genealogy_providers.dart';
 

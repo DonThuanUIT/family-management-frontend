@@ -10,6 +10,7 @@ import '../../../genealogy/presentation/providers/genealogy_providers.dart';
 import '../../../genealogy/presentation/widgets/branch_detail_sidebar.dart';
 import '../../../genealogy/presentation/widgets/transfer_node_dialog.dart';
 import '../../../genealogy/data/models/branch_models.dart';
+import '../../../genealogy/data/repositories/genealogy_repository_impl.dart';
 import '../../../genealogy/domain/repositories/genealogy_repository.dart';
 
 /// Họa sĩ vẽ nhánh chẽ chữ T chuẩn hình học phả hệ (pixel-perfect)

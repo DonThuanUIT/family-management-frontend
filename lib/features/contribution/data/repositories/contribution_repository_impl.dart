@@ -158,6 +158,24 @@ class ContributionRepositoryImpl implements ContributionRepository {
   Future<EventPendingInKindCheckResponseDto> checkPendingInKindContributions(String eventId) {
     return _remoteDataSource.checkPendingInKindContributions(eventId);
   }
+
+  @override
+  Future<ClanBankingInfoDto> getClanBankingInfo() {
+    return _remoteDataSource.getClanBankingInfo();
+  }
+
+  @override
+  Future<BranchRecursiveContributionDto> getBranchRecursiveContributionSummary(
+    String branchId, {
+    String? eventId,
+    int? year,
+  }) {
+    return _remoteDataSource.getBranchRecursiveContributionSummary(
+      branchId,
+      eventId: eventId,
+      year: year,
+    );
+  }
 }
 
 final contributionRepositoryProvider = Provider<ContributionRepository>((ref) {

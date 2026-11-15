@@ -8,6 +8,7 @@ import '../../../../core/security/rbac_models.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../shared/presentation/widgets/heritage_nav_bar.dart';
 import '../../data/models/contribution_models.dart';
+import '../../data/repositories/contribution_repository_impl.dart';
 import '../../domain/repositories/contribution_repository.dart';
 import '../providers/contribution_ui_provider.dart';
 import '../widgets/electronic_receipt_dialog.dart';
@@ -179,7 +180,7 @@ class _MyContributionHistoryScreenState
                               const SizedBox(width: 8),
                               Switch(
                                 value: _includeFamily,
-                                activeColor: kPrimaryColor,
+                                activeThumbColor: kPrimaryColor,
                                 onChanged: (val) {
                                   setState(() => _includeFamily = val);
                                 },
@@ -215,6 +216,49 @@ class _MyContributionHistoryScreenState
                         ),
                       ],
                     ),
+
+                    // Chi tiết phân rã đệ quy chi nhánh (US-11 & US-49: BranchContributionController)
+                    if (history.branchId != null && history.branchId!.isNotEmpty) ...[
+                      const SizedBox(height: 14),
+                      ref.watch(branchRecursiveContributionSummaryProvider(history.branchId!)).when(
+                        data: (branchSummary) => Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFFDF7),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFD4A017).withValues(alpha: 0.6)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.account_tree_outlined, color: Color(0xFF8B1E1E), size: 22),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text.rich(
+                                  TextSpan(
+                                    children: [
+                                      TextSpan(
+                                        text: 'Tổng đóng góp đệ quy toàn chi phái ${branchSummary.branchName}: ',
+                                        style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2B1810), fontSize: 13),
+                                      ),
+                                      TextSpan(
+                                        text: _currencyFormat.format(branchSummary.totalRecursiveAmount),
+                                        style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF8B1E1E), fontSize: 13.5),
+                                      ),
+                                      TextSpan(
+                                        text: ' (Trực tiếp chi phái: ${_currencyFormat.format(branchSummary.directTotalAmount)} • Các nhánh con: ${_currencyFormat.format(branchSummary.descendantsTotalAmount)})',
+                                        style: const TextStyle(color: Color(0xFF6B584E), fontSize: 12),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        loading: () => const SizedBox.shrink(),
+                        error: (_, __) => const SizedBox.shrink(),
+                      ),
+                    ],
                     const SizedBox(height: 28),
 
                     // Danh sách chi tiết các lần đóng góp
