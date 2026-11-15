@@ -503,7 +503,7 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                                       : const Color(0xFF54433E)),
                               const SizedBox(width: 10),
                               Text(
-                                'Trung Tâm Thông Báo (US-08)',
+                                'Trung Tâm Thông Báo',
                                 style: TextStyle(
                                   fontWeight: currentRoute == '/notifications'
                                       ? FontWeight.bold

@@ -186,7 +186,7 @@ class _NotificationCenterDialogState
                               size: 13, color: Color(0xFFB45309)),
                           const SizedBox(width: 4),
                           Text(
-                            'US-08: Tự động nhắc nhở trước hạn chót 24h',
+                            'Tự động nhắc nhở trước hạn chót 24h',
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
