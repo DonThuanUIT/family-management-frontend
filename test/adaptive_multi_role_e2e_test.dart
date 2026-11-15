@@ -429,21 +429,19 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Mobile hides showcase banner and renders demo picker without overflow
+      // Mobile hides showcase banner and renders login form without overflow
       expect(find.text('CỔNG ĐĂNG NHẬP GIA PHẢ'), findsNothing);
-      expect(find.text('Trưởng Tộc'), findsOneWidget);
-      expect(find.text('Trưởng Chi 2'), findsOneWidget);
-      expect(find.text('Thành Viên'), findsOneWidget);
+      expect(find.text('Đăng Nhập Gia Tộc'), findsOneWidget);
+      expect(find.text('Số điện thoại hoặc Email *'), findsOneWidget);
 
-      // Select Trưởng Chi 2 chip -> identifier changes to 0902345678
-      await tester.ensureVisible(find.text('Trưởng Chi 2'));
-      await tester.tap(find.text('Trưởng Chi 2'));
+      // Enter identifier 0902345678
+      final idField = find.byType(TextFormField).at(0);
+      await tester.enterText(idField, '0902345678');
       await tester.pumpAndSettle();
       expect(find.text('0902345678'), findsOneWidget);
 
-      // Select Thành Viên chip -> identifier changes to 0903888999
-      await tester.ensureVisible(find.text('Thành Viên'));
-      await tester.tap(find.text('Thành Viên'));
+      // Enter identifier 0903888999
+      await tester.enterText(idField, '0903888999');
       await tester.pumpAndSettle();
       expect(find.text('0903888999'), findsOneWidget);
 
@@ -475,7 +473,8 @@ void main() {
     Future<void> verifyLoginAndRbacFlow(
       WidgetTester tester, {
       required Size viewport,
-      required String roleChipLabel,
+      required String identifier,
+      required String password,
       required String expectedFullName,
       required bool expectClanHead,
       required bool expectCanManageRoot,
@@ -487,7 +486,7 @@ void main() {
 
       await tester.pumpWidget(
         ProviderScope(
-          key: ValueKey('${roleChipLabel}_${viewport.width.toInt()}'),
+          key: ValueKey('${identifier}_${viewport.width.toInt()}'),
           overrides: [
             initialLocationProvider.overrideWithValue('/login'),
             authRemoteDataSourceProvider.overrideWithValue(
@@ -518,10 +517,13 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // 1. Pick role & tap Login button
-      final chip = find.text(roleChipLabel);
-      await tester.ensureVisible(chip);
-      await tester.tap(chip);
+      // 1. Enter credentials & tap Login button
+      final idField = find.byType(TextFormField).at(0);
+      final passField = find.byType(TextFormField).at(1);
+      await tester.ensureVisible(idField);
+      await tester.enterText(idField, identifier);
+      await tester.ensureVisible(passField);
+      await tester.enterText(passField, password);
       await tester.pumpAndSettle();
 
       final loginBtn = find.text('Đăng Nhập Vào Dòng Họ');
@@ -531,7 +533,7 @@ void main() {
 
       // 2. Verify HomeScreen loaded with logged-in user
       expect(find.byType(HomeScreen), findsOneWidget);
-      if (roleChipLabel != 'Thành Viên') {
+      if (identifier != '0903888999') {
         expect(find.text(expectedFullName), findsWidgets);
       }
 
@@ -566,7 +568,8 @@ void main() {
       await verifyLoginAndRbacFlow(
         tester,
         viewport: const Size(1440, 900),
-        roleChipLabel: 'Trưởng Tộc',
+        identifier: '0901234567',
+        password: '123456',
         expectedFullName: 'Nguyễn Trọng Hoàng',
         expectClanHead: true,
         expectCanManageRoot: true,
@@ -576,7 +579,8 @@ void main() {
       await verifyLoginAndRbacFlow(
         tester,
         viewport: const Size(390, 844),
-        roleChipLabel: 'Trưởng Tộc',
+        identifier: '0901234567',
+        password: '123456',
         expectedFullName: 'Nguyễn Trọng Hoàng',
         expectClanHead: true,
         expectCanManageRoot: true,
@@ -589,7 +593,8 @@ void main() {
       await verifyLoginAndRbacFlow(
         tester,
         viewport: const Size(1440, 900),
-        roleChipLabel: 'Trưởng Chi 2',
+        identifier: '0902345678',
+        password: '123456',
         expectedFullName: 'Nguyễn Văn An',
         expectClanHead: false,
         expectCanManageRoot: false,
@@ -599,7 +604,8 @@ void main() {
       await verifyLoginAndRbacFlow(
         tester,
         viewport: const Size(390, 844),
-        roleChipLabel: 'Trưởng Chi 2',
+        identifier: '0902345678',
+        password: '123456',
         expectedFullName: 'Nguyễn Văn An',
         expectClanHead: false,
         expectCanManageRoot: false,
@@ -612,7 +618,8 @@ void main() {
       await verifyLoginAndRbacFlow(
         tester,
         viewport: const Size(1440, 900),
-        roleChipLabel: 'Thành Viên',
+        identifier: '0903888999',
+        password: '123456',
         expectedFullName: 'Nguyễn Thị Mai Anh',
         expectClanHead: false,
         expectCanManageRoot: false,
@@ -622,7 +629,8 @@ void main() {
       await verifyLoginAndRbacFlow(
         tester,
         viewport: const Size(390, 844),
-        roleChipLabel: 'Thành Viên',
+        identifier: '0903888999',
+        password: '123456',
         expectedFullName: 'Nguyễn Thị Mai Anh',
         expectClanHead: false,
         expectCanManageRoot: false,

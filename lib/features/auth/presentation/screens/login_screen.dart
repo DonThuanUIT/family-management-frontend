@@ -565,67 +565,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             ),
           ),
-
-          // Quick-pick demo accounts
-          const SizedBox(height: 16),
-          const Text(
-            'Chọn nhanh tài khoản kiểm thử (Mật khẩu chung: 123456):',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF6B584E),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            children: kDemoAccounts.map((demo) {
-              final isSelected =
-                  _identifierController.text == demo.identifier;
-              return ActionChip(
-                avatar: Icon(
-                  isSelected
-                      ? Icons.check_circle
-                      : Icons.account_circle_outlined,
-                  size: 16,
-                  color: isSelected
-                      ? Colors.white
-                      : const Color(0xFF7A1518),
-                ),
-                label: Text(
-                  demo.roleName,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: isSelected
-                        ? FontWeight.bold
-                        : FontWeight.w500,
-                    color: isSelected
-                        ? Colors.white
-                        : const Color(0xFF7A1518),
-                  ),
-                ),
-                backgroundColor: isSelected
-                    ? const Color(0xFF7A1518)
-                    : const Color(0xFFFAF6F0),
-                side: BorderSide(
-                  color: isSelected
-                      ? const Color(0xFF7A1518)
-                      : const Color(0xFFD6C8BF),
-                  width: 1.2,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                onPressed: () {
-                  setState(() {
-                    _identifierController.text = demo.identifier;
-                    _passwordController.text = demo.password;
-                  });
-                },
-              );
-            }).toList(),
-          ),
         ],
       ),
     );
