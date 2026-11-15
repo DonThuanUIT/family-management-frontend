@@ -19,6 +19,7 @@ import '../../features/contribution/presentation/screens/receive_contribution_sc
 import '../../features/event/presentation/screens/event_budget_dashboard_screen.dart';
 import '../../features/event/presentation/screens/event_list_screen.dart';
 import '../../features/event/presentation/screens/event_logistics_dashboard_screen.dart';
+import '../../features/finance/presentation/screens/overdue_advance_vouchers_screen.dart';
 import '../../features/genealogy/presentation/screens/edit_root_branch_screen.dart';
 import '../../features/genealogy/presentation/screens/member_import_screen.dart';
 import '../../features/genealogy/presentation/screens/privacy_settings_screen.dart';
@@ -207,7 +208,34 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               return EventBudgetDashboardScreen(eventId: eventId);
             },
           ),
+          // 10.4. Theo Dõi Tạm Ứng Quá Hạn Nộp Chứng Từ (US-48)
+          GoRoute(
+            path: ':eventId/advances/overdue',
+            name: 'event-overdue-advances',
+            builder: (context, state) {
+              final eventId = state.pathParameters['eventId'] ?? '';
+              final eventName = state.uri.queryParameters['eventName'];
+              return OverdueAdvanceVouchersScreen(
+                eventId: eventId,
+                eventName: eventName,
+              );
+            },
+          ),
         ],
+      ),
+
+      // Route theo dõi tạm ứng quá hạn tổng hợp toàn dòng họ (US-48)
+      GoRoute(
+        path: '/finance/overdue-advances',
+        name: 'finance-overdue-advances',
+        builder: (context, state) {
+          final eventId = state.uri.queryParameters['eventId'];
+          final eventName = state.uri.queryParameters['eventName'];
+          return OverdueAdvanceVouchersScreen(
+            eventId: eventId,
+            eventName: eventName,
+          );
+        },
       ),
 
       // 11. Phân hệ Quản lý Phân Quyền & Chức Sự Tác Nghiệp (US-03)

@@ -82,6 +82,21 @@ class FakeAdvanceVoucherRepository implements AdvanceVoucherRepository {
     vouchers[index] = updated;
     return updated;
   }
+
+  @override
+  Future<OverdueScanSummaryModel> scanOverdueVouchers() async {
+    return OverdueScanSummaryModel(
+      scannedCount: vouchers.length,
+      overdueTransitionedCount: 0,
+      notificationsSentCount: 0,
+      referenceTime: DateTime.now(),
+    );
+  }
+
+  @override
+  Future<void> sendSettlementReminder(
+    SendSettlementReminderRequestDto request,
+  ) async {}
 }
 
 void main() {
