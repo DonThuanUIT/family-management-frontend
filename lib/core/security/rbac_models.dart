@@ -258,6 +258,72 @@ class DualRbacSession {
     return false;
   }
 
+  /// [US-46] Kiểm tra quyền lập phiếu tạm ứng sự kiện (LapTamUngUI).
+  /// Ràng buộc: Sự kiện chưa Closed VÀ (là Quản trị viên, Trưởng tộc, hoặc giữ vai trò BTC: HeadOfOrganizer, OrganizerMember, EventTreasurer).
+  bool canCreateAdvanceVoucher({
+    required bool isClosed,
+    List<dynamic>? personnel,
+    String? eventId,
+  }) {
+    if (isClosed) return false;
+    if (isAdmin || isClanHead) return true;
+    if (eventId != null && eventRolesByEventId.containsKey(eventId)) {
+      final ctx = eventRolesByEventId[eventId]!;
+      if (!ctx.isEffectiveReadOnly &&
+          (ctx.role == EventContextualRole.headOfOrganizer ||
+              ctx.role == EventContextualRole.organizerMember ||
+              ctx.role == EventContextualRole.eventTreasurer)) {
+        return true;
+      }
+    }
+    if (personnel != null) {
+      for (final p in personnel) {
+        final pMemberId = p is Map ? p['memberId'] : (p.memberId as String?);
+        final pRole = p is Map ? p['eventRole'] : (p.eventRole as String?);
+        final pReadOnly =
+            p is Map ? p['isReadOnly'] == true : (p.isReadOnly == true);
+        if (pMemberId == memberId && !pReadOnly) {
+          if (pRole == 'HeadOfOrganizer' ||
+              pRole == 'OrganizerMember' ||
+              pRole == 'EventTreasurer') {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  /// [US-46] Kiểm tra quyền xác nhận đã giải ngân dành riêng cho Thủ quỹ sự kiện.
+  /// Ràng buộc: Sự kiện chưa Closed VÀ (là Quản trị viên, Trưởng tộc, hoặc giữ vai trò EventTreasurer).
+  bool canDisburseAdvanceVoucher({
+    required bool isClosed,
+    List<dynamic>? personnel,
+    String? eventId,
+  }) {
+    if (isClosed) return false;
+    if (isAdmin || isClanHead) return true;
+    if (eventId != null && eventRolesByEventId.containsKey(eventId)) {
+      final ctx = eventRolesByEventId[eventId]!;
+      if (!ctx.isEffectiveReadOnly &&
+          ctx.role == EventContextualRole.eventTreasurer) {
+        return true;
+      }
+    }
+    if (personnel != null) {
+      for (final p in personnel) {
+        final pMemberId = p is Map ? p['memberId'] : (p.memberId as String?);
+        final pRole = p is Map ? p['eventRole'] : (p.eventRole as String?);
+        final pReadOnly =
+            p is Map ? p['isReadOnly'] == true : (p.isReadOnly == true);
+        if (pMemberId == memberId && !pReadOnly && pRole == 'EventTreasurer') {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   DualRbacSession copyWith({
     String? accountId,
     String? memberId,

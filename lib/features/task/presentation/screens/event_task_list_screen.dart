@@ -740,7 +740,7 @@ class _EventTaskListScreenState extends ConsumerState<EventTaskListScreen> {
             crossAxisCount: crossAxisCount,
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
-            mainAxisExtent: 380,
+            mainAxisExtent: 410,
           ),
           itemCount: tasks.length,
           itemBuilder: (context, index) {
