@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -86,6 +87,8 @@ class _OnlineContributionScreenState
   ];
 
   bool _isVerifyingPayment = false;
+  Timer? _paymentCheckTimer;
+  DateTime? _qrGeneratedAt;
 
   @override
   void initState() {
@@ -95,12 +98,92 @@ class _OnlineContributionScreenState
 
   @override
   void dispose() {
+    _paymentCheckTimer?.cancel();
     _amountCtrl.dispose();
     _noteCtrl.dispose();
     for (final item in _groupAllocations) {
       item.dispose();
     }
     super.dispose();
+  }
+
+  void _stopAutoPaymentListener() {
+    _paymentCheckTimer?.cancel();
+    _paymentCheckTimer = null;
+  }
+
+  void _startAutoPaymentListener() {
+    _stopAutoPaymentListener();
+    _paymentCheckTimer =
+        Timer.periodic(const Duration(seconds: 4), (timer) async {
+      if (!mounted || _generatedQr == null) {
+        timer.cancel();
+        return;
+      }
+      try {
+        final repo = ref.read(contributionRepositoryProvider);
+        final receipts = await repo.getCashContributionsByEvent(
+            eventId: _selectedEventId);
+
+        ElectronicReceiptDto? matched;
+        for (final r in receipts) {
+          final isSameAmount =
+              (r.amount - _generatedQr!.amount).abs() < 1;
+          final isBankTransfer =
+              r.paymentMethod == PaymentMethod.BankTransfer;
+          final isRecent = _qrGeneratedAt == null ||
+              (r.contributionDate != null &&
+                  r.contributionDate!.isAfter(_qrGeneratedAt!
+                      .subtract(const Duration(seconds: 15))));
+
+          if (isSameAmount && isBankTransfer && isRecent) {
+            matched = r;
+            break;
+          }
+        }
+
+        if (matched != null && mounted) {
+          _stopAutoPaymentListener();
+          setState(() {
+            _generatedQr = null;
+          });
+          ref.invalidate(contributionUiProvider);
+
+          if (context.mounted) {
+            showDialog(
+              context: context,
+              barrierDismissible: true,
+              builder: (_) => ElectronicReceiptDialog(
+                cashReceipt: matched!,
+              ),
+            );
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Row(
+                  children: [
+                    Icon(Icons.check_circle,
+                        color: Colors.white, size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '🎉 Webhook Ngân Hàng đã tự động ghi nhận chuyển khoản thành công & cấp Phiếu thu!',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+                backgroundColor: Color(0xFF15803D),
+                behavior: SnackBarBehavior.floating,
+                duration: Duration(seconds: 5),
+              ),
+            );
+          }
+        }
+      } catch (_) {
+        // Bỏ qua lỗi kết nối nền tạm thời
+      }
+    });
   }
 
   void _initializeDefaultGroupAllocations(List<BranchMemberItem> members) {
@@ -284,7 +367,9 @@ class _OnlineContributionScreenState
           _generatedQr = qrResponse;
           _committedAllocations = allocationsToCommit;
           _isGenerating = false;
+          _qrGeneratedAt = DateTime.now();
         });
+        _startAutoPaymentListener();
       }
     } catch (e) {
       if (mounted) {
@@ -955,6 +1040,43 @@ class _OnlineContributionScreenState
                             ],
                           ),
                         ),
+                        const SizedBox(height: 14),
+
+                        // Banner tự động lắng nghe Webhook ngân hàng
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF0FDF4),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFF86EFAC)),
+                          ),
+                          child: const Row(
+                            children: [
+                              SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Color(0xFF16A34A)),
+                                ),
+                              ),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Cổng Webhook đang tự động chờ tín hiệu từ ngân hàng... Khi chuyển khoản thành công, phiếu thu sẽ tự động bật lên mà không cần bấm thủ công!',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF166534),
+                                    height: 1.3,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                         const SizedBox(height: 16),
 
                         // Khung mã VietQR chuẩn xác
@@ -1391,6 +1513,10 @@ class _OnlineContributionScreenState
                                                     );
                                                   }
 
+                                                  _stopAutoPaymentListener();
+                                                  setState(() =>
+                                                      _generatedQr = null);
+
                                                   showDialog(
                                                     context: context,
                                                     barrierDismissible: true,
@@ -1467,6 +1593,7 @@ class _OnlineContributionScreenState
                             Expanded(
                               child: OutlinedButton(
                                 onPressed: () {
+                                  _stopAutoPaymentListener();
                                   setState(() => _generatedQr = null);
                                 },
                                 style: OutlinedButton.styleFrom(

@@ -1884,144 +1884,372 @@ class _ClanAssetInventoryScreenState
   }
 
   void _showAssetQrDialog(ClanAssetDto asset) {
+    int selectedItemIndex = 1;
+    final totalItems = asset.quantity > 0 ? asset.quantity : 1;
+
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFFFFFDF9),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: Color(0xFFD4A017), width: 2),
-        ),
-        title: Row(
-          children: const [
-            Icon(Icons.qr_code_scanner, color: Color(0xFF8B1E1E), size: 22),
-            SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'TEM QR ĐỊNH DANH BẢO VẬT',
-                style: TextStyle(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF8B1E1E),
-                  letterSpacing: 0.5,
-                ),
-              ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          final isMultiple = totalItems > 1;
+          final itemTagCode = isMultiple
+              ? '${asset.assetId} - #${selectedItemIndex.toString().padLeft(2, '0')}'
+              : asset.assetId;
+
+          return AlertDialog(
+            backgroundColor: const Color(0xFFFFFDF9),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: Color(0xFFD4A017), width: 2),
             ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE6DFD8)),
-              ),
-              child: Column(
-                children: [
-                  const Icon(Icons.qr_code_2,
-                      size: 140, color: Color(0xFF8B1E1E)),
-                  const SizedBox(height: 8),
-                  InkWell(
-                    onTap: () {
-                      Clipboard.setData(ClipboardData(text: asset.assetId));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content:
-                              Text('Đã sao chép mã định danh: ${asset.assetId}'),
-                          duration: const Duration(seconds: 2),
-                          backgroundColor: const Color(0xFF8B1E1E),
-                        ),
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(6),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            asset.assetId,
-                            style: const TextStyle(
-                              fontFamily: 'monospace',
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14.5,
-                              color: Color(0xFF8B1E1E),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          const Icon(Icons.copy,
-                              size: 14, color: Color(0xFF8B1E1E)),
-                        ],
+            title: Row(
+              children: [
+                const Icon(Icons.qr_code_scanner,
+                    color: Color(0xFF8B1E1E), size: 22),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    isMultiple
+                        ? 'TEM QR ĐỊNH DANH TỪNG VẬT PHẨM'
+                        : 'TEM QR ĐỊNH DANH BẢO VẬT',
+                    style: const TextStyle(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF8B1E1E),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                if (isMultiple)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFF59E0B)),
+                    ),
+                    child: Text(
+                      'Bộ $totalItems vật phẩm',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFB45309),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    asset.assetName,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13.5,
-                      color: Color(0xFF2B1810),
+              ],
+            ),
+            content: SizedBox(
+              width: 440,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (isMultiple) ...[
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFBFDBFE)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.info_outline,
+                                size: 16, color: Color(0xFF1D4ED8)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Hiện vật này gồm $totalItems món vật lý riêng biệt. Mỗi món bắt buộc dán 1 tem decal QR độc lập (#1 đến #$totalItems) để thủ từ quét kiểm kê tại chỗ.',
+                                style: const TextStyle(
+                                    fontSize: 11.5,
+                                    color: Color(0xFF1E40AF),
+                                    height: 1.3),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Text(
+                        'CHỌN VẬT PHẨM XEM TRƯỚC TEM:',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF6B7280),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: List.generate(totalItems, (index) {
+                          final itemNum = index + 1;
+                          final isSelected = itemNum == selectedItemIndex;
+                          return InkWell(
+                            onTap: () {
+                              setDialogState(() {
+                                selectedItemIndex = itemNum;
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(6),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? const Color(0xFF8B1E1E)
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFFD1D5DB),
+                                  width: isSelected ? 1.5 : 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.label_important_outline,
+                                    size: 13,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : const Color(0xFF4B5563),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Vật phẩm #$itemNum',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.w500,
+                                      color: isSelected
+                                          ? Colors.white
+                                          : const Color(0xFF374151),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                            color: const Color(0xFFD4A017), width: 1.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            decoration: const BoxDecoration(
+                              border: Border(
+                                  bottom: BorderSide(color: Color(0xFFF3E8DF))),
+                            ),
+                            child: Row(
+                              mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'DÒNG HỌ NGUYỄN (ĐẠI TÔN)',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF8B1E1E),
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF5F0E8),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Text(
+                                    'TEM DECAL BẠC 50x30',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF78350F),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Icon(Icons.qr_code_2,
+                              size: 130, color: Color(0xFF8B1E1E)),
+                          const SizedBox(height: 6),
+                          InkWell(
+                            onTap: () {
+                              Clipboard.setData(
+                                  ClipboardData(text: itemTagCode));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      'Đã sao chép mã tem: $itemTagCode'),
+                                  duration: const Duration(seconds: 2),
+                                  backgroundColor: const Color(0xFF8B1E1E),
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(6),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    itemTagCode,
+                                    style: const TextStyle(
+                                      fontFamily: 'monospace',
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                      color: Color(0xFF8B1E1E),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  const Icon(Icons.copy,
+                                      size: 14, color: Color(0xFF8B1E1E)),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            asset.assetName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13.5,
+                              color: Color(0xFF2B1810),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          if (isMultiple) ...[
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFDF2F2),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                'Vật phẩm #$selectedItemIndex / $totalItems trong bộ',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF991B1B),
+                                ),
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 4),
+                          Text(
+                            'Vị trí: ${asset.storageLocation}',
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              color: Color(0xFF4A3B32),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Vị trí: ${asset.storageLocation}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF4A3B32), // Tương phản cao
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Tem mã QR decal bạc chống ẩm mốc (khổ tiêu chuẩn 50x30mm), dán trực tiếp tại đế hoặc khung hiện vật phục vụ công tác kiểm kê định kỳ.',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF334155),
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Tem mã QR decal bạc chống ẩm mốc (khổ tiêu chuẩn 50x30mm), dán trực tiếp tại đế hoặc khung hiện vật phục vụ công tác kiểm kê định kỳ.',
-              style: TextStyle(
-                fontSize: 11.5,
-                color: Color(0xFF334155), // WCAG AA compliant >= 4.5:1
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-        actions: [
-          OutlinedButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(0, 44),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-            ),
-            child: const Text('Đóng'),
-          ),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8B1E1E),
-              foregroundColor: Colors.white,
-              minimumSize: const Size(0, 44),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-            ),
-            icon: const Icon(Icons.print, size: 16),
-            label: const Text('In Tem QR (Khổ 50x30mm)'),
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                      'Đang gửi lệnh in tem QR cho "${asset.assetName}"...'),
-                  backgroundColor: const Color(0xFF8B1E1E),
+                  ],
                 ),
-              );
-            },
-          ),
-        ],
+              ),
+            ),
+            actions: [
+              OutlinedButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(0, 44),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+                child: const Text('Đóng'),
+              ),
+              if (isMultiple)
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                            'Đang gửi lệnh in lẻ tem #$selectedItemIndex cho "${asset.assetName}"...'),
+                        backgroundColor: const Color(0xFF8B1E1E),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.print_outlined, size: 16),
+                  label: Text('In Lẻ Tem #$selectedItemIndex'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF8B1E1E),
+                    side: const BorderSide(color: Color(0xFF8B1E1E)),
+                    minimumSize: const Size(0, 44),
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                  ),
+                ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF8B1E1E),
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(0, 44),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+                icon: const Icon(Icons.print, size: 16),
+                label: Text(isMultiple
+                    ? 'In Cả Bộ $totalItems Tem Decal'
+                    : 'In Tem QR (Khổ 50x30mm)'),
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isMultiple
+                            ? 'Đang gửi lệnh in trọn bộ $totalItems tem QR (mỗi tem dán 1 hiện vật) cho "${asset.assetName}"...'
+                            : 'Đang gửi lệnh in tem QR cho "${asset.assetName}"...',
+                      ),
+                      backgroundColor: const Color(0xFF8B1E1E),
+                    ),
+                  );
+                },
+              ),
+            ],
+          );
+        },
       ),
     );
   }
