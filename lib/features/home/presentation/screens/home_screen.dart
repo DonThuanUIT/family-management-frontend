@@ -1050,7 +1050,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   }),
                   onEdit: (selectedDetail.isRoot && isClanHead)
                       ? () => context.push('/branches/root/edit')
-                      : (!selectedDetail.isRoot && (isClanHead || (session.isBranchHead && session.branchId == selectedDetail.id)))
+                      : (!selectedDetail.isRoot && session.canManageBranch(branchId: selectedDetail.id))
                           ? () => _showTransferDialog(tree, initialBranchId: selectedDetail.id)
                           : null,
                 ),
