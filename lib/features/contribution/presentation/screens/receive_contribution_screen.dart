@@ -1,18 +1,24 @@
-﻿// ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use
 import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/security/rbac_models.dart';
 import '../../../../core/utils/vietnamese_money_converter.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../data/models/contribution_models.dart';
 import '../providers/contribution_ui_provider.dart';
 import '../widgets/electronic_receipt_dialog.dart';
 import '../services/contribution_pdf_service.dart';
+
+import 'package:collection/collection.dart';
 import 'package:familyfund_app/features/shared/presentation/widgets/heritage_nav_bar.dart';
 import 'package:familyfund_app/features/genealogy/data/models/branch_models.dart';
 import 'package:familyfund_app/features/genealogy/presentation/providers/genealogy_providers.dart';
+import 'package:familyfund_app/features/event/presentation/providers/event_providers.dart';
 
 /// Task #71: Giao diện Bàn Tiếp Nhận Đóng Góp của Thủ Quỹ (TiepNhanDongGopUI).
 /// Chuẩn hóa theo tiêu chuẩn Warm Editorial Heritage & UI/UX Pro Max:
@@ -33,13 +39,16 @@ class _ReceiveContributionScreenState
   final currencyFormatter = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
   final _searchController = TextEditingController();
   String _keyword = '';
-  String _selectedFilter = 'all'; // 'all', 'cash', 'bank_transfer', 'in_kind', 'pending'
+  String _selectedFilter =
+      'all'; // 'all', 'cash', 'bank_transfer', 'in_kind', 'pending'
+  String? _selectedEventId; // Lọc danh sách theo sự kiện / kỳ lễ giỗ
 
   @override
   void initState() {
     super.initState();
     Future.microtask(() {
       ref.read(contributionUiProvider.notifier).fetchFromBackend();
+      ref.read(eventListProvider.notifier).loadEvents();
     });
   }
 
@@ -52,6 +61,19 @@ class _ReceiveContributionScreenState
   @override
   Widget build(BuildContext context) {
     final uiState = ref.watch(contributionUiProvider);
+    final session = ref.watch(dualRbacSessionProvider);
+    final authState = ref.watch(authStateProvider);
+    final canManageContributions =
+        session.isClanHead ||
+        session.isAdmin ||
+        session.isBranchHead ||
+        authState.user?.roles.any(
+              (r) =>
+                  r == 'ROLE_CLAN_HEAD' ||
+                  r == 'ROLE_ADMIN' ||
+                  r == 'ROLE_TREASURER',
+            ) ==
+            true;
 
     final filteredCash = _getFilteredCash(uiState.cashReceipts);
     final filteredInKind = _getFilteredInKind(uiState.inKindReceipts);
@@ -61,7 +83,9 @@ class _ReceiveContributionScreenState
     return Scaffold(
       backgroundColor: const Color(0xFFFAF9F6), // Warm Canvas
       appBar: const HeritageNavBar(currentRoute: '/contributions'),
-      bottomNavigationBar: const HeritageBottomNavBar(currentRoute: '/contributions'),
+      bottomNavigationBar: const HeritageBottomNavBar(
+        currentRoute: '/contributions',
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 22, 20, 80),
         child: Center(
@@ -71,7 +95,10 @@ class _ReceiveContributionScreenState
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Banner Sự Kiện & Nút Tiếp Nhận Nhanh
-                _buildEventBanner(context),
+                _buildEventBanner(
+                  context,
+                  canManageContributions: canManageContributions,
+                ),
                 const SizedBox(height: 20),
 
                 // 4 Thẻ chỉ số tổng kết tài chính sự kiện
@@ -85,13 +112,14 @@ class _ReceiveContributionScreenState
                   filteredInKind: filteredInKind,
                   totalTransactions: totalTransactions,
                   isDesktop: isDesktop,
+                  canManageContributions: canManageContributions,
                 ),
               ],
             ),
           ),
         ),
       ),
-      floatingActionButton: isDesktop
+      floatingActionButton: (isDesktop || !canManageContributions)
           ? null
           : FloatingActionButton.extended(
               onPressed: () => _showAddContributionModal(context),
@@ -115,6 +143,11 @@ class _ReceiveContributionScreenState
       return [];
     }
     return list.where((r) {
+      if (_selectedEventId != null &&
+          _selectedEventId!.isNotEmpty &&
+          r.eventId != _selectedEventId) {
+        return false;
+      }
       if (_selectedFilter == 'cash' && r.paymentMethod != PaymentMethod.Cash) {
         return false;
       }
@@ -130,11 +163,17 @@ class _ReceiveContributionScreenState
   }
 
   List<InKindElectronicReceiptDto> _getFilteredInKind(
-      List<InKindElectronicReceiptDto> list) {
+    List<InKindElectronicReceiptDto> list,
+  ) {
     if (_selectedFilter == 'cash' || _selectedFilter == 'bank_transfer') {
       return [];
     }
     return list.where((r) {
+      if (_selectedEventId != null &&
+          _selectedEventId!.isNotEmpty &&
+          r.eventId != _selectedEventId) {
+        return false;
+      }
       if (_selectedFilter == 'pending' &&
           r.processingStatus != InKindProcessingStatus.Pending) {
         return false;
@@ -157,7 +196,10 @@ class _ReceiveContributionScreenState
     }).toList();
   }
 
-  Widget _buildEventBanner(BuildContext context) {
+  Widget _buildEventBanner(
+    BuildContext context, {
+    bool canManageContributions = true,
+  }) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -176,191 +218,307 @@ class _ReceiveContributionScreenState
           ),
         ],
       ),
-      child: LayoutBuilder(builder: (context, constraints) {
-        final isNarrow = constraints.maxWidth < 1180;
-        final infoColumn = Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Wrap(
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 8,
-              runSpacing: 4,
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF8B1E1E).withAlpha(15),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFF8B1E1E), width: 1),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 1180;
+          final infoColumn = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 3.5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF8B1E1E).withAlpha(15),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: const Color(0xFF8B1E1E),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF8B1E1E),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        const Text(
+                          'KỲ LỄ ĐANG DIỄN RA',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                            color: Color(0xFF8B1E1E),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 7,
-                        height: 7,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF8B1E1E),
-                          shape: BoxShape.circle,
-                        ),
+                  const Text(
+                    'Hạch toán tự động qua VietQR & Sổ cái',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF54433E),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Bàn Tiếp Nhận Đóng Góp & Sổ Cái',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF7A1518),
+                  letterSpacing: -0.3,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Consumer(
+                builder: (context, ref, _) {
+                  final eventState = ref.watch(eventListProvider);
+                  final events = eventState.events;
+                  return Container(
+                    constraints: const BoxConstraints(maxWidth: 460),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: const Color(0xFFD4A017),
+                        width: 1.2,
                       ),
-                      const SizedBox(width: 5),
-                      const Text(
-                        'KỲ LỄ ĐANG DIỄN RA',
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                          color: Color(0xFF8B1E1E),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String?>(
+                        isExpanded: true,
+                        value: _selectedEventId,
+                        hint: const Text(
+                          'Tất cả sự kiện / kỳ lễ giỗ',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF7A1518),
+                          ),
                         ),
+                        items: [
+                          const DropdownMenuItem<String?>(
+                            value: null,
+                            child: Text(
+                              'Toàn bộ sự kiện (Không lọc theo sự kiện)',
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          ...events.map(
+                            (ev) => DropdownMenuItem<String?>(
+                              value: ev.eventId,
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      ev.eventName,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 13.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF2B1810),
+                                      ),
+                                    ),
+                                  ),
+                                  if (ev.status == 'ONGOING')
+                                    Container(
+                                      margin: const EdgeInsets.only(left: 6),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF006E2A)
+                                            .withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: const Text(
+                                        'Đang diễn ra',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF006E2A),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                        onChanged: (val) {
+                          setState(() {
+                            _selectedEventId = val;
+                          });
+                        },
                       ),
-                    ],
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Bàn tiếp nhận Thủ quỹ: Đối soát tức thì, tự động xuất biên lai điện tử và niêm phong sổ cái.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF54433E),
+                  height: 1.4,
+                ),
+              ),
+            ],
+          );
+
+          final actionButtons = Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              if (canManageContributions)
+                ElevatedButton.icon(
+                  onPressed: () => _showAddContributionModal(context),
+                  icon: const Icon(Icons.post_add, size: 18),
+                  label: const Text('Tiếp Nhận Tại Bàn'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF8B1E1E),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
-                const Text(
-                  'Hạch toán tự động qua VietQR & Sổ cái',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF54433E),
+              OutlinedButton.icon(
+                onPressed: () => context.push('/contributions/online'),
+                icon: const Icon(Icons.qr_code_2, size: 18),
+                label: const Text('Đóng Góp VietQR'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF3F51B5),
+                  side: const BorderSide(color: Color(0xFF3F51B5)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
                   ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+              if (canManageContributions)
+                OutlinedButton.icon(
+                  onPressed: () => context.push('/contributions/reconcile'),
+                  icon: const Icon(Icons.rule, size: 18),
+                  label: const Text('Đối Soát Chuyển Khoản'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF006E2A),
+                    side: const BorderSide(color: Color(0xFF006E2A)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              OutlinedButton.icon(
+                onPressed: () => context.push('/contributions/my-history'),
+                icon: const Icon(Icons.history_edu, size: 18),
+                label: const Text('Đóng Góp Của Tôi'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF8B1E1E),
+                  side: const BorderSide(color: Color(0xFF8B1E1E)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
+          );
+
+          final headerIcon = Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF8B1E1E), Color(0xFF6B1414)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x208B1E1E),
+                  blurRadius: 8,
+                  offset: Offset(0, 3),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Bàn Tiếp Nhận Đóng Góp & Sổ Cái',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF7A1518),
-                letterSpacing: -0.3,
-              ),
+            child: const Icon(
+              Icons.celebration,
+              color: Color(0xFFD4A017),
+              size: 30,
             ),
-            const SizedBox(height: 4),
-            const Text(
-              'Đại Lễ Giỗ Tổ Thủy Tộc Xuân Bính Ngọ 2026',
-              style: TextStyle(
-                fontSize: 19,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2B1810),
-                letterSpacing: -0.3,
-              ),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Bàn tiếp nhận Thủ quỹ: Đối soát tức thì, tự động xuất biên lai điện tử và niêm phong sổ cái.',
-              style: TextStyle(
-                fontSize: 13,
-                color: Color(0xFF54433E),
-                height: 1.4,
-              ),
-            ),
-          ],
-        );
+          );
 
-        final actionButtons = Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            ElevatedButton.icon(
-              onPressed: () => _showAddContributionModal(context),
-              icon: const Icon(Icons.post_add, size: 18),
-              label: const Text('Tiếp Nhận Tại Bàn'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF8B1E1E),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-            ),
-            OutlinedButton.icon(
-              onPressed: () => context.push('/contributions/online'),
-              icon: const Icon(Icons.qr_code_2, size: 18),
-              label: const Text('Đóng Góp VietQR'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF3F51B5),
-                side: const BorderSide(color: Color(0xFF3F51B5)),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-            ),
-            OutlinedButton.icon(
-              onPressed: () => context.push('/contributions/reconcile'),
-              icon: const Icon(Icons.rule, size: 18),
-              label: const Text('Đối Soát Chuyển Khoản'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF006E2A),
-                side: const BorderSide(color: Color(0xFF006E2A)),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-            ),
-            OutlinedButton.icon(
-              onPressed: () => context.push('/contributions/my-history'),
-              icon: const Icon(Icons.history_edu, size: 18),
-              label: const Text('Đóng Góp Của Tôi'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF8B1E1E),
-                side: const BorderSide(color: Color(0xFF8B1E1E)),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-            ),
-          ],
-        );
+          if (isNarrow) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    headerIcon,
+                    const SizedBox(width: 14),
+                    Expanded(child: infoColumn),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                actionButtons,
+              ],
+            );
+          }
 
-        final headerIcon = Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF8B1E1E), Color(0xFF6B1414)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x208B1E1E),
-                blurRadius: 8,
-                offset: Offset(0, 3),
-              ),
-            ],
-          ),
-          child: const Icon(Icons.celebration,
-              color: Color(0xFFD4A017), size: 30),
-        );
-
-        if (isNarrow) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  headerIcon,
-                  const SizedBox(width: 14),
-                  Expanded(child: infoColumn),
-                ],
-              ),
-              const SizedBox(height: 16),
-              actionButtons,
+              headerIcon,
+              const SizedBox(width: 18),
+              Expanded(child: infoColumn),
+              const SizedBox(width: 18),
+              Flexible(child: actionButtons),
             ],
           );
-        }
-
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            headerIcon,
-            const SizedBox(width: 18),
-            Expanded(child: infoColumn),
-            const SizedBox(width: 18),
-            Flexible(child: actionButtons),
-          ],
-        );
-      }),
+        },
+      ),
     );
   }
 
@@ -378,7 +536,8 @@ class _ReceiveContributionScreenState
       _statCard(
         title: 'ĐỐI SOÁT VIETQR TỰ ĐỘNG',
         value: '100% Khớp Số',
-        subtitle: '${uiState.cashReceipts.where((r) => r.paymentMethod == PaymentMethod.BankTransfer).length} giao dịch tự động',
+        subtitle:
+            '${uiState.cashReceipts.where((r) => r.paymentMethod == PaymentMethod.BankTransfer).length} giao dịch tự động',
         icon: Icons.qr_code_2,
         color: const Color(0xFF3F51B5),
         footerBadge: 'Đồng bộ sao kê tức thì',
@@ -399,7 +558,9 @@ class _ReceiveContributionScreenState
         subtitle: 'Cần phân loại: Tiêu hao cỗ / Nhập kho',
         icon: Icons.pending_actions,
         color: const Color(0xFFC64545),
-        footerBadge: uiState.pendingInKindCount > 0 ? 'Cần xử lý sau đại lễ' : 'Đã phân loại xong',
+        footerBadge: uiState.pendingInKindCount > 0
+            ? 'Cần xử lý sau đại lễ'
+            : 'Đã phân loại xong',
         footerIcon: Icons.schedule,
         isAlert: uiState.pendingInKindCount > 0,
       ),
@@ -408,21 +569,23 @@ class _ReceiveContributionScreenState
     if (isDesktop) {
       return Row(
         children: cards
-            .map((c) => Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: c,
-                  ),
-                ))
+            .map(
+              (c) => Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: c,
+                ),
+              ),
+            )
             .toList(),
       );
     } else {
       return Column(
         children: cards
-            .map((c) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: c,
-                ))
+            .map(
+              (c) =>
+                  Padding(padding: const EdgeInsets.only(bottom: 12), child: c),
+            )
             .toList(),
       );
     }
@@ -500,10 +663,7 @@ class _ReceiveContributionScreenState
           const SizedBox(height: 4),
           Text(
             subtitle,
-            style: const TextStyle(
-              fontSize: 11.5,
-              color: Color(0xFF54433E),
-            ),
+            style: const TextStyle(fontSize: 11.5, color: Color(0xFF54433E)),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -546,6 +706,7 @@ class _ReceiveContributionScreenState
     required List<InKindElectronicReceiptDto> filteredInKind,
     required int totalTransactions,
     required bool isDesktop,
+    bool canManageContributions = true,
   }) {
     final cashCount = uiState.cashReceipts
         .where((r) => r.paymentMethod == PaymentMethod.Cash)
@@ -594,8 +755,10 @@ class _ReceiveContributionScreenState
                       SizedBox(height: 3),
                       Text(
                         'Danh sách ghi nhận các khoản cúng tiến bằng tiền mặt, chuyển khoản và hiện vật.',
-                        style:
-                            TextStyle(fontSize: 13, color: Color(0xFF54433E)),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF54433E),
+                        ),
                       ),
                     ],
                   ),
@@ -616,7 +779,8 @@ class _ReceiveContributionScreenState
                               ? filteredInKind
                               : uiState.inKindReceipts;
                           await ContributionPdfService.exportLedgerPdf(
-                            eventName: 'Đại Lễ Giỗ Tổ Thủy Tộc Xuân Bính Ngọ 2026',
+                            eventName:
+                                'Đại Lễ Giỗ Tổ Thủy Tộc Xuân Bính Ngọ 2026',
                             cashReceipts: cashToExport,
                             inKindReceipts: inKindToExport,
                           );
@@ -643,21 +807,22 @@ class _ReceiveContributionScreenState
                         ),
                       ),
                     ),
-                    ElevatedButton.icon(
-                      onPressed: () => _showAddContributionModal(context),
-                      icon: const Icon(Icons.add_circle_outline, size: 18),
-                      label: const Text('Lập Phiếu Đóng Góp Mới'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8B1E1E),
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(0, 42),
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        elevation: 1,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                    if (canManageContributions)
+                      ElevatedButton.icon(
+                        onPressed: () => _showAddContributionModal(context),
+                        icon: const Icon(Icons.add_circle_outline, size: 18),
+                        label: const Text('Lập Phiếu Đóng Góp Mới'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF8B1E1E),
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(0, 42),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          elevation: 1,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ],
@@ -673,15 +838,23 @@ class _ReceiveContributionScreenState
               onChanged: (val) => setState(() => _keyword = val.trim()),
               style: const TextStyle(fontSize: 13.5, color: Color(0xFF2B1810)),
               decoration: InputDecoration(
-                hintText:
-                    'Tìm theo tên con cháu, mã phiếu thu (PT-...) hoặc tên hiện vật...',
-                hintStyle:
-                    const TextStyle(fontSize: 13, color: Color(0xFF78655C)),
-                prefixIcon:
-                    const Icon(Icons.search, color: Color(0xFF8B1E1E), size: 20),
+                hintText: 'Tìm theo tên con cháu, mã phiếu thu (PT-...) hoặc tên hiện vật...',
+                hintStyle: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF78655C),
+                ),
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: Color(0xFF8B1E1E),
+                  size: 20,
+                ),
                 suffixIcon: _keyword.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.clear, size: 18, color: Color(0xFF54433E)),
+                        icon: const Icon(
+                          Icons.clear,
+                          size: 18,
+                          color: Color(0xFF54433E),
+                        ),
                         onPressed: () {
                           _searchController.clear();
                           setState(() => _keyword = '');
@@ -690,8 +863,10 @@ class _ReceiveContributionScreenState
                     : null,
                 filled: true,
                 fillColor: const Color(0xFFFAF9F6),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: const BorderSide(color: Color(0xFFE6DFD8)),
@@ -702,7 +877,10 @@ class _ReceiveContributionScreenState
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFF8B1E1E), width: 1.5),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF8B1E1E),
+                    width: 1.5,
+                  ),
                 ),
               ),
             ),
@@ -714,8 +892,11 @@ class _ReceiveContributionScreenState
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
             child: Row(
               children: [
-                _buildFilterChip('Tất cả', 'all',
-                    uiState.cashReceipts.length + uiState.inKindReceipts.length),
+                _buildFilterChip(
+                  'Tất cả',
+                  'all',
+                  uiState.cashReceipts.length + uiState.inKindReceipts.length,
+                ),
                 const SizedBox(width: 8),
                 _buildFilterChip('Tiền mặt', 'cash', cashCount),
                 const SizedBox(width: 8),
@@ -723,12 +904,24 @@ class _ReceiveContributionScreenState
                 const SizedBox(width: 8),
                 _buildFilterChip('Hiện vật dâng lễ', 'in_kind', inKindCount),
                 const SizedBox(width: 8),
-                _buildFilterChip('Chờ xử lý cỗ/kho', 'pending', pendingCount,
-                    isWarning: pendingCount > 0),
+                _buildFilterChip(
+                  'Chờ xử lý cỗ/kho',
+                  'pending',
+                  pendingCount,
+                  isWarning: pendingCount > 0,
+                ),
                 const SizedBox(width: 8),
-                _buildFilterChip('Đã tiêu hao cỗ', 'consumed', uiState.consumedInKindCount),
+                _buildFilterChip(
+                  'Đã tiêu hao cỗ',
+                  'consumed',
+                  uiState.consumedInKindCount,
+                ),
                 const SizedBox(width: 8),
-                _buildFilterChip('Đã hoàn trả', 'returned', uiState.returnedInKindCount),
+                _buildFilterChip(
+                  'Đã hoàn trả',
+                  'returned',
+                  uiState.returnedInKindCount,
+                ),
               ],
             ),
           ),
@@ -748,7 +941,11 @@ class _ReceiveContributionScreenState
                       shape: BoxShape.circle,
                       border: Border.all(color: const Color(0xFFE6DFD8)),
                     ),
-                    child: const Icon(Icons.search_off, size: 40, color: Color(0xFF78655C)),
+                    child: const Icon(
+                      Icons.search_off,
+                      size: 40,
+                      color: Color(0xFF78655C),
+                    ),
                   ),
                   const SizedBox(height: 14),
                   Text(
@@ -793,8 +990,12 @@ class _ReceiveContributionScreenState
     );
   }
 
-  Widget _buildFilterChip(String label, String key, int count,
-      {bool isWarning = false}) {
+  Widget _buildFilterChip(
+    String label,
+    String key,
+    int count, {
+    bool isWarning = false,
+  }) {
     final isSelected = _selectedFilter == key;
     return ChoiceChip(
       label: Text('$label ($count)'),
@@ -932,7 +1133,8 @@ class _ReceiveContributionScreenState
   Widget _buildDesktopCashRow(ElectronicReceiptDto r) {
     final isVietQr = r.paymentMethod == PaymentMethod.BankTransfer;
     final initials = _getInitials(r.payerMemberName ?? r.payerMemberId);
-    final dateStr = DateFormat('dd/MM/yyyy HH:mm').format(r.contributionDate ?? DateTime.now());
+    final dateStr = DateFormat('dd/MM/yyyy HH:mm')
+        .format(r.contributionDate ?? DateTime.now());
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
@@ -1020,7 +1222,10 @@ class _ReceiveContributionScreenState
             child: Align(
               alignment: Alignment.centerLeft,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 3.5,
+                ),
                 decoration: BoxDecoration(
                   color: isVietQr
                       ? const Color(0xFFF0F2FE)
@@ -1070,7 +1275,10 @@ class _ReceiveContributionScreenState
             child: Align(
               alignment: Alignment.centerRight,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF2E8B43).withAlpha(15),
                   borderRadius: BorderRadius.circular(20),
@@ -1096,7 +1304,10 @@ class _ReceiveContributionScreenState
             width: 180,
             child: Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 3.5,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF2E8B43).withAlpha(20),
                   borderRadius: BorderRadius.circular(20),
@@ -1107,7 +1318,11 @@ class _ReceiveContributionScreenState
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: const [
-                    Icon(Icons.check_circle, size: 12, color: Color(0xFF2E8B43)),
+                    Icon(
+                      Icons.check_circle,
+                      size: 12,
+                      color: Color(0xFF2E8B43),
+                    ),
                     SizedBox(width: 4),
                     Flexible(
                       child: Text(
@@ -1258,7 +1473,10 @@ class _ReceiveContributionScreenState
             child: Align(
               alignment: Alignment.centerLeft,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 3.5,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFF8E1),
                   borderRadius: BorderRadius.circular(20),
@@ -1296,7 +1514,10 @@ class _ReceiveContributionScreenState
             child: Align(
               alignment: Alignment.centerRight,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFB36E1B).withAlpha(15),
                   borderRadius: BorderRadius.circular(20),
@@ -1322,7 +1543,10 @@ class _ReceiveContributionScreenState
             width: 180,
             child: Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 3.5,
+                ),
                 decoration: BoxDecoration(
                   color: Color(r.processingStatus.bgColorValue),
                   borderRadius: BorderRadius.circular(20),
@@ -1489,7 +1713,8 @@ class _ReceiveContributionScreenState
 
   Widget _buildCashReceiptTile(ElectronicReceiptDto receipt) {
     final isVietQr = receipt.paymentMethod == PaymentMethod.BankTransfer;
-    final dateFormatted = DateFormat('dd/MM/yyyy HH:mm').format(receipt.contributionDate ?? DateTime.now());
+    final dateFormatted = DateFormat('dd/MM/yyyy HH:mm')
+        .format(receipt.contributionDate ?? DateTime.now());
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       decoration: const BoxDecoration(
@@ -1532,7 +1757,9 @@ class _ReceiveContributionScreenState
                     const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 7, vertical: 2.5),
+                        horizontal: 7,
+                        vertical: 2.5,
+                      ),
                       decoration: BoxDecoration(
                         color: isVietQr
                             ? const Color(0xFFF0F2FE)
@@ -1568,7 +1795,10 @@ class _ReceiveContributionScreenState
                 ),
                 Text(
                   'ID: ${receipt.payerMemberId} • $dateFormatted',
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF54433E)),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF54433E),
+                  ),
                 ),
               ],
             ),
@@ -1590,7 +1820,8 @@ class _ReceiveContributionScreenState
                 onPressed: () {
                   showDialog(
                     context: context,
-                    builder: (_) => ElectronicReceiptDialog(cashReceipt: receipt),
+                    builder: (_) =>
+                        ElectronicReceiptDialog(cashReceipt: receipt),
                   );
                 },
                 icon: const Icon(Icons.receipt_long, size: 15),
@@ -1615,7 +1846,8 @@ class _ReceiveContributionScreenState
   }
 
   Widget _buildInKindReceiptTile(InKindElectronicReceiptDto receipt) {
-    final isPending = receipt.processingStatus == InKindProcessingStatus.Pending;
+    final isPending =
+        receipt.processingStatus == InKindProcessingStatus.Pending;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       decoration: const BoxDecoration(
@@ -1629,8 +1861,11 @@ class _ReceiveContributionScreenState
               color: const Color(0xFFB36E1B).withAlpha(18),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.inventory_2,
-                color: Color(0xFFB36E1B), size: 22),
+            child: const Icon(
+              Icons.inventory_2,
+              color: Color(0xFFB36E1B),
+              size: 22,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -1651,13 +1886,16 @@ class _ReceiveContributionScreenState
                     const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 7, vertical: 2.5),
+                        horizontal: 7,
+                        vertical: 2.5,
+                      ),
                       decoration: BoxDecoration(
                         color: Color(receipt.processingStatus.bgColorValue),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                            color: Color(receipt.processingStatus.colorValue)
-                                .withAlpha(80)),
+                          color: Color(receipt.processingStatus.colorValue)
+                              .withAlpha(80),
+                        ),
                       ),
                       child: Text(
                         receipt.processingStatus.displayName,
@@ -1681,8 +1919,10 @@ class _ReceiveContributionScreenState
                 ),
                 Text(
                   'Dâng lễ: ${receipt.payerMemberName ?? receipt.payerMemberId} • ${receipt.conversionMethod.displayName}',
-                  style:
-                      const TextStyle(fontSize: 12, color: Color(0xFF54433E)),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF54433E),
+                  ),
                 ),
               ],
             ),
@@ -1756,7 +1996,8 @@ class _ReceiveContributionScreenState
     InKindProcessingStatus selectedStatus =
         InKindProcessingStatus.AddedToCommonAssets;
     final locationController = TextEditingController(
-        text: 'Gian thờ chính - Nhà thờ tổ đại gia tộc');
+      text: 'Gian thờ chính - Nhà thờ tổ đại gia tộc',
+    );
 
     showDialog(
       context: context,
@@ -1797,7 +2038,9 @@ class _ReceiveContributionScreenState
 
                   RadioListTile<InKindProcessingStatus>(
                     title: const Text('Đã tiêu hao cỗ (Consumed)'),
-                    subtitle: const Text('Heo quay, xôi hoa quả chia cho mâm cỗ thụ lộc'),
+                    subtitle: const Text(
+                      'Heo quay, xôi hoa quả chia cho mâm cỗ thụ lộc',
+                    ),
                     value: InKindProcessingStatus.Consumed,
                     groupValue: selectedStatus,
                     activeColor: const Color(0xFF8B1E1E),
@@ -1805,7 +2048,9 @@ class _ReceiveContributionScreenState
                   ),
                   RadioListTile<InKindProcessingStatus>(
                     title: const Text('Đã hoàn trả gia chủ (Returned)'),
-                    subtitle: const Text('Đồ lễ mượn, bàn ghế dâng lễ hoàn trả sau tiệc'),
+                    subtitle: const Text(
+                      'Đồ lễ mượn, bàn ghế dâng lễ hoàn trả sau tiệc',
+                    ),
                     value: InKindProcessingStatus.Returned,
                     groupValue: selectedStatus,
                     activeColor: const Color(0xFF8B1E1E),
@@ -1817,14 +2062,16 @@ class _ReceiveContributionScreenState
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     subtitle: const Text(
-                        'Đồ thờ tự, lư hương, lục bình... lưu vào kho tài sản dòng họ vĩnh viễn'),
+                      'Đồ thờ tự, lư hương, lục bình... lưu vào kho tài sản dòng họ vĩnh viễn',
+                    ),
                     value: InKindProcessingStatus.AddedToCommonAssets,
                     groupValue: selectedStatus,
                     activeColor: const Color(0xFF8B1E1E),
                     onChanged: (v) => setDialogState(() => selectedStatus = v!),
                   ),
 
-                  if (selectedStatus == InKindProcessingStatus.AddedToCommonAssets) ...[
+                  if (selectedStatus ==
+                      InKindProcessingStatus.AddedToCommonAssets) ...[
                     const SizedBox(height: 12),
                     TextField(
                       controller: locationController,
@@ -1849,10 +2096,13 @@ class _ReceiveContributionScreenState
               ),
               ElevatedButton.icon(
                 onPressed: () {
-                  ref.read(contributionUiProvider.notifier).processInKindLifecycle(
+                  ref
+                      .read(contributionUiProvider.notifier)
+                      .processInKindLifecycle(
                         contributionId: item.contributionId,
                         targetStatus: selectedStatus,
-                        storageLocation: selectedStatus ==
+                        storageLocation:
+                            selectedStatus ==
                                 InKindProcessingStatus.AddedToCommonAssets
                             ? locationController.text.trim()
                             : null,
@@ -1861,7 +2111,8 @@ class _ReceiveContributionScreenState
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        selectedStatus == InKindProcessingStatus.AddedToCommonAssets
+                        selectedStatus ==
+                                InKindProcessingStatus.AddedToCommonAssets
                             ? 'Đã chuyển thành công "${item.itemName}" vào Sổ kho bảo vật Từ Đường!'
                             : 'Đã cập nhật trạng thái vòng đời thành công!',
                       ),
@@ -1891,7 +2142,7 @@ class _ReceiveContributionScreenState
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => const _AddContributionSheet(),
+      builder: (ctx) => _AddContributionSheet(initialEventId: _selectedEventId),
     );
   }
 }
@@ -1899,7 +2150,8 @@ class _ReceiveContributionScreenState
 /// Sheet nhập liệu tiếp nhận Tiền mặt, Chuyển khoản hoặc Hiện vật
 /// Trang bị Trợ lý đọc số tiền bằng chữ thời gian thực (Live Preview - UI/UX Pro Max)
 class _AddContributionSheet extends ConsumerStatefulWidget {
-  const _AddContributionSheet();
+  final String? initialEventId;
+  const _AddContributionSheet({this.initialEventId});
 
   @override
   ConsumerState<_AddContributionSheet> createState() =>
@@ -1912,6 +2164,7 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
 
   // Form tiền
   String? _selectedCashMemberId;
+  String? _selectedCashEventId;
   bool _isCashCustomMember = false;
   final _cashCustomPayerController = TextEditingController();
   final _cashAmountController = TextEditingController();
@@ -1920,6 +2173,7 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
 
   // Form hiện vật
   String? _selectedInKindMemberId;
+  String? _selectedInKindEventId;
   bool _isInKindCustomMember = false;
   final _inKindCustomPayerController = TextEditingController();
   final _itemNameController = TextEditingController();
@@ -1935,6 +2189,8 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
     _tabController = TabController(length: 2, vsync: this);
     _selectedCashMemberId = 'MEM_TRUONG_CHI';
     _selectedInKindMemberId = 'MEM_MAI_ANH';
+    _selectedCashEventId = widget.initialEventId;
+    _selectedInKindEventId = widget.initialEventId;
   }
 
   @override
@@ -1957,26 +2213,28 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
   @override
   Widget build(BuildContext context) {
     final membersAsync = ref.watch(genealogyMemberListProvider);
-    final memberList = membersAsync.value ?? const [
-      BranchMemberItem(
-        memberId: 'MEM_TRUONG_TOC',
-        fullName: 'Nguyễn Trọng Hoàng',
-        generation: 1,
-        roleInBranch: 'Khởi Tổ / Trưởng Tộc • Đời 1',
-      ),
-      BranchMemberItem(
-        memberId: 'MEM_TRUONG_CHI',
-        fullName: 'Nguyễn Văn An',
-        generation: 2,
-        roleInBranch: 'Trưởng Chi 2 • Đời 2',
-      ),
-      BranchMemberItem(
-        memberId: 'MEM_MAI_ANH',
-        fullName: 'Nguyễn Thị Mai Anh',
-        generation: 3,
-        roleInBranch: 'Chi 2 • Đời 3',
-      ),
-    ];
+    final memberList =
+        membersAsync.value ??
+        const [
+          BranchMemberItem(
+            memberId: 'MEM_TRUONG_TOC',
+            fullName: 'Nguyễn Trọng Hoàng',
+            generation: 1,
+            roleInBranch: 'Khởi Tổ / Trưởng Tộc • Đời 1',
+          ),
+          BranchMemberItem(
+            memberId: 'MEM_TRUONG_CHI',
+            fullName: 'Nguyễn Văn An',
+            generation: 2,
+            roleInBranch: 'Trưởng Chi 2 • Đời 2',
+          ),
+          BranchMemberItem(
+            memberId: 'MEM_MAI_ANH',
+            fullName: 'Nguyễn Thị Mai Anh',
+            generation: 3,
+            roleInBranch: 'Chi 2 • Đời 3',
+          ),
+        ];
 
     return Container(
       padding: EdgeInsets.only(
@@ -2024,8 +2282,11 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
                       color: const Color(0xFF8B1E1E).withAlpha(15),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.post_add,
-                        color: Color(0xFF8B1E1E), size: 22),
+                    child: const Icon(
+                      Icons.post_add,
+                      color: Color(0xFF8B1E1E),
+                      size: 22,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   const Expanded(
@@ -2070,7 +2331,10 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
                 labelStyle: const TextStyle(fontWeight: FontWeight.bold),
                 tabs: const [
                   Tab(icon: Icon(Icons.payments, size: 18), text: 'Tiền Mặt'),
-                  Tab(icon: Icon(Icons.inventory_2, size: 18), text: 'Hiện Vật Dâng Lễ'),
+                  Tab(
+                    icon: Icon(Icons.inventory_2, size: 18),
+                    text: 'Hiện Vật Dâng Lễ',
+                  ),
                 ],
               ),
             ),
@@ -2092,7 +2356,20 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
   }
 
   Widget _buildCashForm(List<BranchMemberItem> memberList) {
-    final effectiveSelectedId = _selectedCashMemberId ??
+    final eventState = ref.watch(eventListProvider);
+    final events = eventState.events;
+    final effectiveEventId =
+        _selectedCashEventId ??
+        (events.any((e) => e.eventId == widget.initialEventId)
+            ? widget.initialEventId
+            : (events
+                      .where((e) => e.status == 'ONGOING')
+                      .firstOrNull
+                      ?.eventId ??
+                  events.firstOrNull?.eventId));
+
+    final effectiveSelectedId =
+        _selectedCashMemberId ??
         (memberList.isNotEmpty ? memberList.first.memberId : null);
 
     return SingleChildScrollView(
@@ -2100,6 +2377,36 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // 0. Combobox chọn kỳ lễ / sự kiện
+          DropdownButtonFormField<String>(
+            isExpanded: true,
+            value: events.any((e) => e.eventId == effectiveEventId)
+                ? effectiveEventId
+                : (events.isNotEmpty ? events.first.eventId : null),
+            decoration: const InputDecoration(
+              labelText: 'Kỳ Lễ Giỗ / Sự kiện tiếp nhận *',
+              prefixIcon: Icon(Icons.event_available, color: Color(0xFF8B1E1E)),
+              border: OutlineInputBorder(),
+            ),
+            items: events
+                .map(
+                  (ev) => DropdownMenuItem<String>(
+                    value: ev.eventId,
+                    child: Text(
+                      '${ev.eventName} (${ev.status == "ONGOING" ? "Đang diễn ra" : ev.status})',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                )
+                .toList(),
+            onChanged: (val) {
+              setState(() {
+                _selectedCashEventId = val;
+              });
+            },
+          ),
+          const SizedBox(height: 14),
+
           // 1. Combobox chọn thành viên trong phả hệ
           DropdownButtonFormField<String>(
             isExpanded: true,
@@ -2110,13 +2417,15 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
               border: OutlineInputBorder(),
             ),
             items: [
-              ...memberList.map((m) => DropdownMenuItem<String>(
-                    value: m.memberId,
-                    child: Text(
-                      '${m.fullName} (${m.roleInBranch})',
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  )),
+              ...memberList.map(
+                (m) => DropdownMenuItem<String>(
+                  value: m.memberId,
+                  child: Text(
+                    '${m.fullName} (${m.roleInBranch})',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
               const DropdownMenuItem<String>(
                 value: '__OTHER__',
                 child: Text('＋ Khách thập phương / Người ngoài gia phả...'),
@@ -2136,7 +2445,10 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
               decoration: const InputDecoration(
                 labelText: 'Họ và tên người đóng góp ngoài gia phả *',
                 hintText: 'Nhập họ và tên...',
-                prefixIcon: Icon(Icons.person_add_alt_1, color: Color(0xFF8B1E1E)),
+                prefixIcon: Icon(
+                  Icons.person_add_alt_1,
+                  color: Color(0xFF8B1E1E),
+                ),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -2152,7 +2464,11 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
             ),
             child: const Row(
               children: [
-                Icon(Icons.payments_outlined, color: Color(0xFF8B1E1E), size: 20),
+                Icon(
+                  Icons.payments_outlined,
+                  color: Color(0xFF8B1E1E),
+                  size: 20,
+                ),
                 SizedBox(width: 10),
                 Text(
                   'Hình thức: Tiếp Nhận Tiền Mặt Tại Bàn',
@@ -2193,14 +2509,15 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
             decoration: BoxDecoration(
               color: const Color(0xFF2E8B43).withAlpha(15),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: const Color(0xFF2E8B43).withAlpha(40),
-              ),
+              border: Border.all(color: const Color(0xFF2E8B43).withAlpha(40)),
             ),
             child: Row(
               children: [
-                const Icon(Icons.record_voice_over,
-                    size: 18, color: Color(0xFF2E8B43)),
+                const Icon(
+                  Icons.record_voice_over,
+                  size: 18,
+                  color: Color(0xFF2E8B43),
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -2251,8 +2568,11 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
                 finalPayerId = 'MEM-GUEST-${1000 + Random().nextInt(9000)}';
                 finalPayerName = customName;
               } else {
-                final targetId = _selectedCashMemberId ??
-                    (memberList.isNotEmpty ? memberList.first.memberId : 'MEM_TRUONG_CHI');
+                final targetId =
+                    _selectedCashMemberId ??
+                    (memberList.isNotEmpty
+                        ? memberList.first.memberId
+                        : 'MEM_TRUONG_CHI');
                 final found = memberList.firstWhere(
                   (m) => m.memberId == targetId,
                   orElse: () => memberList.first,
@@ -2261,21 +2581,26 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
                 finalPayerName = found.fullName;
               }
 
-              final newReceipt = await
-                  ref.read(contributionUiProvider.notifier).recordCashContribution(
-                        eventId: 'EVT-GIO-TO-2026',
-                        payerMemberId: finalPayerId,
-                        payerMemberName: finalPayerName,
-                        amount: amount,
-                        paymentMethod: _paymentMethod,
-                      );
+              final chosenEventId =
+                  _selectedCashEventId ?? effectiveEventId ?? 'EVT-GIO-TO-2026';
+
+              final newReceipt = await ref
+                  .read(contributionUiProvider.notifier)
+                  .recordCashContribution(
+                    eventId: chosenEventId,
+                    payerMemberId: finalPayerId,
+                    payerMemberName: finalPayerName,
+                    amount: amount,
+                    paymentMethod: _paymentMethod,
+                  );
 
               if (!mounted) return;
               Navigator.of(context).pop();
 
               showDialog(
                 context: context,
-                builder: (_) => ElectronicReceiptDialog(cashReceipt: newReceipt),
+                builder: (_) =>
+                    ElectronicReceiptDialog(cashReceipt: newReceipt),
               );
             },
             icon: const Icon(Icons.check_circle, size: 20),
@@ -2298,7 +2623,20 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
   }
 
   Widget _buildInKindForm(List<BranchMemberItem> memberList) {
-    final effectiveSelectedId = _selectedInKindMemberId ??
+    final eventState = ref.watch(eventListProvider);
+    final events = eventState.events;
+    final effectiveEventId =
+        _selectedInKindEventId ??
+        (events.any((e) => e.eventId == widget.initialEventId)
+            ? widget.initialEventId
+            : (events
+                      .where((e) => e.status == 'ONGOING')
+                      .firstOrNull
+                      ?.eventId ??
+                  events.firstOrNull?.eventId));
+
+    final effectiveSelectedId =
+        _selectedInKindMemberId ??
         (memberList.isNotEmpty ? memberList.first.memberId : null);
 
     return SingleChildScrollView(
@@ -2306,6 +2644,36 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // 0. Combobox chọn kỳ lễ / sự kiện dâng lễ
+          DropdownButtonFormField<String>(
+            isExpanded: true,
+            value: events.any((e) => e.eventId == effectiveEventId)
+                ? effectiveEventId
+                : (events.isNotEmpty ? events.first.eventId : null),
+            decoration: const InputDecoration(
+              labelText: 'Kỳ Lễ Giỗ / Sự kiện dâng lễ *',
+              prefixIcon: Icon(Icons.event_available, color: Color(0xFF8B1E1E)),
+              border: OutlineInputBorder(),
+            ),
+            items: events
+                .map(
+                  (ev) => DropdownMenuItem<String>(
+                    value: ev.eventId,
+                    child: Text(
+                      '${ev.eventName} (${ev.status == "ONGOING" ? "Đang diễn ra" : ev.status})',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                )
+                .toList(),
+            onChanged: (val) {
+              setState(() {
+                _selectedInKindEventId = val;
+              });
+            },
+          ),
+          const SizedBox(height: 14),
+
           // 1. Combobox chọn thành viên trong phả hệ
           DropdownButtonFormField<String>(
             isExpanded: true,
@@ -2316,13 +2684,15 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
               border: OutlineInputBorder(),
             ),
             items: [
-              ...memberList.map((m) => DropdownMenuItem<String>(
-                    value: m.memberId,
-                    child: Text(
-                      '${m.fullName} (${m.roleInBranch})',
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  )),
+              ...memberList.map(
+                (m) => DropdownMenuItem<String>(
+                  value: m.memberId,
+                  child: Text(
+                    '${m.fullName} (${m.roleInBranch})',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
               const DropdownMenuItem<String>(
                 value: '__OTHER__',
                 child: Text('＋ Khách thập phương / Người ngoài gia phả...'),
@@ -2342,7 +2712,10 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
               decoration: const InputDecoration(
                 labelText: 'Họ và tên người cúng tiến ngoài gia phả *',
                 hintText: 'Nhập họ và tên...',
-                prefixIcon: Icon(Icons.person_add_alt_1, color: Color(0xFF8B1E1E)),
+                prefixIcon: Icon(
+                  Icons.person_add_alt_1,
+                  color: Color(0xFF8B1E1E),
+                ),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -2440,14 +2813,15 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
             decoration: BoxDecoration(
               color: const Color(0xFFB36E1B).withAlpha(15),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: const Color(0xFFB36E1B).withAlpha(40),
-              ),
+              border: Border.all(color: const Color(0xFFB36E1B).withAlpha(40)),
             ),
             child: Row(
               children: [
-                const Icon(Icons.record_voice_over,
-                    size: 18, color: Color(0xFFB36E1B)),
+                const Icon(
+                  Icons.record_voice_over,
+                  size: 18,
+                  color: Color(0xFFB36E1B),
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -2490,8 +2864,11 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
                 finalPayerId = 'MEM-GUEST-${1000 + Random().nextInt(9000)}';
                 finalPayerName = customName;
               } else {
-                final targetId = _selectedInKindMemberId ??
-                    (memberList.isNotEmpty ? memberList.first.memberId : 'MEM_MAI_ANH');
+                final targetId =
+                    _selectedInKindMemberId ??
+                    (memberList.isNotEmpty
+                        ? memberList.first.memberId
+                        : 'MEM_MAI_ANH');
                 final found = memberList.firstWhere(
                   (m) => m.memberId == targetId,
                   orElse: () => memberList.first,
@@ -2500,10 +2877,15 @@ class _AddContributionSheetState extends ConsumerState<_AddContributionSheet>
                 finalPayerName = found.fullName;
               }
 
+              final chosenEventId =
+                  _selectedInKindEventId ??
+                  effectiveEventId ??
+                  'EVT-GIO-TO-2026';
+
               final newReceipt = await ref
                   .read(contributionUiProvider.notifier)
                   .recordInKindContribution(
-                    eventId: 'EVT-GIO-TO-2026',
+                    eventId: chosenEventId,
                     payerMemberId: finalPayerId,
                     payerMemberName: finalPayerName,
                     itemName: _itemNameController.text.trim(),

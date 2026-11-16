@@ -115,7 +115,8 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
 
     // Lắng nghe sự kiện thông báo lỗi hoặc thành công
     ref.listen<ProfileState>(profileProvider, (prev, next) {
-      if (next.errorMessage != null && next.errorMessage != prev?.errorMessage) {
+      if (next.errorMessage != null &&
+          next.errorMessage != prev?.errorMessage) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -135,7 +136,11 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+                const Icon(
+                  Icons.check_circle_outline,
+                  color: Colors.white,
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
                 Expanded(child: Text(next.successMessage!)),
               ],
@@ -166,7 +171,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
               },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 24,
+                ),
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 720),
@@ -177,12 +185,20 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                         const SizedBox(height: 20),
                         _buildGenealogyImmutableCard(context, state),
                         if (state.profile?.memberId != null)
-                          Padding(padding: const EdgeInsets.only(top: 16),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16),
                             child: OutlinedButton.icon(
-                              onPressed: () => context.push('/members/${Uri.encodeComponent(state.profile!.memberId!)}'),
+                              onPressed: () => context.push(
+                                '/members/${Uri.encodeComponent(state.profile!.memberId!)}',
+                              ),
                               icon: const Icon(Icons.auto_stories_outlined),
-                              label: const Text('Ảnh chân dung, tiểu sử và tư liệu gia sử'),
-                            )),
+                              label: const Text(
+                                'Ảnh chân dung, tiểu sử và tư liệu gia sử',
+                              ),
+                            ),
+                          ),
+                        const SizedBox(height: 20),
+                        _buildClanBankingCard(context, state),
                         const SizedBox(height: 20),
                         _buildContactEditableCard(context, state, notifier),
                         const SizedBox(height: 20),
@@ -275,7 +291,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                     if (profile?.roles != null && profile!.roles.isNotEmpty)
                       ...profile.roles.map(
                         (r) => Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFF8B1E1E).withAlpha(16),
                             borderRadius: BorderRadius.circular(6),
@@ -295,7 +314,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                       )
                     else
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFF8B1E1E).withAlpha(16),
                           borderRadius: BorderRadius.circular(6),
@@ -310,7 +332,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                         ),
                       ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF006E2A).withAlpha(16),
                         borderRadius: BorderRadius.circular(6),
@@ -319,7 +344,9 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                         ),
                       ),
                       child: Text(
-                        profile?.accountStatus == 'ACTIVE' ? 'Đã kích hoạt' : 'Hợp lệ',
+                        profile?.accountStatus == 'ACTIVE'
+                            ? 'Đã kích hoạt'
+                            : 'Hợp lệ',
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -338,7 +365,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
   }
 
   // Khối 1: Thông tin phả hệ & nhân khẩu cố định (Read-Only)
-  Widget _buildGenealogyImmutableCard(BuildContext context, ProfileState state) {
+  Widget _buildGenealogyImmutableCard(
+    BuildContext context,
+    ProfileState state,
+  ) {
     final p = state.profile;
 
     return Container(
@@ -380,10 +410,7 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                     ),
                     Text(
                       'Bảo vệ tính toàn vẹn lịch sử dòng họ (Chỉ xem)',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF7D6E66),
-                      ),
+                      style: TextStyle(fontSize: 12, color: Color(0xFF7D6E66)),
                     ),
                   ],
                 ),
@@ -398,7 +425,11 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.lock_outline, size: 13, color: Color(0xFF7D6E66)),
+                    Icon(
+                      Icons.lock_outline,
+                      size: 13,
+                      color: Color(0xFF7D6E66),
+                    ),
                     SizedBox(width: 4),
                     Text(
                       'Read-only',
@@ -466,7 +497,9 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
               ),
               _buildReadOnlyField(
                 label: 'Đời thứ (Thế hệ)',
-                value: p?.generation != null ? 'Đời thứ ${p!.generation}' : 'Chưa gán',
+                value: p?.generation != null
+                    ? 'Đời thứ ${p!.generation}'
+                    : 'Chưa gán',
                 icon: Icons.account_tree_outlined,
                 widthFactor: 0.47,
               ),
@@ -543,6 +576,115 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
     );
   }
 
+  // Khối: Tài khoản thụ hưởng & Cấu hình VietQR của Dòng họ (Chuyển sang phân hệ /clan-info)
+  Widget _buildClanBankingCard(BuildContext context, ProfileState state) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE6DFD8)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 8,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF8B1E1E).withAlpha(16),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.assured_workload_outlined,
+                  color: Color(0xFF8B1E1E),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Tài Khoản & Thông Tin Dòng Họ',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2B1810),
+                      ),
+                    ),
+                    Text(
+                      'Tài khoản thụ hưởng VietQR, định giá hiện vật và hồ sơ gia tộc',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF7D6E66)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFDF8),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFF1EAE2)),
+            ),
+            child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.info_outline, size: 18, color: Color(0xFF8B1E1E)),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Để đảm bảo tính bảo mật và phân quyền rõ ràng giữa cá nhân và tập thể, thông tin tài khoản ngân hàng thụ hưởng dòng họ, biểu mẫu VietQR, lược sử dòng họ và bảng định giá benchmark đã được chuyển sang phân hệ Thông Tin Dòng Họ chuyên biệt.',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      color: Color(0xFF54433E),
+                      height: 1.45,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton.icon(
+              onPressed: () => context.push('/clan-info'),
+              icon: const Icon(Icons.arrow_forward, size: 18),
+              label: const Text(
+                'Đến Trang Thông Tin Dòng Họ',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF8B1E1E),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // Khối 2: Cập nhật thông tin liên lạc (Chỉnh sửa được)
   Widget _buildContactEditableCard(
     BuildContext context,
@@ -608,7 +750,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
               decoration: InputDecoration(
                 labelText: 'Số điện thoại liên lạc *',
                 hintText: 'Ví dụ: 0912345678',
-                prefixIcon: const Icon(Icons.phone_outlined, color: Color(0xFF8B1E1E)),
+                prefixIcon: const Icon(
+                  Icons.phone_outlined,
+                  color: Color(0xFF8B1E1E),
+                ),
                 filled: true,
                 fillColor: const Color(0xFFFCFAF7),
                 border: OutlineInputBorder(
@@ -621,7 +766,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFF8B1E1E), width: 1.5),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF8B1E1E),
+                    width: 1.5,
+                  ),
                 ),
               ),
               validator: (val) {
@@ -644,7 +792,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
               decoration: InputDecoration(
                 labelText: 'Địa chỉ Email (Tùy chọn)',
                 hintText: 'thanhvien@dongho.vn',
-                prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF8B1E1E)),
+                prefixIcon: const Icon(
+                  Icons.email_outlined,
+                  color: Color(0xFF8B1E1E),
+                ),
                 filled: true,
                 fillColor: const Color(0xFFFCFAF7),
                 border: OutlineInputBorder(
@@ -657,13 +808,17 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFF8B1E1E), width: 1.5),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF8B1E1E),
+                    width: 1.5,
+                  ),
                 ),
               ),
               validator: (val) {
                 if (val != null && val.trim().isNotEmpty) {
-                  final emailRegex =
-                      RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+                  final emailRegex = RegExp(
+                    r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+                  );
                   if (!emailRegex.hasMatch(val.trim())) {
                     return 'Định dạng email không hợp lệ';
                   }
@@ -678,10 +833,14 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
               maxLines: 2,
               decoration: InputDecoration(
                 labelText: 'Địa chỉ thường trú (Tùy chọn)',
-                hintText: 'Số nhà, ngõ/xóm, xã/phường, quận/huyện, tỉnh/thành phố...',
+                hintText:
+                    'Số nhà, ngõ/xóm, xã/phường, quận/huyện, tỉnh/thành phố...',
                 prefixIcon: const Padding(
                   padding: EdgeInsets.only(bottom: 24),
-                  child: Icon(Icons.location_on_outlined, color: Color(0xFF8B1E1E)),
+                  child: Icon(
+                    Icons.location_on_outlined,
+                    color: Color(0xFF8B1E1E),
+                  ),
                 ),
                 filled: true,
                 fillColor: const Color(0xFFFCFAF7),
@@ -695,7 +854,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFF8B1E1E), width: 1.5),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF8B1E1E),
+                    width: 1.5,
+                  ),
                 ),
               ),
             ),
@@ -738,7 +900,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryCrimson,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 22,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -817,7 +982,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
               decoration: InputDecoration(
                 labelText: 'Mật khẩu hiện tại *',
                 hintText: 'Nhập mật khẩu bạn đang dùng',
-                prefixIcon: const Icon(Icons.lock_open_outlined, color: Color(0xFF7D6E66)),
+                prefixIcon: const Icon(
+                  Icons.lock_open_outlined,
+                  color: Color(0xFF7D6E66),
+                ),
                 suffixIcon: IconButton(
                   icon: Icon(
                     _obscureCurrentPassword
@@ -844,7 +1012,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFF8B1E1E), width: 1.5),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF8B1E1E),
+                    width: 1.5,
+                  ),
                 ),
               ),
               validator: (val) {
@@ -862,7 +1033,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
               decoration: InputDecoration(
                 labelText: 'Mật khẩu mới * (Tối thiểu 6 ký tự)',
                 hintText: 'Nhập mật khẩu mới an toàn',
-                prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF7D6E66)),
+                prefixIcon: const Icon(
+                  Icons.lock_outline,
+                  color: Color(0xFF7D6E66),
+                ),
                 suffixIcon: IconButton(
                   icon: Icon(
                     _obscureNewPassword
@@ -889,7 +1063,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFF8B1E1E), width: 1.5),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF8B1E1E),
+                    width: 1.5,
+                  ),
                 ),
               ),
               validator: (val) {
@@ -913,7 +1090,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
               decoration: InputDecoration(
                 labelText: 'Xác nhận lại mật khẩu mới *',
                 hintText: 'Nhập lại chính xác mật khẩu mới',
-                prefixIcon: const Icon(Icons.check_circle_outline, color: Color(0xFF7D6E66)),
+                prefixIcon: const Icon(
+                  Icons.check_circle_outline,
+                  color: Color(0xFF7D6E66),
+                ),
                 suffixIcon: IconButton(
                   icon: Icon(
                     _obscureConfirmPassword
@@ -940,7 +1120,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFF8B1E1E), width: 1.5),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF8B1E1E),
+                    width: 1.5,
+                  ),
                 ),
               ),
               validator: (val) {
@@ -961,7 +1144,8 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                 onPressed: state.isChangingPassword
                     ? null
                     : () async {
-                        if (_passwordFormKey.currentState?.validate() ?? false) {
+                        if (_passwordFormKey.currentState?.validate() ??
+                            false) {
                           final success = await notifier.changePassword(
                             currentPassword: _currentPasswordController.text,
                             newPassword: _newPasswordController.text,
@@ -985,13 +1169,18 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                       )
                     : const Icon(Icons.vpn_key_outlined, size: 18),
                 label: Text(
-                  state.isChangingPassword ? 'Đang xử lý...' : 'Cập Nhật Mật Khẩu',
+                  state.isChangingPassword
+                      ? 'Đang xử lý...'
+                      : 'Cập Nhật Mật Khẩu',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2B1810),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 22,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -1005,3 +1194,89 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
     );
   }
 }
+
+/// Thông tin định danh ngân hàng hỗ trợ chuẩn Napas / VietQR
+class BankInfoItem {
+  final String bin;
+  final String shortName;
+  final String name;
+
+  const BankInfoItem({
+    required this.bin,
+    required this.shortName,
+    required this.name,
+  });
+}
+
+const List<BankInfoItem> kSupportedBanks = [
+  BankInfoItem(
+    bin: '970422',
+    shortName: 'MBBank',
+    name: 'MBBank - Ngân hàng TMCP Quân Đội',
+  ),
+  BankInfoItem(
+    bin: '970436',
+    shortName: 'Vietcombank',
+    name: 'Vietcombank - Ngân hàng TMCP Ngoại Thương VN',
+  ),
+  BankInfoItem(
+    bin: '970407',
+    shortName: 'Techcombank',
+    name: 'Techcombank - Ngân hàng TMCP Kỹ Thương VN',
+  ),
+  BankInfoItem(
+    bin: '970415',
+    shortName: 'VietinBank',
+    name: 'VietinBank - Ngân hàng TMCP Công Thương VN',
+  ),
+  BankInfoItem(
+    bin: '970418',
+    shortName: 'BIDV',
+    name: 'BIDV - Ngân hàng TMCP Đầu Tư & Phát Triển VN',
+  ),
+  BankInfoItem(
+    bin: '970423',
+    shortName: 'TPBank',
+    name: 'TPBank - Ngân hàng TMCP Tiên Phong',
+  ),
+  BankInfoItem(
+    bin: '970432',
+    shortName: 'VPBank',
+    name: 'VPBank - Ngân hàng TMCP Việt Nam Thịnh Vượng',
+  ),
+  BankInfoItem(
+    bin: '970416',
+    shortName: 'ACB',
+    name: 'ACB - Ngân hàng TMCP Á Châu',
+  ),
+  BankInfoItem(
+    bin: '970405',
+    shortName: 'Agribank',
+    name: 'Agribank - Ngân hàng Nông Nghiệp & PTNT VN',
+  ),
+  BankInfoItem(
+    bin: '970441',
+    shortName: 'VIB',
+    name: 'VIB - Ngân Hàng Quốc Tế',
+  ),
+  BankInfoItem(
+    bin: '970448',
+    shortName: 'OCB',
+    name: 'OCB - Ngân hàng TMCP Phương Đông',
+  ),
+  BankInfoItem(
+    bin: '970443',
+    shortName: 'SHB',
+    name: 'SHB - Ngân hàng TMCP Sài Gòn - Hà Nội',
+  ),
+  BankInfoItem(
+    bin: '970428',
+    shortName: 'NamABank',
+    name: 'NamABank - Ngân hàng TMCP Nam Á',
+  ),
+  BankInfoItem(
+    bin: '970454',
+    shortName: 'VietCapitalBank',
+    name: 'BVBank - Ngân hàng Bản Việt',
+  ),
+];

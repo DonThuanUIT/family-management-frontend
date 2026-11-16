@@ -1,12 +1,14 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../data/models/contribution_models.dart';
 import '../../../../core/utils/vietnamese_money_converter.dart';
+import '../../../../core/widgets/error_message_box.dart';
 import '../providers/contribution_ui_provider.dart';
 import '../widgets/electronic_receipt_dialog.dart';
+
 import 'package:familyfund_app/features/shared/presentation/widgets/heritage_nav_bar.dart';
 
 /// Task #74: Màn hình Quản lý Kho Bảo Vật – Di Sản Dòng Họ và Vòng Đời Hiện Vật Sự Kiện.
@@ -126,24 +128,26 @@ class _ClanAssetInventoryScreenState
       return catKey == 'all'
           ? uiState.clanAssets.length
           : uiState.clanAssets
-              .where((a) => _matchesItemCategory(a.assetName, catKey))
-              .length;
+                .where((a) => _matchesItemCategory(a.assetName, catKey))
+                .length;
     } else if (_tabController.index == 1) {
-      final pendings = uiState.inKindReceipts
-          .where((i) => i.processingStatus == InKindProcessingStatus.Pending);
+      final pendings = uiState.inKindReceipts.where(
+        (i) => i.processingStatus == InKindProcessingStatus.Pending,
+      );
       return catKey == 'all'
           ? pendings.length
           : pendings
-              .where((i) => _matchesItemCategory(i.itemName, catKey))
-              .length;
+                .where((i) => _matchesItemCategory(i.itemName, catKey))
+                .length;
     } else {
-      final processeds = uiState.inKindReceipts
-          .where((i) => i.processingStatus != InKindProcessingStatus.Pending);
+      final processeds = uiState.inKindReceipts.where(
+        (i) => i.processingStatus != InKindProcessingStatus.Pending,
+      );
       return catKey == 'all'
           ? processeds.length
           : processeds
-              .where((i) => _matchesItemCategory(i.itemName, catKey))
-              .length;
+                .where((i) => _matchesItemCategory(i.itemName, catKey))
+                .length;
     }
   }
 
@@ -202,7 +206,9 @@ class _ClanAssetInventoryScreenState
     return Scaffold(
       backgroundColor: const Color(0xFFFAF9F6),
       appBar: const HeritageNavBar(currentRoute: '/clan-assets'),
-      bottomNavigationBar: const HeritageBottomNavBar(currentRoute: '/clan-assets'),
+      bottomNavigationBar: const HeritageBottomNavBar(
+        currentRoute: '/clan-assets',
+      ),
       body: Column(
         children: [
           // Header summary statistics & Search
@@ -227,7 +233,10 @@ class _ClanAssetInventoryScreenState
                                 end: Alignment.bottomRight,
                               ),
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: const Color(0xFFD4A017), width: 1.2),
+                              border: Border.all(
+                                color: const Color(0xFFD4A017),
+                                width: 1.2,
+                              ),
                             ),
                             child: const Icon(
                               Icons.temple_buddhist,
@@ -266,22 +275,6 @@ class _ClanAssetInventoryScreenState
                         ],
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    ElevatedButton.icon(
-                      onPressed: () => _showAddAssetModal(context),
-                      icon: const Icon(Icons.add_circle_outline, size: 16),
-                      label: const Text('Đăng Ký Bảo Vật Mới'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8B1E1E),
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(0, 40),
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        elevation: 1,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -299,14 +292,18 @@ class _ClanAssetInventoryScreenState
                     color: Color(0xFF2B1810),
                   ),
                   decoration: InputDecoration(
-                    hintText:
-                        'Tìm kiếm bảo vật, đồ thờ theo tên hoặc vị trí lưu kho...',
+                    hintText: 'Tìm kiếm bảo vật, đồ thờ theo tên hoặc vị trí lưu kho...',
                     hintStyle: const TextStyle(color: Color(0xFF78655C)),
-                    prefixIcon:
-                        const Icon(Icons.search, color: Color(0xFF8B1E1E)),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: Color(0xFF8B1E1E),
+                    ),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear, color: Color(0xFF4A3B32)),
+                            icon: const Icon(
+                              Icons.clear,
+                              color: Color(0xFF4A3B32),
+                            ),
                             onPressed: () {
                               _searchController.clear();
                               ref
@@ -325,13 +322,17 @@ class _ClanAssetInventoryScreenState
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide:
-                          const BorderSide(color: Color(0xFF8B1E1E), width: 1.5),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF8B1E1E),
+                        width: 1.5,
+                      ),
                     ),
                     filled: true,
                     fillColor: const Color(0xFFFAF9F6),
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -373,7 +374,9 @@ class _ClanAssetInventoryScreenState
                             ),
                           ),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 6),
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
                           showCheckmark: false,
                         ),
                       );
@@ -382,18 +385,28 @@ class _ClanAssetInventoryScreenState
                 ),
 
                 // Thanh hiển thị bộ lọc đang kích hoạt kèm nút xóa nhanh 1-chạm
-                if (_selectedCategory != 'all' || uiState.searchQuery.isNotEmpty) ...[
+                if (_selectedCategory != 'all' ||
+                    uiState.searchQuery.isNotEmpty) ...[
                   const SizedBox(height: 10),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 7,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFBF4E8),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFE2AA36).withAlpha(120)),
+                      border: Border.all(
+                        color: const Color(0xFFE2AA36).withAlpha(120),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.filter_alt, size: 15, color: Color(0xFF8B1E1E)),
+                        const Icon(
+                          Icons.filter_alt,
+                          size: 15,
+                          color: Color(0xFF8B1E1E),
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -408,17 +421,26 @@ class _ClanAssetInventoryScreenState
                         InkWell(
                           onTap: () {
                             _searchController.clear();
-                            ref.read(contributionUiProvider.notifier).setSearchQuery('');
+                            ref
+                                .read(contributionUiProvider.notifier)
+                                .setSearchQuery('');
                             setState(() {
                               _selectedCategory = 'all';
                             });
                           },
                           child: const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.close, size: 14, color: Color(0xFF8B1E1E)),
+                                Icon(
+                                  Icons.close,
+                                  size: 14,
+                                  color: Color(0xFF8B1E1E),
+                                ),
                                 SizedBox(width: 4),
                                 Text(
                                   'Bỏ lọc',
@@ -533,12 +555,14 @@ class _ClanAssetInventoryScreenState
     if (screenWidth > 1150) {
       return Row(
         children: widgets
-            .map((w) => Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 5),
-                    child: w,
-                  ),
-                ))
+            .map(
+              (w) => Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  child: w,
+                ),
+              ),
+            )
             .toList(),
       );
     } else if (screenWidth > 680) {
@@ -581,16 +605,22 @@ class _ClanAssetInventoryScreenState
     } else {
       return Column(
         children: widgets
-            .map((w) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: w,
-                ))
+            .map(
+              (w) =>
+                  Padding(padding: const EdgeInsets.only(bottom: 8), child: w),
+            )
             .toList(),
       );
     }
   }
 
-  Widget _statMini(String label, String value, IconData icon, Color color, String sub) {
+  Widget _statMini(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+    String sub,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
@@ -657,8 +687,11 @@ class _ClanAssetInventoryScreenState
                   shape: BoxShape.circle,
                   border: Border.all(color: const Color(0xFFE6DFD8)),
                 ),
-                child: const Icon(Icons.inventory_2_outlined,
-                    size: 44, color: Color(0xFF78655C)),
+                child: const Icon(
+                  Icons.inventory_2_outlined,
+                  size: 44,
+                  color: Color(0xFF78655C),
+                ),
               ),
               const SizedBox(height: 16),
               const Text(
@@ -712,14 +745,13 @@ class _ClanAssetInventoryScreenState
   Widget _buildAssetCard(ClanAssetDto asset) {
     final uiState = ref.watch(contributionUiProvider);
     final originReceipt = asset.originContributionId != null
-        ? uiState.inKindReceipts
-            .cast<InKindElectronicReceiptDto?>()
-            .firstWhere(
-              (r) => r?.contributionId == asset.originContributionId,
-              orElse: () => null,
-            )
+        ? uiState.inKindReceipts.cast<InKindElectronicReceiptDto?>().firstWhere(
+            (r) => r?.contributionId == asset.originContributionId,
+            orElse: () => null,
+          )
         : null;
-    final donorDisplay = asset.originDonorName ??
+    final donorDisplay =
+        asset.originDonorName ??
         (originReceipt != null
             ? '${originReceipt.payerMemberName ?? originReceipt.payerMemberId} (Cúng tiến ${originReceipt.eventName})'
             : null);
@@ -742,80 +774,104 @@ class _ClanAssetInventoryScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Mã định danh tem kèm nút sao chép nhanh
-              InkWell(
-                onTap: () {
-                  Clipboard.setData(ClipboardData(text: asset.assetId));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Đã sao chép mã bảo vật: ${asset.assetId}'),
-                      duration: const Duration(seconds: 2),
-                      backgroundColor: const Color(0xFF8B1E1E),
-                    ),
-                  );
-                },
-                borderRadius: BorderRadius.circular(6),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF8B1E1E).withAlpha(15),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: const Color(0xFF8B1E1E).withAlpha(40),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        asset.assetId,
-                        style: const TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF8B1E1E),
+              Expanded(
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    // Mã định danh tem kèm nút sao chép nhanh
+                    InkWell(
+                      onTap: () {
+                        Clipboard.setData(ClipboardData(text: asset.assetId));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Đã sao chép mã bảo vật: ${asset.assetId}',
+                            ),
+                            duration: const Duration(seconds: 2),
+                            backgroundColor: const Color(0xFF8B1E1E),
+                          ),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF8B1E1E).withAlpha(15),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: const Color(0xFF8B1E1E).withAlpha(40),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              asset.assetId,
+                              style: const TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF8B1E1E),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(
+                              Icons.copy,
+                              size: 12,
+                              color: Color(0xFF8B1E1E),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.copy, size: 12, color: Color(0xFF8B1E1E)),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD4A017).withAlpha(30),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: const Color(0xFFD4A017).withAlpha(120),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.verified, size: 12, color: Color(0xFF8A5300)),
-                    SizedBox(width: 4),
-                    Text(
-                      'Bảo Vật Từ Đường',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF8A5300),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD4A017).withAlpha(30),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: const Color(0xFFD4A017).withAlpha(120),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(
+                            Icons.verified,
+                            size: 12,
+                            color: Color(0xFF8A5300),
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            'Bảo Vật Từ Đường',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF8A5300),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               Text(
                 currencyFormatter.format(asset.assessedValue),
                 style: const TextStyle(
                   fontFamily: 'monospace',
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF2E8B43),
                 ),
@@ -868,8 +924,11 @@ class _ClanAssetInventoryScreenState
             const SizedBox(height: 6),
             Row(
               children: [
-                const Icon(Icons.volunteer_activism,
-                    size: 14, color: Color(0xFF8B1E1E)),
+                const Icon(
+                  Icons.volunteer_activism,
+                  size: 14,
+                  color: Color(0xFF8B1E1E),
+                ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
@@ -898,7 +957,10 @@ class _ClanAssetInventoryScreenState
                   foregroundColor: const Color(0xFF006E2A),
                   side: const BorderSide(color: Color(0xFF006E2A)),
                   minimumSize: const Size(0, 40),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -912,7 +974,10 @@ class _ClanAssetInventoryScreenState
                   foregroundColor: const Color(0xFF54433E),
                   side: const BorderSide(color: Color(0xFFDAC1BA)),
                   minimumSize: const Size(0, 40),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -926,7 +991,10 @@ class _ClanAssetInventoryScreenState
                   foregroundColor: const Color(0xFF8B1E1E),
                   side: const BorderSide(color: Color(0xFF8B1E1E)),
                   minimumSize: const Size(0, 40),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -941,7 +1009,10 @@ class _ClanAssetInventoryScreenState
                   foregroundColor: const Color(0xFF8B1E1E),
                   elevation: 0,
                   minimumSize: const Size(0, 40),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                     side: const BorderSide(color: Color(0xFFE6DFD8)),
@@ -958,7 +1029,8 @@ class _ClanAssetInventoryScreenState
   // Danh sách hiện vật sự kiện chờ phân loại vòng đời
   Widget _buildPendingList(List<InKindElectronicReceiptDto> pendingItems) {
     if (pendingItems.isEmpty) {
-      final isFiltered = _selectedCategory != 'all' ||
+      final isFiltered =
+          _selectedCategory != 'all' ||
           ref.read(contributionUiProvider).searchQuery.isNotEmpty;
       if (isFiltered) {
         return Center(
@@ -974,8 +1046,11 @@ class _ClanAssetInventoryScreenState
                     shape: BoxShape.circle,
                     border: Border.all(color: const Color(0xFFE6DFD8)),
                   ),
-                  child: const Icon(Icons.filter_list_off,
-                      size: 44, color: Color(0xFF78655C)),
+                  child: const Icon(
+                    Icons.filter_list_off,
+                    size: 44,
+                    color: Color(0xFF78655C),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 const Text(
@@ -989,14 +1064,19 @@ class _ClanAssetInventoryScreenState
                 const SizedBox(height: 6),
                 Text(
                   'Không có hiện vật nào thuộc phân loại "${_categories[_selectedCategory]}" đang chờ phân loại.',
-                  style: const TextStyle(color: Color(0xFF4A3B32), fontSize: 13),
+                  style: const TextStyle(
+                    color: Color(0xFF4A3B32),
+                    fontSize: 13,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
                 OutlinedButton.icon(
                   onPressed: () {
                     _searchController.clear();
-                    ref.read(contributionUiProvider.notifier).setSearchQuery('');
+                    ref
+                        .read(contributionUiProvider.notifier)
+                        .setSearchQuery('');
                     setState(() => _selectedCategory = 'all');
                   },
                   icon: const Icon(Icons.refresh, size: 16),
@@ -1025,8 +1105,11 @@ class _ClanAssetInventoryScreenState
                   color: const Color(0xFF2E8B43).withAlpha(20),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check_circle_outline,
-                    size: 48, color: Color(0xFF2E8B43)),
+                child: const Icon(
+                  Icons.check_circle_outline,
+                  size: 48,
+                  color: Color(0xFF2E8B43),
+                ),
               ),
               const SizedBox(height: 14),
               const Text(
@@ -1058,7 +1141,11 @@ class _ClanAssetInventoryScreenState
             children: [
               Text(
                 'Danh sách hiện vật chờ chốt: ${pendingItems.length} món',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF2B1810)),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: Color(0xFF2B1810),
+                ),
               ),
               ElevatedButton.icon(
                 onPressed: () => _showClosureCheckModal(context),
@@ -1067,8 +1154,14 @@ class _ClanAssetInventoryScreenState
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF8B1E1E),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -1080,170 +1173,184 @@ class _ClanAssetInventoryScreenState
             itemCount: pendingItems.length,
             separatorBuilder: (_, _) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
-        final item = pendingItems[index];
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE6DFD8)),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x06000000),
-                blurRadius: 4,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFD97706).withAlpha(20),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xFFD97706)),
+              final item = pendingItems[index];
+              return Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE6DFD8)),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x06000000),
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(Icons.schedule, size: 13, color: Color(0xFFB45309)),
-                        SizedBox(width: 4),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 9,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD97706).withAlpha(20),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFFD97706)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(
+                                Icons.schedule,
+                                size: 13,
+                                color: Color(0xFFB45309),
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                'ĐANG DÂNG LỄ (PENDING)',
+                                style: TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFFB45309),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                         Text(
-                          'ĐANG DÂNG LỄ (PENDING)',
-                          style: TextStyle(
+                          currencyFormatter.format(item.convertedMonetaryValue),
+                          style: const TextStyle(
                             fontFamily: 'monospace',
-                            fontSize: 11,
+                            fontSize: 15.5,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFFB45309),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  Text(
-                    currencyFormatter.format(item.convertedMonetaryValue),
-                    style: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 15.5,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFB45309),
+                    const SizedBox(height: 10),
+                    Text(
+                      '${item.itemName} (${item.quantity} ${item.unit})',
+                      style: const TextStyle(
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2B1810),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                '${item.itemName} (${item.quantity} ${item.unit})',
-                style: const TextStyle(
-                  fontSize: 15.5,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2B1810),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Người cúng tiến: ${item.payerMemberName ?? item.payerMemberId} • ${item.conversionMethod.displayName}',
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF4A3B32), // Tương phản cao
-                ),
-              ),
-              const Divider(height: 20, color: Color(0xFFF0EDEB)),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      ref
-                          .read(contributionUiProvider.notifier)
-                          .processInKindLifecycle(
-                            contributionId: item.contributionId,
-                            targetStatus: InKindProcessingStatus.Consumed,
-                          );
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                              'Đã đánh dấu "${item.itemName}" là ĐÃ TIÊU HAO CHO CỖ BÀN!'),
-                          backgroundColor: const Color(0xFF475569),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Người cúng tiến: ${item.payerMemberName ?? item.payerMemberId} • ${item.conversionMethod.displayName}',
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF4A3B32), // Tương phản cao
+                      ),
+                    ),
+                    const Divider(height: 20, color: Color(0xFFF0EDEB)),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            ref
+                                .read(contributionUiProvider.notifier)
+                                .processInKindLifecycle(
+                                  contributionId: item.contributionId,
+                                  targetStatus: InKindProcessingStatus.Consumed,
+                                );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Đã đánh dấu "${item.itemName}" là ĐÃ TIÊU HAO CHO CỖ BÀN!',
+                                ),
+                                backgroundColor: const Color(0xFF475569),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.restaurant, size: 16),
+                          label: const Text('Đã Tiêu Hao Cỗ'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF475569),
+                            side: const BorderSide(color: Color(0xFF94A3B8)),
+                            minimumSize: const Size(0, 42),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
                         ),
-                      );
-                    },
-                    icon: const Icon(Icons.restaurant, size: 16),
-                    label: const Text('Đã Tiêu Hao Cỗ'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF475569),
-                      side: const BorderSide(color: Color(0xFF94A3B8)),
-                      minimumSize: const Size(0, 42),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      ref
-                          .read(contributionUiProvider.notifier)
-                          .processInKindLifecycle(
-                            contributionId: item.contributionId,
-                            targetStatus: InKindProcessingStatus.Returned,
-                          );
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                              'Đã đánh dấu "${item.itemName}" là ĐÃ HOÀN TRẢ GIA CHỦ!'),
-                          backgroundColor: const Color(0xFF0284C7),
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            ref
+                                .read(contributionUiProvider.notifier)
+                                .processInKindLifecycle(
+                                  contributionId: item.contributionId,
+                                  targetStatus: InKindProcessingStatus.Returned,
+                                );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Đã đánh dấu "${item.itemName}" là ĐÃ HOÀN TRẢ GIA CHỦ!',
+                                ),
+                                backgroundColor: const Color(0xFF0284C7),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.assignment_return, size: 16),
+                          label: const Text('Đã Hoàn Trả Gia Chủ'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF0284C7),
+                            side: const BorderSide(color: Color(0xFF38BDF8)),
+                            minimumSize: const Size(0, 42),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
                         ),
-                      );
-                    },
-                    icon: const Icon(Icons.assignment_return, size: 16),
-                    label: const Text('Đã Hoàn Trả Gia Chủ'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF0284C7),
-                      side: const BorderSide(color: Color(0xFF38BDF8)),
-                      minimumSize: const Size(0, 42),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                        ElevatedButton.icon(
+                          onPressed: () => _promptAddToAssetsDialog(item),
+                          icon: const Icon(Icons.account_balance, size: 16),
+                          label: const Text('Nhập Kho Từ Đường'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF8B1E1E),
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(0, 42),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 8,
+                            ),
+                            elevation: 1,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () => _promptAddToAssetsDialog(item),
-                    icon: const Icon(Icons.account_balance, size: 16),
-                    label: const Text('Nhập Kho Từ Đường'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF8B1E1E),
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(0, 42),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 8),
-                      elevation: 1,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              );
+            },
           ),
-        );
-      },
-    ),
-  ),
-],
-);
+        ),
+      ],
+    );
   }
 
   // Danh sách hiện vật đã xử lý vòng đời (Đã tiêu hao cỗ bàn / Hoàn trả / Nhập kho)
@@ -1263,18 +1370,24 @@ class _ClanAssetInventoryScreenState
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFBF8F2),
                   borderRadius: BorderRadius.circular(8),
-                  border:
-                      Border.all(color: const Color(0xFFD4A017).withAlpha(120)),
+                  border: Border.all(
+                    color: const Color(0xFFD4A017).withAlpha(120),
+                  ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.verified_user,
-                        color: Color(0xFF8B1E1E), size: 20),
+                    const Icon(
+                      Icons.verified_user,
+                      color: Color(0xFF8B1E1E),
+                      size: 20,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text.rich(
@@ -1293,8 +1406,7 @@ class _ClanAssetInventoryScreenState
                               ),
                             ),
                             TextSpan(
-                              text:
-                                  'Mọi hiện vật cúng tiến dù đã tiêu hao cho cỗ bàn hay hoàn trả gia chủ đều được lưu vĩnh viễn trong Sổ cái & CSDL. Công đức gia chủ luôn được bảo toàn và có thể tra cứu phiếu thu bất cứ lúc nào.',
+                              text: 'Mọi hiện vật cúng tiến dù đã tiêu hao cho cỗ bàn hay hoàn trả gia chủ đều được lưu vĩnh viễn trong Sổ cái & CSDL. Công đức gia chủ luôn được bảo toàn và có thể tra cứu phiếu thu bất cứ lúc nào.',
                             ),
                           ],
                         ),
@@ -1318,9 +1430,11 @@ class _ClanAssetInventoryScreenState
                       'Đã tiêu hao cỗ bàn',
                       'consumed',
                       processedBase
-                          .where((i) =>
-                              i.processingStatus ==
-                              InKindProcessingStatus.Consumed)
+                          .where(
+                            (i) =>
+                                i.processingStatus ==
+                                InKindProcessingStatus.Consumed,
+                          )
                           .length,
                       color: const Color(0xFF475569),
                     ),
@@ -1329,9 +1443,11 @@ class _ClanAssetInventoryScreenState
                       'Đã hoàn trả gia chủ',
                       'returned',
                       processedBase
-                          .where((i) =>
-                              i.processingStatus ==
-                              InKindProcessingStatus.Returned)
+                          .where(
+                            (i) =>
+                                i.processingStatus ==
+                                InKindProcessingStatus.Returned,
+                          )
                           .length,
                       color: const Color(0xFF0284C7),
                     ),
@@ -1359,8 +1475,11 @@ class _ClanAssetInventoryScreenState
                             shape: BoxShape.circle,
                             border: Border.all(color: const Color(0xFFE6DFD8)),
                           ),
-                          child: const Icon(Icons.filter_alt_off,
-                              size: 44, color: Color(0xFF78655C)),
+                          child: const Icon(
+                            Icons.filter_alt_off,
+                            size: 44,
+                            color: Color(0xFF78655C),
+                          ),
                         ),
                         const SizedBox(height: 14),
                         const Text(
@@ -1377,8 +1496,10 @@ class _ClanAssetInventoryScreenState
                               ? 'Không có hiện vật nào thuộc danh mục "${_categories[_selectedCategory]}" trong mục này.'
                               : 'Chưa có hiện vật nào ở nhóm xử lý đã chọn.',
                           textAlign: TextAlign.center,
-                          style:
-                              const TextStyle(color: Color(0xFF54433E), fontSize: 13),
+                          style: const TextStyle(
+                            color: Color(0xFF54433E),
+                            fontSize: 13,
+                          ),
                         ),
                         if (_selectedCategory != 'all' ||
                             _selectedProcessedFilter != 'all' ||
@@ -1387,7 +1508,9 @@ class _ClanAssetInventoryScreenState
                           OutlinedButton.icon(
                             onPressed: () {
                               _searchController.clear();
-                              ref.read(contributionUiProvider.notifier).setSearchQuery('');
+                              ref
+                                  .read(contributionUiProvider.notifier)
+                                  .setSearchQuery('');
                               setState(() {
                                 _selectedCategory = 'all';
                                 _selectedProcessedFilter = 'all';
@@ -1420,8 +1543,12 @@ class _ClanAssetInventoryScreenState
     );
   }
 
-  Widget _buildProcessedFilterChip(String label, String key, int count,
-      {Color color = const Color(0xFF8B1E1E)}) {
+  Widget _buildProcessedFilterChip(
+    String label,
+    String key,
+    int count, {
+    Color color = const Color(0xFF8B1E1E),
+  }) {
     final isSelected = _selectedProcessedFilter == key;
     return FilterChip(
       label: Text('$label ($count)'),
@@ -1440,9 +1567,7 @@ class _ClanAssetInventoryScreenState
       ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(
-          color: isSelected ? color : const Color(0xFFE6DFD8),
-        ),
+        side: BorderSide(color: isSelected ? color : const Color(0xFFE6DFD8)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       showCheckmark: false,
@@ -1535,8 +1660,9 @@ class _ClanAssetInventoryScreenState
                   Clipboard.setData(ClipboardData(text: item.receiptNumber));
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content:
-                          Text('Đã sao chép mã phiếu: ${item.receiptNumber}'),
+                      content: Text(
+                        'Đã sao chép mã phiếu: ${item.receiptNumber}',
+                      ),
                       duration: const Duration(seconds: 2),
                       backgroundColor: const Color(0xFF8B1E1E),
                     ),
@@ -1544,8 +1670,10 @@ class _ClanAssetInventoryScreenState
                 },
                 borderRadius: BorderRadius.circular(4),
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFAF9F6),
                     borderRadius: BorderRadius.circular(4),
@@ -1564,7 +1692,11 @@ class _ClanAssetInventoryScreenState
                         ),
                       ),
                       const SizedBox(width: 3),
-                      const Icon(Icons.copy, size: 10, color: Color(0xFF54433E)),
+                      const Icon(
+                        Icons.copy,
+                        size: 10,
+                        color: Color(0xFF54433E),
+                      ),
                     ],
                   ),
                 ),
@@ -1659,7 +1791,8 @@ class _ClanAssetInventoryScreenState
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                          'Đã hoàn tác "${item.itemName}" về hàng đợi Chờ Xử Lý!'),
+                        'Đã hoàn tác "${item.itemName}" về hàng đợi Chờ Xử Lý!',
+                      ),
                       backgroundColor: const Color(0xFFB45309),
                     ),
                   );
@@ -1669,7 +1802,9 @@ class _ClanAssetInventoryScreenState
                 style: TextButton.styleFrom(
                   foregroundColor: const Color(0xFFB45309),
                   textStyle: const TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w600),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -1687,11 +1822,15 @@ class _ClanAssetInventoryScreenState
                   backgroundColor: const Color(0xFF8B1E1E),
                   foregroundColor: Colors.white,
                   minimumSize: const Size(0, 40),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
                   elevation: 0,
                   textStyle: const TextStyle(
-                      fontSize: 12.5, fontWeight: FontWeight.bold),
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.bold,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -1706,7 +1845,8 @@ class _ClanAssetInventoryScreenState
 
   void _promptAddToAssetsDialog(InKindElectronicReceiptDto item) {
     final locationCtrl = TextEditingController(
-        text: 'Gian thờ chính - Nhà thờ tổ đại gia tộc');
+      text: 'Gian thờ chính - Nhà thờ tổ đại gia tộc',
+    );
 
     final locationPresets = [
       'Gian thờ chính - Nhà thờ tổ',
@@ -1803,8 +1943,9 @@ class _ClanAssetInventoryScreenState
                           color: isCurrent
                               ? const Color(0xFF8B1E1E)
                               : const Color(0xFF4A3B32),
-                          fontWeight:
-                              isCurrent ? FontWeight.bold : FontWeight.normal,
+                          fontWeight: isCurrent
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                         ),
                       ),
                       backgroundColor: isCurrent
@@ -1834,8 +1975,10 @@ class _ClanAssetInventoryScreenState
                     labelText: 'Vị trí lưu kho chi tiết *',
                     labelStyle: TextStyle(color: Color(0xFF54433E)),
                     border: OutlineInputBorder(),
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
                   ),
                 ),
               ],
@@ -1863,7 +2006,8 @@ class _ClanAssetInventoryScreenState
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                        'Đã kết chuyển "${item.itemName}" vào Sổ kho bảo vật Từ Đường thành công!'),
+                      'Đã kết chuyển "${item.itemName}" vào Sổ kho bảo vật Từ Đường thành công!',
+                    ),
                     backgroundColor: const Color(0xFF2E8B43),
                   ),
                 );
@@ -1884,144 +2028,399 @@ class _ClanAssetInventoryScreenState
   }
 
   void _showAssetQrDialog(ClanAssetDto asset) {
+    int selectedItemIndex = 1;
+    final totalItems = asset.quantity > 0 ? asset.quantity : 1;
+
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFFFFFDF9),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: Color(0xFFD4A017), width: 2),
-        ),
-        title: Row(
-          children: const [
-            Icon(Icons.qr_code_scanner, color: Color(0xFF8B1E1E), size: 22),
-            SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'TEM QR ĐỊNH DANH BẢO VẬT',
-                style: TextStyle(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF8B1E1E),
-                  letterSpacing: 0.5,
-                ),
-              ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          final isMultiple = totalItems > 1;
+          final itemTagCode = isMultiple
+              ? '${asset.assetId} - #${selectedItemIndex.toString().padLeft(2, '0')}'
+              : asset.assetId;
+
+          return AlertDialog(
+            backgroundColor: const Color(0xFFFFFDF9),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: Color(0xFFD4A017), width: 2),
             ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE6DFD8)),
-              ),
-              child: Column(
-                children: [
-                  const Icon(Icons.qr_code_2,
-                      size: 140, color: Color(0xFF8B1E1E)),
-                  const SizedBox(height: 8),
-                  InkWell(
-                    onTap: () {
-                      Clipboard.setData(ClipboardData(text: asset.assetId));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content:
-                              Text('Đã sao chép mã định danh: ${asset.assetId}'),
-                          duration: const Duration(seconds: 2),
-                          backgroundColor: const Color(0xFF8B1E1E),
-                        ),
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(6),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            asset.assetId,
-                            style: const TextStyle(
-                              fontFamily: 'monospace',
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14.5,
-                              color: Color(0xFF8B1E1E),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          const Icon(Icons.copy,
-                              size: 14, color: Color(0xFF8B1E1E)),
-                        ],
+            title: Row(
+              children: [
+                const Icon(
+                  Icons.qr_code_scanner,
+                  color: Color(0xFF8B1E1E),
+                  size: 22,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    isMultiple
+                        ? 'TEM QR ĐỊNH DANH TỪNG VẬT PHẨM'
+                        : 'TEM QR ĐỊNH DANH BẢO VẬT',
+                    style: const TextStyle(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF8B1E1E),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                if (isMultiple)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFF59E0B)),
+                    ),
+                    child: Text(
+                      'Bộ $totalItems vật phẩm',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFB45309),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    asset.assetName,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13.5,
-                      color: Color(0xFF2B1810),
+              ],
+            ),
+            content: SizedBox(
+              width: 440,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (isMultiple) ...[
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFBFDBFE)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              Icons.info_outline,
+                              size: 16,
+                              color: Color(0xFF1D4ED8),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Hiện vật này gồm $totalItems món vật lý riêng biệt. Mỗi món bắt buộc dán 1 tem decal QR độc lập (#1 đến #$totalItems) để thủ từ quét kiểm kê tại chỗ.',
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  color: Color(0xFF1E40AF),
+                                  height: 1.3,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Text(
+                        'CHỌN VẬT PHẨM XEM TRƯỚC TEM:',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF6B7280),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: List.generate(totalItems, (index) {
+                          final itemNum = index + 1;
+                          final isSelected = itemNum == selectedItemIndex;
+                          return InkWell(
+                            onTap: () {
+                              setDialogState(() {
+                                selectedItemIndex = itemNum;
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(6),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? const Color(0xFF8B1E1E)
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFFD1D5DB),
+                                  width: isSelected ? 1.5 : 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.label_important_outline,
+                                    size: 13,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : const Color(0xFF4B5563),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Vật phẩm #$itemNum',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.w500,
+                                      color: isSelected
+                                          ? Colors.white
+                                          : const Color(0xFF374151),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFFD4A017),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            decoration: const BoxDecoration(
+                              border: Border(
+                                bottom: BorderSide(color: Color(0xFFF3E8DF)),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'DÒNG HỌ NGUYỄN (ĐẠI TÔN)',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF8B1E1E),
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF5F0E8),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Text(
+                                    'TEM DECAL BẠC 50x30',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF78350F),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Icon(
+                            Icons.qr_code_2,
+                            size: 130,
+                            color: Color(0xFF8B1E1E),
+                          ),
+                          const SizedBox(height: 6),
+                          InkWell(
+                            onTap: () {
+                              Clipboard.setData(
+                                ClipboardData(text: itemTagCode),
+                              );
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Đã sao chép mã tem: $itemTagCode',
+                                  ),
+                                  duration: const Duration(seconds: 2),
+                                  backgroundColor: const Color(0xFF8B1E1E),
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(6),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    itemTagCode,
+                                    style: const TextStyle(
+                                      fontFamily: 'monospace',
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                      color: Color(0xFF8B1E1E),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  const Icon(
+                                    Icons.copy,
+                                    size: 14,
+                                    color: Color(0xFF8B1E1E),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            asset.assetName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13.5,
+                              color: Color(0xFF2B1810),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          if (isMultiple) ...[
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFDF2F2),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                'Vật phẩm #$selectedItemIndex / $totalItems trong bộ',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF991B1B),
+                                ),
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 4),
+                          Text(
+                            'Vị trí: ${asset.storageLocation}',
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              color: Color(0xFF4A3B32),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Vị trí: ${asset.storageLocation}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF4A3B32), // Tương phản cao
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Tem mã QR decal bạc chống ẩm mốc (khổ tiêu chuẩn 50x30mm), dán trực tiếp tại đế hoặc khung hiện vật phục vụ công tác kiểm kê định kỳ.',
+                      style: TextStyle(fontSize: 11, color: Color(0xFF334155)),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Tem mã QR decal bạc chống ẩm mốc (khổ tiêu chuẩn 50x30mm), dán trực tiếp tại đế hoặc khung hiện vật phục vụ công tác kiểm kê định kỳ.',
-              style: TextStyle(
-                fontSize: 11.5,
-                color: Color(0xFF334155), // WCAG AA compliant >= 4.5:1
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-        actions: [
-          OutlinedButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(0, 44),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-            ),
-            child: const Text('Đóng'),
-          ),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8B1E1E),
-              foregroundColor: Colors.white,
-              minimumSize: const Size(0, 44),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-            ),
-            icon: const Icon(Icons.print, size: 16),
-            label: const Text('In Tem QR (Khổ 50x30mm)'),
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                      'Đang gửi lệnh in tem QR cho "${asset.assetName}"...'),
-                  backgroundColor: const Color(0xFF8B1E1E),
+                  ],
                 ),
-              );
-            },
-          ),
-        ],
+              ),
+            ),
+            actions: [
+              OutlinedButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(0, 44),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+                child: const Text('Đóng'),
+              ),
+              if (isMultiple)
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Đang gửi lệnh in lẻ tem #$selectedItemIndex cho "${asset.assetName}"...',
+                        ),
+                        backgroundColor: const Color(0xFF8B1E1E),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.print_outlined, size: 16),
+                  label: Text('In Lẻ Tem #$selectedItemIndex'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF8B1E1E),
+                    side: const BorderSide(color: Color(0xFF8B1E1E)),
+                    minimumSize: const Size(0, 44),
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                  ),
+                ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF8B1E1E),
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(0, 44),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+                icon: const Icon(Icons.print, size: 16),
+                label: Text(
+                  isMultiple
+                      ? 'In Cả Bộ $totalItems Tem Decal'
+                      : 'In Tem QR (Khổ 50x30mm)',
+                ),
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isMultiple
+                            ? 'Đang gửi lệnh in trọn bộ $totalItems tem QR (mỗi tem dán 1 hiện vật) cho "${asset.assetName}"...'
+                            : 'Đang gửi lệnh in tem QR cho "${asset.assetName}"...',
+                      ),
+                      backgroundColor: const Color(0xFF8B1E1E),
+                    ),
+                  );
+                },
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -2031,12 +2430,13 @@ class _ClanAssetInventoryScreenState
     if (asset.originContributionId != null) {
       final inKindList = ref.read(contributionUiProvider).inKindReceipts;
       found = inKindList.cast<InKindElectronicReceiptDto?>().firstWhere(
-            (r) => r?.contributionId == asset.originContributionId,
-            orElse: () => null,
-          );
+        (r) => r?.contributionId == asset.originContributionId,
+        orElse: () => null,
+      );
     }
 
-    final receipt = found ??
+    final receipt =
+        found ??
         InKindElectronicReceiptDto(
           receiptNumber:
               'PT-ASSET-${asset.assetId.replaceAll(RegExp(r'[^0-9]'), '')}',
@@ -2070,7 +2470,9 @@ class _ClanAssetInventoryScreenState
     final qtyCtrl = TextEditingController(text: '1');
     final unitCtrl = TextEditingController(text: 'bộ');
     final valCtrl = TextEditingController(text: '10000000');
-    final locCtrl = TextEditingController(text: 'Gian chính từ đường đại gia tộc');
+    final locCtrl = TextEditingController(
+      text: 'Gian chính từ đường đại gia tộc',
+    );
     final donorCtrl = TextEditingController();
     String valWords = VietnameseMoneyConverter.toWords(10000000);
 
@@ -2113,8 +2515,11 @@ class _ClanAssetInventoryScreenState
                                   color: const Color(0xFF8B1E1E).withAlpha(15),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: const Icon(Icons.add_box_outlined,
-                                    color: Color(0xFF8B1E1E), size: 22),
+                                child: const Icon(
+                                  Icons.add_box_outlined,
+                                  color: Color(0xFF8B1E1E),
+                                  size: 22,
+                                ),
                               ),
                               const SizedBox(width: 10),
                               const Text(
@@ -2128,7 +2533,10 @@ class _ClanAssetInventoryScreenState
                             ],
                           ),
                           IconButton(
-                            icon: const Icon(Icons.close, color: Color(0xFF54433E)),
+                            icon: const Icon(
+                              Icons.close,
+                              color: Color(0xFF54433E),
+                            ),
                             onPressed: () => Navigator.of(ctx).pop(),
                           ),
                         ],
@@ -2136,7 +2544,10 @@ class _ClanAssetInventoryScreenState
                       const SizedBox(height: 6),
                       const Text(
                         'Định danh và quản lý các đồ thờ gia bảo, cổ vật lưu giữ tại nhà thờ tổ dòng họ.',
-                        style: TextStyle(fontSize: 12.5, color: Color(0xFF78655C)),
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: Color(0xFF78655C),
+                        ),
                       ),
                       const Divider(height: 24, color: Color(0xFFE6DFD8)),
 
@@ -2154,13 +2565,23 @@ class _ClanAssetInventoryScreenState
                         controller: nameCtrl,
                         decoration: InputDecoration(
                           hintText: 'VD: Đỉnh đồng chạm tam khí, Hoành phi Phúc Mãn Đường...',
-                          hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF78655C)),
+                          hintStyle: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF78655C),
+                          ),
                           filled: true,
                           fillColor: const Color(0xFFFAF9F6),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
                         ),
-                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Vui lòng nhập tên hiện vật' : null,
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Vui lòng nhập tên hiện vật'
+                            : null,
                       ),
                       const SizedBox(height: 14),
 
@@ -2173,7 +2594,11 @@ class _ClanAssetInventoryScreenState
                               children: [
                                 const Text(
                                   'Số lượng *',
-                                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF2B1810)),
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF2B1810),
+                                  ),
                                 ),
                                 const SizedBox(height: 6),
                                 TextFormField(
@@ -2182,10 +2607,19 @@ class _ClanAssetInventoryScreenState
                                   decoration: InputDecoration(
                                     filled: true,
                                     fillColor: const Color(0xFFFAF9F6),
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 12,
+                                    ),
                                   ),
-                                  validator: (v) => (v == null || int.tryParse(v.trim()) == null) ? 'Hợp lệ > 0' : null,
+                                  validator: (v) =>
+                                      (v == null ||
+                                          int.tryParse(v.trim()) == null)
+                                      ? 'Hợp lệ > 0'
+                                      : null,
                                 ),
                               ],
                             ),
@@ -2197,7 +2631,11 @@ class _ClanAssetInventoryScreenState
                               children: [
                                 const Text(
                                   'Đơn vị tính *',
-                                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF2B1810)),
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF2B1810),
+                                  ),
                                 ),
                                 const SizedBox(height: 6),
                                 TextFormField(
@@ -2206,10 +2644,18 @@ class _ClanAssetInventoryScreenState
                                     hintText: 'bộ, chiếc, pho...',
                                     filled: true,
                                     fillColor: const Color(0xFFFAF9F6),
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 12,
+                                    ),
                                   ),
-                                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Nhập đơn vị' : null,
+                                  validator: (v) =>
+                                      (v == null || v.trim().isEmpty)
+                                      ? 'Nhập đơn vị'
+                                      : null,
                                 ),
                               ],
                             ),
@@ -2221,7 +2667,11 @@ class _ClanAssetInventoryScreenState
                       // Giá trị thẩm định ước tính
                       const Text(
                         'Giá trị thẩm định ước tính (VNĐ) *',
-                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF2B1810)),
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2B1810),
+                        ),
                       ),
                       const SizedBox(height: 6),
                       TextFormField(
@@ -2231,32 +2681,56 @@ class _ClanAssetInventoryScreenState
                           filled: true,
                           fillColor: const Color(0xFFFAF9F6),
                           suffixText: 'VNĐ',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
                         ),
                         onChanged: (v) {
-                          final parsed = double.tryParse(v.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+                          final parsed =
+                              double.tryParse(
+                                v.replaceAll(RegExp(r'[^0-9]'), ''),
+                              ) ??
+                              0;
                           setModalState(() {
                             valWords = VietnameseMoneyConverter.toWords(parsed);
                           });
                         },
                         validator: (v) {
-                          if (v == null || v.trim().isEmpty) return 'Nhập giá trị';
-                          final num = double.tryParse(v.replaceAll(RegExp(r'[^0-9]'), ''));
-                          return (num == null || num <= 0) ? 'Giá trị phải lớn hơn 0' : null;
+                          if (v == null || v.trim().isEmpty)
+                            return 'Nhập giá trị';
+                          final num = double.tryParse(
+                            v.replaceAll(RegExp(r'[^0-9]'), ''),
+                          );
+                          return (num == null || num <= 0)
+                              ? 'Giá trị phải lớn hơn 0'
+                              : null;
                         },
                       ),
                       const SizedBox(height: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFBF8F2),
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: const Color(0xFFD4A017).withAlpha(80)),
+                          border: Border.all(
+                            color: const Color(0xFFD4A017).withAlpha(80),
+                          ),
                         ),
                         child: Text(
                           'Bằng chữ: $valWords',
-                          style: const TextStyle(fontSize: 11.5, fontStyle: FontStyle.italic, color: Color(0xFF7A1518), fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontStyle: FontStyle.italic,
+                            color: Color(0xFF7A1518),
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 14),
@@ -2264,7 +2738,11 @@ class _ClanAssetInventoryScreenState
                       // Vị trí lưu kho
                       const Text(
                         'Vị trí lưu kho tại từ đường *',
-                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF2B1810)),
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2B1810),
+                        ),
                       ),
                       const SizedBox(height: 6),
                       TextFormField(
@@ -2273,17 +2751,28 @@ class _ClanAssetInventoryScreenState
                           hintText: 'VD: Ban thờ cụ Thủy Tổ, Hậu cung, Tủ kính số 1...',
                           filled: true,
                           fillColor: const Color(0xFFFAF9F6),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
                         ),
-                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Vui lòng nhập vị trí' : null,
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Vui lòng nhập vị trí'
+                            : null,
                       ),
                       const SizedBox(height: 14),
 
                       // Nguồn gốc / Người cung tiến
                       const Text(
                         'Nguồn gốc / Người cung tiến (Tùy chọn)',
-                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF2B1810)),
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2B1810),
+                        ),
                       ),
                       const SizedBox(height: 6),
                       TextFormField(
@@ -2292,8 +2781,13 @@ class _ClanAssetInventoryScreenState
                           hintText: 'VD: Gia bảo tiền nhân để lại, Chi 1 hiến tặng...',
                           filled: true,
                           fillColor: const Color(0xFFFAF9F6),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 22),
@@ -2302,22 +2796,34 @@ class _ClanAssetInventoryScreenState
                       ElevatedButton.icon(
                         onPressed: () {
                           if (!formKey.currentState!.validate()) return;
-                          final parsedVal = double.tryParse(valCtrl.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
-                          final parsedQty = int.tryParse(qtyCtrl.text.trim()) ?? 1;
+                          final parsedVal =
+                              double.tryParse(
+                                valCtrl.text.replaceAll(RegExp(r'[^0-9]'), ''),
+                              ) ??
+                              0;
+                          final parsedQty =
+                              int.tryParse(qtyCtrl.text.trim()) ?? 1;
 
-                          ref.read(contributionUiProvider.notifier).addDirectClanAsset(
-                            assetName: nameCtrl.text.trim(),
-                            quantity: parsedQty,
-                            unit: unitCtrl.text.trim(),
-                            assessedValue: parsedVal,
-                            storageLocation: locCtrl.text.trim(),
-                            originDonorName: donorCtrl.text.trim().isNotEmpty ? donorCtrl.text.trim() : 'Gia phả tiền nhân',
-                          );
+                          ref
+                              .read(contributionUiProvider.notifier)
+                              .addDirectClanAsset(
+                                assetName: nameCtrl.text.trim(),
+                                quantity: parsedQty,
+                                unit: unitCtrl.text.trim(),
+                                assessedValue: parsedVal,
+                                storageLocation: locCtrl.text.trim(),
+                                originDonorName:
+                                    donorCtrl.text.trim().isNotEmpty
+                                    ? donorCtrl.text.trim()
+                                    : 'Gia phả tiền nhân',
+                              );
 
                           Navigator.of(ctx).pop();
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Đã đăng ký "${nameCtrl.text.trim()}" vào kho từ đường thành công!'),
+                              content: Text(
+                                'Đã đăng ký "${nameCtrl.text.trim()}" vào kho từ đường thành công!',
+                              ),
                               backgroundColor: const Color(0xFF2E8B43),
                             ),
                           );
@@ -2325,13 +2831,18 @@ class _ClanAssetInventoryScreenState
                         icon: const Icon(Icons.qr_code_2, size: 20),
                         label: const Text(
                           'Lưu Vào Kho & Cấp Mã Định Danh QR',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF8B1E1E),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                           elevation: 2,
                         ),
                       ),
@@ -2348,21 +2859,41 @@ class _ClanAssetInventoryScreenState
 
   // Cập nhật tình trạng kiểm kê định kỳ cho Trưởng tộc & Thủ quỹ (US-52, Task #184)
   void _showAssetAuditModal(ClanAssetDto asset) {
+    final isMultiple = asset.quantity > 1;
     final qtyCtrl = TextEditingController(text: asset.quantity.toString());
     final locCtrl = TextEditingController(text: asset.storageLocation);
     final notesCtrl = TextEditingController();
     String condition = 'Tốt (Good)';
     bool isSubmitting = false;
-    String? errorText;
+
+    // Phân loại chi tiết từng món khi số lượng > 1
+    int goodCount = asset.quantity;
+    int repairCount = 0;
+    int damagedCount = 0;
+    int lostCount = 0;
+    int liquidatedCount = 0;
+    Set<int> selectedAffectedItems = {1};
 
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) {
+          final totalAllocated =
+              goodCount +
+              repairCount +
+              damagedCount +
+              lostCount +
+              liquidatedCount;
+          final currentActualStock = goodCount + repairCount + damagedCount;
+          final totalIssues =
+              repairCount + damagedCount + lostCount + liquidatedCount;
+
           return AlertDialog(
             backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             title: Row(
               children: [
                 Container(
@@ -2371,7 +2902,11 @@ class _ClanAssetInventoryScreenState
                     color: const Color(0xFF006E2A).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.inventory, color: Color(0xFF006E2A), size: 22),
+                  child: const Icon(
+                    Icons.inventory,
+                    color: Color(0xFF006E2A),
+                    size: 22,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -2388,8 +2923,13 @@ class _ClanAssetInventoryScreenState
                         ),
                       ),
                       Text(
-                        'Dành cho Trưởng tộc & Thủ quỹ cập nhật hiện trạng',
-                        style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+                        isMultiple
+                            ? 'Phân bổ chi tiết hiện trạng cho từng vật phẩm trong bộ'
+                            : 'Dành cho Trưởng tộc & Thủ quỹ cập nhật hiện trạng',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade700,
+                        ),
                       ),
                     ],
                   ),
@@ -2398,7 +2938,7 @@ class _ClanAssetInventoryScreenState
             ),
             content: SingleChildScrollView(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 480),
+                constraints: const BoxConstraints(maxWidth: 500),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2415,75 +2955,444 @@ class _ClanAssetInventoryScreenState
                         children: [
                           Text(
                             asset.assetName,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
                           ),
-                          Text('Mã: ${asset.assetId} • Định mức ghi nhận: ${asset.quantity} ${asset.unit}'),
+                          Text(
+                            'Mã: ${asset.assetId} • Định mức ghi nhận ban đầu: ${asset.quantity} ${asset.unit}',
+                          ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 16),
-
-                    const Text('Số lượng thực tế kiểm đếm *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    const SizedBox(height: 6),
-                    TextField(
-                      controller: qtyCtrl,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        suffixText: asset.unit,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    if (isMultiple) ...[
+                      // BẢNG PHÂN BỔ HIỆN TRẠNG CHO TÀI SẢN NHIỀU MÓN
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFCBD5E1)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'PHÂN LOẠI HIỆN TRẠNG TỪNG MÓN:',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF334155),
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: totalAllocated == asset.quantity
+                                        ? const Color(0xFFDCFCE7)
+                                        : const Color(0xFFFEE2E2),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    'Khớp: $totalAllocated / ${asset.quantity} ${asset.unit}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: totalAllocated == asset.quantity
+                                          ? const Color(0xFF166534)
+                                          : const Color(0xFF991B1B),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Divider(height: 16),
+                            _buildConditionCounterRow(
+                              label: 'Tốt - Nguyên vẹn',
+                              color: const Color(0xFF16A34A),
+                              count: goodCount,
+                              unit: asset.unit,
+                              onMinus: goodCount > 0
+                                  ? () => setModalState(() => goodCount--)
+                                  : null,
+                              onPlus: totalAllocated < asset.quantity
+                                  ? () => setModalState(() => goodCount++)
+                                  : null,
+                            ),
+                            const SizedBox(height: 6),
+                            _buildConditionCounterRow(
+                              label: 'Cần bảo dưỡng / lau men',
+                              color: const Color(0xFFD97706),
+                              count: repairCount,
+                              unit: asset.unit,
+                              onMinus: repairCount > 0
+                                  ? () => setModalState(() => repairCount--)
+                                  : null,
+                              onPlus: totalAllocated < asset.quantity
+                                  ? () => setModalState(() => repairCount++)
+                                  : null,
+                            ),
+                            const SizedBox(height: 6),
+                            _buildConditionCounterRow(
+                              label: 'Hư hỏng nhẹ / mẻ nứt',
+                              color: const Color(0xFFEA580C),
+                              count: damagedCount,
+                              unit: asset.unit,
+                              onMinus: damagedCount > 0
+                                  ? () => setModalState(() => damagedCount--)
+                                  : null,
+                              onPlus: totalAllocated < asset.quantity
+                                  ? () => setModalState(() => damagedCount++)
+                                  : null,
+                            ),
+                            const SizedBox(height: 6),
+                            _buildConditionCounterRow(
+                              label: 'Thất lạc / Không thấy',
+                              color: const Color(0xFFDC2626),
+                              count: lostCount,
+                              unit: asset.unit,
+                              onMinus: lostCount > 0
+                                  ? () => setModalState(() => lostCount--)
+                                  : null,
+                              onPlus: totalAllocated < asset.quantity
+                                  ? () => setModalState(() => lostCount++)
+                                  : null,
+                            ),
+                            const SizedBox(height: 6),
+                            _buildConditionCounterRow(
+                              label: 'Đề xuất thanh lý',
+                              color: const Color(0xFF475569),
+                              count: liquidatedCount,
+                              unit: asset.unit,
+                              onMinus: liquidatedCount > 0
+                                  ? () => setModalState(() => liquidatedCount--)
+                                  : null,
+                              onPlus: totalAllocated < asset.quantity
+                                  ? () => setModalState(() => liquidatedCount++)
+                                  : null,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 14),
+                      const SizedBox(height: 14),
+                      if (totalIssues > 0) ...[
+                        Builder(
+                          builder: (context) {
+                            String issueTitle;
+                            Color issueColor;
+                            if (repairCount > 0 &&
+                                damagedCount == 0 &&
+                                lostCount == 0 &&
+                                liquidatedCount == 0) {
+                              issueTitle =
+                                  'CHỈ ĐỊNH VẬT PHẨM CẦN BẢO DƯỠNG / LAU MEN (ĐÃ CHỌN ${selectedAffectedItems.length}/$repairCount MÓN):';
+                              issueColor = const Color(0xFFD97706);
+                            } else if (damagedCount > 0 &&
+                                repairCount == 0 &&
+                                lostCount == 0 &&
+                                liquidatedCount == 0) {
+                              issueTitle =
+                                  'CHỈ ĐỊNH VẬT PHẨM HƯ HỎNG NHẸ / MẺ NỨT (ĐÃ CHỌN ${selectedAffectedItems.length}/$damagedCount MÓN):';
+                              issueColor = const Color(0xFFEA580C);
+                            } else if (lostCount > 0 &&
+                                repairCount == 0 &&
+                                damagedCount == 0 &&
+                                liquidatedCount == 0) {
+                              issueTitle =
+                                  'CHỈ ĐỊNH VẬT PHẨM THẤT LẠC / KHÔNG THẤY (ĐÃ CHỌN ${selectedAffectedItems.length}/$lostCount MÓN):';
+                              issueColor = const Color(0xFFDC2626);
+                            } else if (liquidatedCount > 0 &&
+                                repairCount == 0 &&
+                                damagedCount == 0 &&
+                                lostCount == 0) {
+                              issueTitle =
+                                  'CHỈ ĐỊNH VẬT PHẨM ĐỀ XUẤT THANH LÝ (ĐÃ CHỌN ${selectedAffectedItems.length}/$liquidatedCount MÓN):';
+                              issueColor = const Color(0xFF475569);
+                            } else {
+                              issueTitle =
+                                  'CHỈ ĐỊNH VẬT PHẨM BỊ ẢNH HƯỞNG (ĐÃ CHỌN ${selectedAffectedItems.length}/$totalIssues MÓN):';
+                              issueColor = const Color(0xFF64748B);
+                            }
 
-                    const Text('Tình trạng hiện vật *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    const SizedBox(height: 6),
-                    DropdownButtonFormField<String>(
-                      value: condition,
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      ),
-                      items: const [
-                        DropdownMenuItem(value: 'Tốt (Good)', child: Text('Tốt - Nguyên vẹn (Good)')),
-                        DropdownMenuItem(value: 'Cần bảo dưỡng (NeedsRepair)', child: Text('Cần bảo dưỡng / lau bóng (NeedsRepair)')),
-                        DropdownMenuItem(value: 'Hư hỏng (Damaged)', child: Text('Hư hỏng nhẹ (Damaged)')),
-                        DropdownMenuItem(value: 'Thất lạc (Lost)', child: Text('Thất lạc / Không tìm thấy (Lost)')),
-                        DropdownMenuItem(value: 'Thanh lý (Liquidated)', child: Text('Đề xuất thanh lý (Liquidated)')),
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        issueTitle,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: issueColor,
+                                        ),
+                                      ),
+                                    ),
+                                    if (selectedAffectedItems.isNotEmpty)
+                                      TextButton(
+                                        onPressed: () => setModalState(
+                                          () => selectedAffectedItems.clear(),
+                                        ),
+                                        style: TextButton.styleFrom(
+                                          padding: EdgeInsets.zero,
+                                          minimumSize: const Size(50, 24),
+                                          tapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                        child: const Text(
+                                          'Bỏ chọn tất cả',
+                                          style: TextStyle(
+                                            fontSize: 10.5,
+                                            color: Color(0xFFDC2626),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '💡 Đang có $totalIssues vật phẩm không ở tình trạng "Tốt". Chọn đúng $totalIssues tem tương ứng (các tem còn lại là Tốt - Nguyên vẹn).',
+                                  style: const TextStyle(
+                                    fontSize: 10.5,
+                                    color: Color(0xFF64748B),
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 6,
+                          children: List.generate(asset.quantity, (idx) {
+                            final itemNo = idx + 1;
+                            final isSelected = selectedAffectedItems.contains(
+                              itemNo,
+                            );
+                            return FilterChip(
+                              label: Text('Vật phẩm #$itemNo (tem #0$itemNo)'),
+                              selected: isSelected,
+                              selectedColor: const Color(0xFFFDE8E8),
+                              checkmarkColor: const Color(0xFF991B1B),
+                              labelStyle: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                color: isSelected
+                                    ? const Color(0xFF991B1B)
+                                    : const Color(0xFF334155),
+                              ),
+                              onSelected: (selected) {
+                                if (selected) {
+                                  if (totalIssues > 0 &&
+                                      selectedAffectedItems.length >=
+                                          totalIssues) {
+                                    showWarningMessageBox(
+                                      context: ctx,
+                                      title: 'Giới Hạn Chọn Tem Vật Phẩm',
+                                      message:
+                                          'Bạn chỉ có thể chọn tối đa $totalIssues vật phẩm ứng với số lượng đã phân loại cần bảo dưỡng/hư hỏng ở trên.\n\nNếu muốn đổi sang món khác, vui lòng bỏ chọn bớt tem hiện tại!',
+                                    );
+                                    return;
+                                  }
+                                  setModalState(() {
+                                    selectedAffectedItems.add(itemNo);
+                                  });
+                                } else {
+                                  setModalState(() {
+                                    selectedAffectedItems.remove(itemNo);
+                                  });
+                                }
+                              },
+                            );
+                          }),
+                        ),
+                        const SizedBox(height: 14),
                       ],
-                      onChanged: (val) {
-                        if (val != null) setModalState(() => condition = val);
-                      },
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0FDF4),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFBBF7D0)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.check_circle_outline,
+                              size: 16,
+                              color: Color(0xFF16A34A),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Số lượng còn thực tế trong kho: $currentActualStock ${asset.unit}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF166534),
+                              ),
+                            ),
+                            if (lostCount + liquidatedCount > 0) ...[
+                              const Spacer(),
+                              Text(
+                                '(Hao hụt: ${lostCount + liquidatedCount})',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFFDC2626),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                    ] else ...[
+                      const Text(
+                        'Số lượng thực tế kiểm đếm *',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: qtyCtrl,
+                        keyboardType: TextInputType.number,
+                        onChanged: (_) => setModalState(() {}),
+                        decoration: InputDecoration(
+                          suffixText: asset.unit,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      const Text(
+                        'Tình trạng hiện vật *',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      DropdownButtonFormField<String>(
+                        initialValue: condition,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'Tốt (Good)',
+                            child: Text('Tốt - Nguyên vẹn (Good)'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Cần bảo dưỡng (NeedsRepair)',
+                            child: Text(
+                              'Cần bảo dưỡng / lau bóng (NeedsRepair)',
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Hư hỏng (Damaged)',
+                            child: Text('Hư hỏng nhẹ (Damaged)'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Thất lạc (Lost)',
+                            child: Text('Thất lạc / Không tìm thấy (Lost)'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Thanh lý (Liquidated)',
+                            child: Text('Đề xuất thanh lý (Liquidated)'),
+                          ),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) {
+                            setModalState(() {
+                              condition = val;
+                              if (val.contains('Lost') ||
+                                  val.contains('Liquidated')) {
+                                qtyCtrl.text = '0';
+                              } else if (qtyCtrl.text == '0' &&
+                                  asset.quantity > 0) {
+                                qtyCtrl.text = asset.quantity.toString();
+                              }
+                            });
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+                    const Text(
+                      'Vị trí lưu trữ hiện tại',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
                     ),
-                    const SizedBox(height: 14),
-
-                    const Text('Vị trí lưu trữ hiện tại', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     const SizedBox(height: 6),
                     TextField(
                       controller: locCtrl,
                       decoration: InputDecoration(
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 14),
-
-                    const Text('Ghi chú đợt kiểm kê', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    const Text(
+                      'Ghi chú đợt kiểm kê',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     TextField(
                       controller: notesCtrl,
                       maxLines: 2,
                       decoration: InputDecoration(
-                        hintText: 'VD: Kiểm kê định kỳ rằm tháng Giêng, đồ đồng sáng bóng...',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        hintText: isMultiple
+                            ? (selectedAffectedItems.isNotEmpty
+                                  ? 'VD: Vật phẩm #${(selectedAffectedItems.toList()..sort()).join(", #")} bị mẻ viền men, đã gửi xưởng phục chế...'
+                                  : 'VD: Nhập chi tiết các vật phẩm cần phục chế, kiểm tra...')
+                            : 'VD: Kiểm kê định kỳ rằm tháng Giêng, đồ đồng sáng bóng...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                         contentPadding: const EdgeInsets.all(10),
                       ),
                     ),
-
-                    if (errorText != null) ...[
-                      const SizedBox(height: 12),
-                      Text(errorText!, style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold)),
-                    ],
                   ],
                 ),
               ),
@@ -2497,31 +3406,117 @@ class _ClanAssetInventoryScreenState
                 onPressed: isSubmitting
                     ? null
                     : () async {
-                        final parsedQty = int.tryParse(qtyCtrl.text.trim());
-                        if (parsedQty == null || parsedQty < 0) {
-                          setModalState(() => errorText = 'Số lượng kiểm đếm không hợp lệ');
-                          return;
+                        int finalActualQty;
+                        String finalConditionStatus;
+                        String finalNotes = notesCtrl.text.trim();
+
+                        if (isMultiple) {
+                          if (totalAllocated != asset.quantity) {
+                            showWarningMessageBox(
+                              context: ctx,
+                              title: 'Số Lượng Chưa Khớp',
+                              message:
+                                  'Tổng số lượng phân bổ ($totalAllocated ${asset.unit}) phải bằng đúng định mức ban đầu của hiện vật (${asset.quantity} ${asset.unit})!',
+                            );
+                            return;
+                          }
+
+                          if (totalIssues > 0 &&
+                              selectedAffectedItems.length != totalIssues) {
+                            showWarningMessageBox(
+                              context: ctx,
+                              title: 'Chưa Chọn Đủ Tem Vật Phẩm',
+                              message:
+                                  'Bạn đã phân loại $totalIssues vật phẩm không ở tình trạng "Tốt", nhưng hiện tại mới chỉ định ${selectedAffectedItems.length} tem.\n\nVui lòng bấm chọn đúng $totalIssues tem vật phẩm tương ứng trước khi lưu kết quả!',
+                            );
+                            return;
+                          }
+
+                          finalActualQty = currentActualStock;
+                          final List<String> statusParts = [];
+                          if (goodCount > 0) statusParts.add('$goodCount Tốt');
+                          if (repairCount > 0) {
+                            statusParts.add('$repairCount Cần bảo dưỡng');
+                          }
+                          if (damagedCount > 0) {
+                            statusParts.add('$damagedCount Hư hỏng');
+                          }
+                          if (lostCount > 0) {
+                            statusParts.add('$lostCount Thất lạc');
+                          }
+                          if (liquidatedCount > 0) {
+                            statusParts.add('$liquidatedCount Thanh lý');
+                          }
+                          finalConditionStatus =
+                              'Phân loại: ${statusParts.join(', ')}';
+
+                          if (totalIssues > 0) {
+                            final sortedItems = selectedAffectedItems.toList()
+                              ..sort();
+                            final itemsLabel = sortedItems.isNotEmpty
+                                ? sortedItems
+                                      .map((n) => '#$n (tem #0$n)')
+                                      .join(', ')
+                                : 'chưa chỉ định số tem cụ thể';
+                            final prefix = '[Vật phẩm: $itemsLabel]: ';
+                            if (!finalNotes.startsWith('[Vật phẩm:') &&
+                                finalNotes.isNotEmpty) {
+                              finalNotes = '$prefix$finalNotes';
+                            } else if (finalNotes.isEmpty) {
+                              finalNotes = sortedItems.isNotEmpty
+                                  ? 'Vật phẩm $itemsLabel có hiện trạng cần theo dõi / bảo dưỡng.'
+                                  : 'Có vật phẩm trong bộ cần theo dõi / bảo dưỡng.';
+                            }
+                          }
+                        } else {
+                          final parsedQty = int.tryParse(qtyCtrl.text.trim());
+                          if (parsedQty == null || parsedQty < 0) {
+                            showWarningMessageBox(
+                              context: ctx,
+                              title: 'Số Lượng Không Hợp Lệ',
+                              message: 'Vui lòng nhập số lượng kiểm đếm thực tế hợp lệ!',
+                            );
+                            return;
+                          }
+
+                          if ((condition.contains('Lost') ||
+                                  condition.contains('Liquidated')) &&
+                              parsedQty >= asset.quantity &&
+                              asset.quantity > 0) {
+                            showWarningMessageBox(
+                              context: ctx,
+                              title: 'Số Lượng Không Hợp Lệ',
+                              message:
+                                  'Đang chọn "$condition", số lượng kiểm đếm thực tế phải giảm bớt so với định mức ban đầu (${asset.quantity} ${asset.unit})!',
+                            );
+                            return;
+                          }
+                          finalActualQty = parsedQty;
+                          finalConditionStatus = condition;
                         }
 
                         setModalState(() {
                           isSubmitting = true;
-                          errorText = null;
                         });
 
                         try {
-                          await ref.read(contributionUiProvider.notifier).auditClanAsset(
+                          await ref
+                              .read(contributionUiProvider.notifier)
+                              .auditClanAsset(
                                 assetId: asset.assetId,
-                                actualQuantity: parsedQty,
-                                conditionStatus: condition,
+                                actualQuantity: finalActualQty,
+                                conditionStatus: finalConditionStatus,
                                 storageLocation: locCtrl.text.trim(),
-                                notes: notesCtrl.text.trim(),
+                                notes: finalNotes,
                               );
 
                           if (mounted) {
                             Navigator.of(ctx).pop();
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Đã cập nhật kết quả kiểm kê cho "${asset.assetName}" thành công!'),
+                                content: Text(
+                                  'Đã cập nhật kết quả kiểm kê cho "${asset.assetName}" thành công!',
+                                ),
                                 backgroundColor: const Color(0xFF006E2A),
                               ),
                             );
@@ -2529,23 +3524,122 @@ class _ClanAssetInventoryScreenState
                         } catch (e) {
                           setModalState(() {
                             isSubmitting = false;
-                            errorText = 'Lỗi cập nhật: $e';
                           });
+                          if (ctx.mounted) {
+                            showErrorMessageBox(
+                              context: ctx,
+                              title: 'Lỗi Cập Nhật Kiểm Kê',
+                              error: e,
+                            );
+                          }
                         }
                       },
                 icon: isSubmitting
-                    ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
                     : const Icon(Icons.check, size: 16),
                 label: const Text('Lưu Kết Quả Kiểm Kê'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF006E2A),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                 ),
               ),
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildConditionCounterRow({
+    required String label,
+    required Color color,
+    required int count,
+    required String unit,
+    required VoidCallback? onMinus,
+    required VoidCallback? onPlus,
+  }) {
+    return Row(
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF1E293B),
+            ),
+          ),
+        ),
+        IconButton(
+          onPressed: onMinus,
+          icon: const Icon(Icons.remove_circle_outline, size: 18),
+          color: onMinus != null
+              ? const Color(0xFF64748B)
+              : const Color(0xFFCBD5E1),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+        ),
+        SizedBox(
+          width: 36,
+          child: Text(
+            '$count $unit',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0F172A),
+            ),
+          ),
+        ),
+        IconButton(
+          onPressed: onPlus,
+          icon: const Icon(Icons.add_circle_outline, size: 18),
+          color: onPlus != null
+              ? const Color(0xFF006E2A)
+              : const Color(0xFFCBD5E1),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAssetAuditHistoryRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2.5),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12, color: Color(0xFF6B584E)),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2B1810),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -2564,53 +3658,177 @@ class _ClanAssetInventoryScreenState
             Expanded(
               child: Text(
                 'Lịch Sử Kiểm Kê: ${asset.assetName}',
-                style: const TextStyle(fontFamily: 'Merriweather', fontSize: 16, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontFamily: 'Merriweather',
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
         ),
-        content: SizedBox(
-          width: 520,
-          child: Consumer(
-            builder: (context, ref, _) {
-              final auditsAsync = ref.watch(clanAssetAuditsProvider(asset.assetId));
-              return auditsAsync.when(
-                loading: () => const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator())),
-                error: (e, _) => Center(child: Text('Lỗi tải lịch sử kiểm kê: $e', style: const TextStyle(color: Colors.red))),
-                data: (audits) {
-                  if (audits.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Center(
-                        child: Text('Chưa có ghi chép kiểm kê nào cho bảo vật này.'),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520, maxHeight: 520),
+          child: SingleChildScrollView(
+            child: SizedBox(
+              width: 520,
+              child: Consumer(
+                builder: (context, ref, _) {
+                  final auditsAsync = ref.watch(
+                    clanAssetAuditsProvider(asset.assetId),
+                  );
+                  return auditsAsync.when(
+                    loading: () => const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: CircularProgressIndicator(),
                       ),
-                    );
-                  }
-                  return ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: audits.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (_, i) {
-                      final a = audits[i];
-                      final dateStr = a.auditDate != null ? DateFormat('dd/MM/yyyy HH:mm').format(a.auditDate!) : 'Gần đây';
-                      return ListTile(
-                        dense: true,
-                        leading: CircleAvatar(
-                          backgroundColor: const Color(0xFF8B1E1E).withValues(alpha: 0.1),
-                          child: const Icon(Icons.checklist, color: Color(0xFF8B1E1E), size: 18),
-                        ),
-                        title: Text('SL thực tế: ${a.actualQuantity} • Tình trạng: ${a.conditionStatus}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text('Ngày: $dateStr\nVị trí: ${a.storageLocation ?? 'Chưa rõ'}${a.notes != null ? ' • Ghi chú: ${a.notes}' : ''}'),
+                    ),
+                    error: (e, _) => Center(
+                      child: Text(
+                        'Lỗi tải lịch sử kiểm kê: $e',
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    ),
+                    data: (audits) {
+                      if (audits.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFDFBF7),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: const Color(0xFFE8DFD8),
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Row(
+                                      children: [
+                                        Icon(
+                                          Icons.inventory_2_outlined,
+                                          color: Color(0xFF8B1E1E),
+                                          size: 18,
+                                        ),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'Hồ sơ khởi tạo bảo vật ban đầu',
+                                          style: TextStyle(
+                                            fontFamily: 'Plus Jakarta Sans',
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF2B1810),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const Divider(height: 16),
+                                    _buildAssetAuditHistoryRow(
+                                      'Số lượng bàn giao ban đầu:',
+                                      '${asset.quantity} ${asset.unit}',
+                                    ),
+                                    _buildAssetAuditHistoryRow(
+                                      'Tình trạng tiếp nhận:',
+                                      'Nguyên vẹn (Good)',
+                                    ),
+                                    _buildAssetAuditHistoryRow(
+                                      'Vị trí lưu kho:',
+                                      asset.storageLocation,
+                                    ),
+                                    _buildAssetAuditHistoryRow(
+                                      'Ngày tiếp nhận vào kho:',
+                                      DateFormat('dd/MM/yyyy HH:mm')
+                                          .format(asset.createdAt),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              const Text(
+                                'Bảo vật chưa có đợt kiểm kê hiện trạng định kỳ nào phát sinh.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF755B53),
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.of(ctx).pop();
+                                  _showAssetAuditModal(asset);
+                                },
+                                icon: const Icon(Icons.edit_calendar, size: 16),
+                                label: const Text(
+                                  'Tiến Hành Kiểm Kê Hiện Trạng Ngay',
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF006E2A),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 10,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: audits.length,
+                        separatorBuilder: (_, _) => const Divider(height: 1),
+                        itemBuilder: (_, i) {
+                          final a = audits[i];
+                          final dateStr = a.auditDate != null
+                              ? DateFormat('dd/MM/yyyy HH:mm')
+                                    .format(a.auditDate!)
+                              : 'Gần đây';
+                          return ListTile(
+                            dense: true,
+                            leading: CircleAvatar(
+                              backgroundColor: const Color(0xFF006E2A)
+                                  .withValues(alpha: 0.1),
+                              child: const Icon(
+                                Icons.verified,
+                                color: Color(0xFF006E2A),
+                                size: 18,
+                              ),
+                            ),
+                            title: Text(
+                              'SL thực tế: ${a.actualQuantity} • Tình trạng: ${a.conditionStatus}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Text(
+                              'Ngày: $dateStr\nVị trí: ${a.storageLocation ?? 'Chưa rõ'}${a.notes != null ? ' • Ghi chú: ${a.notes}' : ''}',
+                            ),
+                          );
+                        },
                       );
                     },
                   );
                 },
-              );
-            },
+              ),
+            ),
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Đóng')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Đóng'),
+          ),
         ],
       ),
     );
@@ -2630,70 +3848,110 @@ class _ClanAssetInventoryScreenState
             Expanded(
               child: Text(
                 'Kiểm Tra Chốt Hiện Vật Sau Sự Kiện',
-                style: TextStyle(fontFamily: 'Merriweather', fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontFamily: 'Merriweather',
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
         ),
-        content: SizedBox(
-          width: 480,
-          child: Consumer(
-            builder: (context, ref, _) {
-              final checkAsync = ref.watch(eventPendingInKindCheckProvider('EVT-GIO-TO-2026'));
-              return checkAsync.when(
-                loading: () => const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator())),
-                error: (e, _) => Center(child: Text('Lỗi kết nối kiểm tra: $e', style: const TextStyle(color: Colors.red))),
-                data: (check) {
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: check.hasPendingItems ? const Color(0xFFFFF0F0) : const Color(0xFFF0FDF4),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: check.hasPendingItems ? const Color(0xFFBA1A1A) : const Color(0xFF006E2A)),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              check.hasPendingItems ? Icons.warning_amber_rounded : Icons.check_circle,
-                              color: check.hasPendingItems ? const Color(0xFFBA1A1A) : const Color(0xFF006E2A),
-                              size: 28,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                check.hasPendingItems
-                                    ? 'CẢNH BÁO: Còn ${check.pendingCount} hiện vật chưa được chốt hướng xử lý!'
-                                    : 'HOÀN HẢO: Tất cả hiện vật đã được chốt và phân loại 100%!',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                  color: check.hasPendingItems ? const Color(0xFFBA1A1A) : const Color(0xFF006E2A),
-                                ),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480, maxHeight: 520),
+          child: SingleChildScrollView(
+            child: SizedBox(
+              width: 480,
+              child: Consumer(
+                builder: (context, ref, _) {
+                  final checkAsync = ref.watch(
+                    eventPendingInKindCheckProvider('EVT-GIO-TO-2026'),
+                  );
+                  return checkAsync.when(
+                    loading: () => const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
+                    error: (e, _) => Center(
+                      child: Text(
+                        'Lỗi kết nối kiểm tra: $e',
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    ),
+                    data: (check) {
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: check.hasPendingItems
+                                  ? const Color(0xFFFFF0F0)
+                                  : const Color(0xFFF0FDF4),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: check.hasPendingItems
+                                    ? const Color(0xFFBA1A1A)
+                                    : const Color(0xFF006E2A),
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        check.warningMessage.isNotEmpty
-                            ? check.warningMessage
-                            : 'Theo quy định: Trước khi kết thúc đại lễ dòng họ, toàn bộ đồ lễ cúng tiến phải được chốt rõ hướng xử lý (Tiêu hao cỗ bàn, Hoàn trả gia chủ, hoặc Nhập kho từ đường).',
-                        style: const TextStyle(fontSize: 12.5, color: Color(0xFF54433E), height: 1.4),
-                      ),
-                    ],
+                            child: Row(
+                              children: [
+                                Icon(
+                                  check.hasPendingItems
+                                      ? Icons.warning_amber_rounded
+                                      : Icons.check_circle,
+                                  color: check.hasPendingItems
+                                      ? const Color(0xFFBA1A1A)
+                                      : const Color(0xFF006E2A),
+                                  size: 28,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    check.hasPendingItems
+                                        ? 'CẢNH BÁO: Còn ${check.pendingCount} hiện vật chưa được chốt hướng xử lý!'
+                                        : 'HOÀN HẢO: Tất cả hiện vật đã được chốt và phân loại 100%!',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                      color: check.hasPendingItems
+                                          ? const Color(0xFFBA1A1A)
+                                          : const Color(0xFF006E2A),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Text(
+                            check.warningMessage.isNotEmpty
+                                ? check.warningMessage
+                                : 'Theo quy định: Trước khi kết thúc đại lễ dòng họ, toàn bộ đồ lễ cúng tiến phải được chốt rõ hướng xử lý (Tiêu hao cỗ bàn, Hoàn trả gia chủ, hoặc Nhập kho từ đường).',
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              color: Color(0xFF54433E),
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   );
                 },
-              );
-            },
+              ),
+            ),
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Đóng')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Đóng'),
+          ),
         ],
       ),
     );

@@ -85,6 +85,25 @@ abstract class ContributionRemoteDataSource {
   Future<EventPendingInKindCheckResponseDto> checkPendingInKindContributions(String eventId);
 
   Future<ClanBankingInfoDto> getClanBankingInfo();
+  Future<ClanBankingInfoDto> updateClanBankingInfo(UpdateClanBankingRequestDto request);
+
+  Future<List<EventItemBenchmarkDto>> getEventItemBenchmarks(String eventId);
+  Future<List<EventItemBenchmarkDto>> getAllClanBenchmarks();
+  Future<EventItemBenchmarkDto> createEventItemBenchmark({
+    required String eventId,
+    required CreateEventItemBenchmarkRequestDto request,
+  });
+  Future<void> deleteEventItemBenchmark({
+    required String eventId,
+    required String benchmarkId,
+  });
+
+  Future<Map<String, dynamic>> simulatePaymentWebhook({
+    required double amount,
+    required String content,
+    String? referenceCode,
+    List<MemberAllocationDto> allocations = const [],
+  });
 
   Future<BranchRecursiveContributionDto> getBranchRecursiveContributionSummary(
     String branchId, {
@@ -345,6 +364,67 @@ class ContributionRemoteDataSourceImpl implements ContributionRemoteDataSource {
     final response = await _dio.get('clans/banking-info');
     final data = response.data['data'] as Map<String, dynamic>;
     return ClanBankingInfoDto.fromJson(data);
+  }
+
+  @override
+  Future<ClanBankingInfoDto> updateClanBankingInfo(UpdateClanBankingRequestDto request) async {
+    final response = await _dio.put('clans/banking-info', data: request.toJson());
+    final data = response.data['data'] as Map<String, dynamic>;
+    return ClanBankingInfoDto.fromJson(data);
+  }
+
+  @override
+  Future<List<EventItemBenchmarkDto>> getEventItemBenchmarks(String eventId) async {
+    final response = await _dio.get('events/$eventId/benchmarks');
+    final list = (response.data['data'] as List<dynamic>? ?? [])
+        .map((e) => EventItemBenchmarkDto.fromJson(e as Map<String, dynamic>))
+        .toList();
+    return list;
+  }
+
+  @override
+  Future<List<EventItemBenchmarkDto>> getAllClanBenchmarks() async {
+    final response = await _dio.get('benchmarks');
+    final list = (response.data['data'] as List<dynamic>? ?? [])
+        .map((e) => EventItemBenchmarkDto.fromJson(e as Map<String, dynamic>))
+        .toList();
+    return list;
+  }
+
+  @override
+  Future<EventItemBenchmarkDto> createEventItemBenchmark({
+    required String eventId,
+    required CreateEventItemBenchmarkRequestDto request,
+  }) async {
+    final response = await _dio.post('events/$eventId/benchmarks', data: request.toJson());
+    final data = response.data['data'] as Map<String, dynamic>;
+    return EventItemBenchmarkDto.fromJson(data);
+  }
+
+  @override
+  Future<void> deleteEventItemBenchmark({
+    required String eventId,
+    required String benchmarkId,
+  }) async {
+    await _dio.delete('events/$eventId/benchmarks/$benchmarkId');
+  }
+
+  @override
+  Future<Map<String, dynamic>> simulatePaymentWebhook({
+    required double amount,
+    required String content,
+    String? referenceCode,
+    List<MemberAllocationDto> allocations = const [],
+  }) async {
+    final payload = {
+      'transferAmount': amount,
+      'content': content,
+      'referenceCode': referenceCode ?? 'DEV_SIM_${DateTime.now().millisecondsSinceEpoch}',
+      if (allocations.isNotEmpty)
+        'allocations': allocations.map((e) => e.toJson()).toList(),
+    };
+    final response = await _dio.post('contributions/vietqr/webhook', data: payload);
+    return response.data as Map<String, dynamic>;
   }
 
   @override

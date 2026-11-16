@@ -49,13 +49,17 @@ class _TransferNodeDialogState extends ConsumerState<TransferNodeDialog> {
     _selectedMember = widget.initialMember;
   }
 
-  /// Thu thập phẳng tất cả các chi nhánh từ cây phả hệ
+  /// Thu thập phẳng tất cả các chi nhánh từ cây phả hệ (khử trùng lặp ID)
   List<BranchTreeNodeDto> _flattenBranches(BranchTreeNodeDto node) {
-    final list = <BranchTreeNodeDto>[node];
-    for (final child in node.children) {
-      list.addAll(_flattenBranches(child));
+    final map = <String, BranchTreeNodeDto>{};
+    void dfs(BranchTreeNodeDto n) {
+      map.putIfAbsent(n.branchId, () => n);
+      for (final child in n.children) {
+        dfs(child);
+      }
     }
-    return list;
+    dfs(node);
+    return map.values.toList();
   }
 
   /// Tìm node chi nhánh theo ID
@@ -365,23 +369,38 @@ class _TransferNodeDialogState extends ConsumerState<TransferNodeDialog> {
                     final membersAsync = ref.watch(clanMembersProvider);
                     return membersAsync.when(
                       loading: () => const LinearProgressIndicator(),
-                      error: (e, _) => Text('Lỗi tải thành viên: $e', style: const TextStyle(color: Colors.red)),
+                      error: (e, _) => Text('Lỗi tải thành viên: $e',
+                          style: const TextStyle(color: Colors.red)),
                       data: (members) {
+                        final uniqueMembers = <String, BranchMemberItem>{};
+                        for (final m in members) {
+                          uniqueMembers.putIfAbsent(m.memberId, () => m);
+                        }
+                        final uniqueList = uniqueMembers.values.toList();
+                        final isSelectedValueValid = _selectedMember != null &&
+                            uniqueMembers
+                                .containsKey(_selectedMember!.memberId);
+
                         return DropdownButtonFormField<String>(
-                          value: _selectedMember?.memberId,
+                          value: isSelectedValueValid
+                              ? _selectedMember!.memberId
+                              : null,
                           hint: const Text('-- Chọn thành viên dòng họ --'),
                           decoration: InputDecoration(
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 12),
                           ),
-                          items: members.map((m) {
+                          items: uniqueList.map((m) {
                             return DropdownMenuItem(
                               value: m.memberId,
-                              child: Text('${m.fullName} • Mã: ${m.memberId} (Đời ${m.generation})'),
+                              child: Text(
+                                  '${m.fullName} • Mã: ${m.memberId} (Đời ${m.generation})'),
                             );
                           }).toList(),
                           onChanged: (val) {
-                            final found = members.firstWhere((m) => m.memberId == val);
+                            final found = uniqueMembers[val];
                             setState(() {
                               _selectedMember = found;
                               _backendErrorMessage = null;
