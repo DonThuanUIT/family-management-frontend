@@ -16,6 +16,8 @@ import '../../data/models/contribution_models.dart';
 import '../../data/repositories/contribution_repository_impl.dart';
 import '../providers/contribution_ui_provider.dart';
 import '../widgets/electronic_receipt_dialog.dart';
+import '../../../event/data/models/event_models.dart';
+import '../../../event/presentation/providers/event_providers.dart';
 
 /// Hình thức đóng góp trực tuyến
 enum ContributionScope {
@@ -94,6 +96,7 @@ class _OnlineContributionScreenState
   void initState() {
     super.initState();
     _selectedEventId = widget.initialEventId ?? 'EVT-GIO-TO-2026';
+    Future.microtask(() => ref.read(eventListProvider.notifier).loadEvents());
   }
 
   @override
@@ -451,6 +454,19 @@ class _OnlineContributionScreenState
     final membersAsync = ref.watch(genealogyMemberListProvider);
     final memberList = membersAsync.value ?? const <BranchMemberItem>[];
 
+    final eventState = ref.watch(eventListProvider);
+    final events = eventState.events;
+    final ongoingEvents = events
+        .where((e) => e.status == 'Ongoing' || e.status == 'RegistrationOpen')
+        .toList();
+
+    if (widget.initialEventId == null && ongoingEvents.isNotEmpty) {
+      if (!events.any((e) => e.eventId == _selectedEventId) ||
+          _selectedEventId == 'EVT-GIO-TO-2026') {
+        _selectedEventId = ongoingEvents.first.eventId;
+      }
+    }
+
     return Scaffold(
       backgroundColor: kBgColor,
       appBar: const HeritageNavBar(currentRoute: '/contributions/online'),
@@ -565,6 +581,127 @@ class _OnlineContributionScreenState
                     ),
 
                 if (_generatedQr == null) ...[
+                  // BỘ CHỌN SỰ KIỆN ĐANG DIỄN RA TIẾP NHẬN ĐÓNG GÓP
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 20),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                          color: const Color(0xFFD4A017), width: 1.5),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x0A000000),
+                          blurRadius: 10,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF8B1E1E)
+                                    .withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Icon(Icons.festival,
+                                  color: Color(0xFF8B1E1E), size: 18),
+                            ),
+                            const SizedBox(width: 10),
+                            const Text(
+                              'SỰ KIỆN / LỄ GIỖ TIẾP NHẬN CÔNG ĐỨC',
+                              style: TextStyle(
+                                fontFamily: 'Plus Jakarta Sans',
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF8B1E1E),
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const Spacer(),
+                            if (ongoingEvents
+                                .any((e) => e.eventId == _selectedEventId))
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFDCFCE7),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border:
+                                      Border.all(color: const Color(0xFF86EFAC)),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.fiber_manual_record,
+                                        size: 8, color: Color(0xFF16A34A)),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      '⚡ Sự kiện đang diễn ra',
+                                      style: TextStyle(
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF166534),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          value: events.any((e) => e.eventId == _selectedEventId)
+                              ? _selectedEventId
+                              : (events.isNotEmpty
+                                  ? events.first.eventId
+                                  : _selectedEventId),
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 12),
+                            prefixIcon: const Icon(Icons.event_available,
+                                color: Color(0xFF8B1E1E)),
+                          ),
+                          items: events.map((ev) {
+                            final isOngoing = ev.status == 'Ongoing' ||
+                                ev.status == 'RegistrationOpen';
+                            return DropdownMenuItem<String>(
+                              value: ev.eventId,
+                              child: Text(
+                                '${ev.eventName}${isOngoing ? '  [ĐANG DIỄN RA]' : ''}',
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: isOngoing
+                                      ? FontWeight.bold
+                                      : FontWeight.w500,
+                                  color: isOngoing
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF2B1810),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (newVal) {
+                            if (newVal != null && newVal != _selectedEventId) {
+                              setState(() {
+                                _selectedEventId = newVal;
+                              });
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+
                   // BƯỚC 1: LỰA CHỌN PHƯƠNG THỨC & NHẬP THÔNG TIN ĐÓNG GÓP
                   Container(
                     padding: const EdgeInsets.all(24),

@@ -1035,41 +1035,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                       ),
                     ),
-
-                    // Nút mở nhanh bảng chi tiết chi khi đang đóng trên màn hình rộng
-                    if (isWide && !_isSidebarOpen)
-                      Positioned(
-                        top: 16,
-                        right: 16,
-                        child: Material(
-                          elevation: 3,
-                          borderRadius: BorderRadius.circular(20),
-                          color: Colors.white,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(20),
-                            onTap: () => setState(() => _isSidebarOpen = true),
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.view_sidebar_outlined, size: 18, color: kPrimaryColor),
-                                  SizedBox(width: 6),
-                                  Text(
-                                    'Mở bảng chi tiết chi',
-                                    style: TextStyle(
-                                      fontFamily: 'Be Vietnam Pro',
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: kPrimaryColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
                   ],
                 ),
               ),

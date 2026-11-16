@@ -266,22 +266,6 @@ class _ClanAssetInventoryScreenState
                         ],
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    ElevatedButton.icon(
-                      onPressed: () => _showAddAssetModal(context),
-                      icon: const Icon(Icons.add_circle_outline, size: 16),
-                      label: const Text('Đăng Ký Bảo Vật Mới'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8B1E1E),
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(0, 40),
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        elevation: 1,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -2576,6 +2560,7 @@ class _ClanAssetInventoryScreenState
 
   // Cập nhật tình trạng kiểm kê định kỳ cho Trưởng tộc & Thủ quỹ (US-52, Task #184)
   void _showAssetAuditModal(ClanAssetDto asset) {
+    final isMultiple = asset.quantity > 1;
     final qtyCtrl = TextEditingController(text: asset.quantity.toString());
     final locCtrl = TextEditingController(text: asset.storageLocation);
     final notesCtrl = TextEditingController();
@@ -2583,14 +2568,30 @@ class _ClanAssetInventoryScreenState
     bool isSubmitting = false;
     String? errorText;
 
+    // Phân loại chi tiết từng món khi số lượng > 1
+    int goodCount = asset.quantity;
+    int repairCount = 0;
+    int damagedCount = 0;
+    int lostCount = 0;
+    int liquidatedCount = 0;
+    int selectedAffectedItem = 1;
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) {
+          final totalAllocated = goodCount +
+              repairCount +
+              damagedCount +
+              lostCount +
+              liquidatedCount;
+          final currentActualStock = goodCount + repairCount + damagedCount;
+
           return AlertDialog(
             backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: Row(
               children: [
                 Container(
@@ -2599,7 +2600,8 @@ class _ClanAssetInventoryScreenState
                     color: const Color(0xFF006E2A).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.inventory, color: Color(0xFF006E2A), size: 22),
+                  child: const Icon(Icons.inventory,
+                      color: Color(0xFF006E2A), size: 22),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -2616,8 +2618,11 @@ class _ClanAssetInventoryScreenState
                         ),
                       ),
                       Text(
-                        'Dành cho Trưởng tộc & Thủ quỹ cập nhật hiện trạng',
-                        style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+                        isMultiple
+                            ? 'Phân bổ chi tiết hiện trạng cho từng vật phẩm trong bộ'
+                            : 'Dành cho Trưởng tộc & Thủ quỹ cập nhật hiện trạng',
+                        style: TextStyle(
+                            fontSize: 11, color: Colors.grey.shade700),
                       ),
                     ],
                   ),
@@ -2626,7 +2631,7 @@ class _ClanAssetInventoryScreenState
             ),
             content: SingleChildScrollView(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 480),
+                constraints: const BoxConstraints(maxWidth: 500),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2643,117 +2648,305 @@ class _ClanAssetInventoryScreenState
                         children: [
                           Text(
                             asset.assetName,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 14),
                           ),
-                          Text('Mã: ${asset.assetId} • Định mức ghi nhận: ${asset.quantity} ${asset.unit}'),
+                          Text(
+                              'Mã: ${asset.assetId} • Định mức ghi nhận ban đầu: ${asset.quantity} ${asset.unit}'),
                         ],
                       ),
                     ),
                     const SizedBox(height: 16),
-
-                    const Text('Số lượng thực tế kiểm đếm *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    const SizedBox(height: 6),
-                    TextField(
-                      controller: qtyCtrl,
-                      keyboardType: TextInputType.number,
-                      onChanged: (_) => setModalState(() {}),
-                      decoration: InputDecoration(
-                        suffixText: asset.unit,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    if (isMultiple) ...[
+                      // BẢNG PHÂN BỔ HIỆN TRẠNG CHO TÀI SẢN NHIỀU MÓN
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFCBD5E1)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'PHÂN LOẠI HIỆN TRẠNG TỪNG MÓN:',
+                                  style: TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF334155)),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: totalAllocated == asset.quantity
+                                        ? const Color(0xFFDCFCE7)
+                                        : const Color(0xFFFEE2E2),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    'Khớp: $totalAllocated / ${asset.quantity} ${asset.unit}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: totalAllocated == asset.quantity
+                                          ? const Color(0xFF166534)
+                                          : const Color(0xFF991B1B),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Divider(height: 16),
+                            _buildConditionCounterRow(
+                              label: 'Tốt - Nguyên vẹn',
+                              color: const Color(0xFF16A34A),
+                              count: goodCount,
+                              unit: asset.unit,
+                              onMinus: goodCount > 0
+                                  ? () => setModalState(() => goodCount--)
+                                  : null,
+                              onPlus: totalAllocated < asset.quantity
+                                  ? () => setModalState(() => goodCount++)
+                                  : null,
+                            ),
+                            const SizedBox(height: 6),
+                            _buildConditionCounterRow(
+                              label: 'Cần bảo dưỡng / lau men',
+                              color: const Color(0xFFD97706),
+                              count: repairCount,
+                              unit: asset.unit,
+                              onMinus: repairCount > 0
+                                  ? () => setModalState(() => repairCount--)
+                                  : null,
+                              onPlus: totalAllocated < asset.quantity
+                                  ? () => setModalState(() => repairCount++)
+                                  : null,
+                            ),
+                            const SizedBox(height: 6),
+                            _buildConditionCounterRow(
+                              label: 'Hư hỏng nhẹ / mẻ nứt',
+                              color: const Color(0xFFEA580C),
+                              count: damagedCount,
+                              unit: asset.unit,
+                              onMinus: damagedCount > 0
+                                  ? () => setModalState(() => damagedCount--)
+                                  : null,
+                              onPlus: totalAllocated < asset.quantity
+                                  ? () => setModalState(() => damagedCount++)
+                                  : null,
+                            ),
+                            const SizedBox(height: 6),
+                            _buildConditionCounterRow(
+                              label: 'Thất lạc / Không thấy',
+                              color: const Color(0xFFDC2626),
+                              count: lostCount,
+                              unit: asset.unit,
+                              onMinus: lostCount > 0
+                                  ? () => setModalState(() => lostCount--)
+                                  : null,
+                              onPlus: totalAllocated < asset.quantity
+                                  ? () => setModalState(() => lostCount++)
+                                  : null,
+                            ),
+                            const SizedBox(height: 6),
+                            _buildConditionCounterRow(
+                              label: 'Đề xuất thanh lý',
+                              color: const Color(0xFF475569),
+                              count: liquidatedCount,
+                              unit: asset.unit,
+                              onMinus: liquidatedCount > 0
+                                  ? () =>
+                                      setModalState(() => liquidatedCount--)
+                                  : null,
+                              onPlus: totalAllocated < asset.quantity
+                                  ? () =>
+                                      setModalState(() => liquidatedCount++)
+                                  : null,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    Builder(builder: (_) {
-                      final currentVal = int.tryParse(qtyCtrl.text.trim()) ?? asset.quantity;
-                      if (currentVal < asset.quantity) {
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.trending_down, color: Color(0xFFBA1A1A), size: 16),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Hao hụt giảm ${asset.quantity - currentVal} ${asset.unit} so với ban đầu (${asset.quantity} ${asset.unit})',
-                                style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFFBA1A1A)),
+                      const SizedBox(height: 14),
+                      if (repairCount > 0 ||
+                          damagedCount > 0 ||
+                          lostCount > 0 ||
+                          liquidatedCount > 0) ...[
+                        const Text(
+                          'CHỈ ĐỊNH VẬT PHẨM BỊ ẢNH HƯỞNG:',
+                          style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF64748B)),
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 6,
+                          children: List.generate(asset.quantity, (idx) {
+                            final itemNo = idx + 1;
+                            final isSelected = itemNo == selectedAffectedItem;
+                            return ChoiceChip(
+                              label: Text('Vật phẩm #$itemNo (tem #0$itemNo)'),
+                              selected: isSelected,
+                              selectedColor: const Color(0xFFFDE8E8),
+                              labelStyle: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                color: isSelected
+                                    ? const Color(0xFF991B1B)
+                                    : const Color(0xFF334155),
                               ),
-                            ],
-                          ),
-                        );
-                      } else if (currentVal > asset.quantity) {
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.trending_up, color: Color(0xFF006E2A), size: 16),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Tăng thêm ${currentVal - asset.quantity} ${asset.unit} so với ban đầu (${asset.quantity} ${asset.unit})',
-                                style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF006E2A)),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    }),
-                    const SizedBox(height: 14),
-
-                    const Text('Tình trạng hiện vật *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    const SizedBox(height: 6),
-                    DropdownButtonFormField<String>(
-                      initialValue: condition,
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      ),
-                      items: const [
-                        DropdownMenuItem(value: 'Tốt (Good)', child: Text('Tốt - Nguyên vẹn (Good)')),
-                        DropdownMenuItem(value: 'Cần bảo dưỡng (NeedsRepair)', child: Text('Cần bảo dưỡng / lau bóng (NeedsRepair)')),
-                        DropdownMenuItem(value: 'Hư hỏng (Damaged)', child: Text('Hư hỏng nhẹ (Damaged)')),
-                        DropdownMenuItem(value: 'Thất lạc (Lost)', child: Text('Thất lạc / Không tìm thấy (Lost)')),
-                        DropdownMenuItem(value: 'Thanh lý (Liquidated)', child: Text('Đề xuất thanh lý (Liquidated)')),
+                              onSelected: (_) => setModalState(
+                                  () => selectedAffectedItem = itemNo),
+                            );
+                          }),
+                        ),
+                        const SizedBox(height: 14),
                       ],
-                      onChanged: (val) {
-                        if (val != null) {
-                          setModalState(() {
-                            condition = val;
-                            if (val.contains('Lost') || val.contains('Liquidated')) {
-                              qtyCtrl.text = '0';
-                            } else if (qtyCtrl.text == '0' && asset.quantity > 0) {
-                              qtyCtrl.text = asset.quantity.toString();
-                            }
-                          });
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 14),
-
-                    const Text('Vị trí lưu trữ hiện tại', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0FDF4),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFBBF7D0)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.check_circle_outline,
+                                size: 16, color: Color(0xFF16A34A)),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Số lượng còn thực tế trong kho: $currentActualStock ${asset.unit}',
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF166534)),
+                            ),
+                            if (lostCount + liquidatedCount > 0) ...[
+                              const Spacer(),
+                              Text(
+                                '(Hao hụt: ${lostCount + liquidatedCount})',
+                                style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFDC2626)),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                    ] else ...[
+                      const Text('Số lượng thực tế kiểm đếm *',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 13)),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: qtyCtrl,
+                        keyboardType: TextInputType.number,
+                        onChanged: (_) => setModalState(() {}),
+                        decoration: InputDecoration(
+                          suffixText: asset.unit,
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      const Text('Tình trạng hiện vật *',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 13)),
+                      const SizedBox(height: 6),
+                      DropdownButtonFormField<String>(
+                        initialValue: condition,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                              value: 'Tốt (Good)',
+                              child: Text('Tốt - Nguyên vẹn (Good)')),
+                          DropdownMenuItem(
+                              value: 'Cần bảo dưỡng (NeedsRepair)',
+                              child: Text(
+                                  'Cần bảo dưỡng / lau bóng (NeedsRepair)')),
+                          DropdownMenuItem(
+                              value: 'Hư hỏng (Damaged)',
+                              child: Text('Hư hỏng nhẹ (Damaged)')),
+                          DropdownMenuItem(
+                              value: 'Thất lạc (Lost)',
+                              child: Text('Thất lạc / Không tìm thấy (Lost)')),
+                          DropdownMenuItem(
+                              value: 'Thanh lý (Liquidated)',
+                              child: Text('Đề xuất thanh lý (Liquidated)')),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) {
+                            setModalState(() {
+                              condition = val;
+                              if (val.contains('Lost') ||
+                                  val.contains('Liquidated')) {
+                                qtyCtrl.text = '0';
+                              } else if (qtyCtrl.text == '0' &&
+                                  asset.quantity > 0) {
+                                qtyCtrl.text = asset.quantity.toString();
+                              }
+                            });
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+                    const Text('Vị trí lưu trữ hiện tại',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 13)),
                     const SizedBox(height: 6),
                     TextField(
                       controller: locCtrl,
                       decoration: InputDecoration(
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
                       ),
                     ),
                     const SizedBox(height: 14),
-
-                    const Text('Ghi chú đợt kiểm kê', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    const Text('Ghi chú đợt kiểm kê',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 13)),
                     const SizedBox(height: 6),
                     TextField(
                       controller: notesCtrl,
                       maxLines: 2,
                       decoration: InputDecoration(
-                        hintText: 'VD: Kiểm kê định kỳ rằm tháng Giêng, đồ đồng sáng bóng...',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        hintText: isMultiple
+                            ? 'VD: Vật phẩm #$selectedAffectedItem bị mẻ viền men, đã gửi xưởng phục chế...'
+                            : 'VD: Kiểm kê định kỳ rằm tháng Giêng, đồ đồng sáng bóng...',
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8)),
                         contentPadding: const EdgeInsets.all(10),
                       ),
                     ),
-
                     if (errorText != null) ...[
                       const SizedBox(height: 12),
-                      Text(errorText!, style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold)),
+                      Text(errorText!,
+                          style: const TextStyle(
+                              color: Colors.red,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold)),
                     ],
                   ],
                 ),
@@ -2768,18 +2961,66 @@ class _ClanAssetInventoryScreenState
                 onPressed: isSubmitting
                     ? null
                     : () async {
-                        final parsedQty = int.tryParse(qtyCtrl.text.trim());
-                        if (parsedQty == null || parsedQty < 0) {
-                          setModalState(() => errorText = 'Số lượng kiểm đếm không hợp lệ');
-                          return;
-                        }
+                        int finalActualQty;
+                        String finalConditionStatus;
+                        String finalNotes = notesCtrl.text.trim();
 
-                        if ((condition.contains('Lost') || condition.contains('Liquidated')) &&
-                            parsedQty >= asset.quantity &&
-                            asset.quantity > 0) {
-                          setModalState(() => errorText =
-                              'Đang chọn "$condition", số lượng kiểm đếm thực tế phải giảm bớt so với định mức ban đầu (${asset.quantity} ${asset.unit})');
-                          return;
+                        if (isMultiple) {
+                          if (totalAllocated != asset.quantity) {
+                            setModalState(() => errorText =
+                                'Tổng phân bổ ($totalAllocated) phải bằng đúng định mức ban đầu (${asset.quantity} ${asset.unit})');
+                            return;
+                          }
+                          finalActualQty = currentActualStock;
+                          final List<String> statusParts = [];
+                          if (goodCount > 0) statusParts.add('$goodCount Tốt');
+                          if (repairCount > 0) {
+                            statusParts.add('$repairCount Cần bảo dưỡng');
+                          }
+                          if (damagedCount > 0) {
+                            statusParts.add('$damagedCount Hư hỏng');
+                          }
+                          if (lostCount > 0) {
+                            statusParts.add('$lostCount Thất lạc');
+                          }
+                          if (liquidatedCount > 0) {
+                            statusParts.add('$liquidatedCount Thanh lý');
+                          }
+                          finalConditionStatus =
+                              'Phân loại: ${statusParts.join(', ')}';
+
+                          if (repairCount > 0 ||
+                              damagedCount > 0 ||
+                              lostCount > 0 ||
+                              liquidatedCount > 0) {
+                            final prefix =
+                                '[Vật phẩm #$selectedAffectedItem (tem #0$selectedAffectedItem)]: ';
+                            if (!finalNotes.startsWith(prefix) &&
+                                finalNotes.isNotEmpty) {
+                              finalNotes = '$prefix$finalNotes';
+                            } else if (finalNotes.isEmpty) {
+                              finalNotes =
+                                  'Vật phẩm #$selectedAffectedItem có hiện trạng cần theo dõi / bảo dưỡng.';
+                            }
+                          }
+                        } else {
+                          final parsedQty = int.tryParse(qtyCtrl.text.trim());
+                          if (parsedQty == null || parsedQty < 0) {
+                            setModalState(() =>
+                                errorText = 'Số lượng kiểm đếm không hợp lệ');
+                            return;
+                          }
+
+                          if ((condition.contains('Lost') ||
+                                  condition.contains('Liquidated')) &&
+                              parsedQty >= asset.quantity &&
+                              asset.quantity > 0) {
+                            setModalState(() => errorText =
+                                'Đang chọn "$condition", số lượng kiểm đếm thực tế phải giảm bớt so với định mức ban đầu (${asset.quantity} ${asset.unit})');
+                            return;
+                          }
+                          finalActualQty = parsedQty;
+                          finalConditionStatus = condition;
                         }
 
                         setModalState(() {
@@ -2788,19 +3029,22 @@ class _ClanAssetInventoryScreenState
                         });
 
                         try {
-                          await ref.read(contributionUiProvider.notifier).auditClanAsset(
+                          await ref
+                              .read(contributionUiProvider.notifier)
+                              .auditClanAsset(
                                 assetId: asset.assetId,
-                                actualQuantity: parsedQty,
-                                conditionStatus: condition,
+                                actualQuantity: finalActualQty,
+                                conditionStatus: finalConditionStatus,
                                 storageLocation: locCtrl.text.trim(),
-                                notes: notesCtrl.text.trim(),
+                                notes: finalNotes,
                               );
 
                           if (mounted) {
                             Navigator.of(ctx).pop();
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Đã cập nhật kết quả kiểm kê cho "${asset.assetName}" thành công!'),
+                                content: Text(
+                                    'Đã cập nhật kết quả kiểm kê cho "${asset.assetName}" thành công!'),
                                 backgroundColor: const Color(0xFF006E2A),
                               ),
                             );
@@ -2813,19 +3057,82 @@ class _ClanAssetInventoryScreenState
                         }
                       },
                 icon: isSubmitting
-                    ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.check, size: 16),
                 label: const Text('Lưu Kết Quả Kiểm Kê'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF006E2A),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 ),
               ),
             ],
           );
         },
       ),
+    );
+  }
+
+  Widget _buildConditionCounterRow({
+    required String label,
+    required Color color,
+    required int count,
+    required String unit,
+    required VoidCallback? onMinus,
+    required VoidCallback? onPlus,
+  }) {
+    return Row(
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF1E293B)),
+          ),
+        ),
+        IconButton(
+          onPressed: onMinus,
+          icon: const Icon(Icons.remove_circle_outline, size: 18),
+          color: onMinus != null
+              ? const Color(0xFF64748B)
+              : const Color(0xFFCBD5E1),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+        ),
+        SizedBox(
+          width: 36,
+          child: Text(
+            '$count $unit',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F172A)),
+          ),
+        ),
+        IconButton(
+          onPressed: onPlus,
+          icon: const Icon(Icons.add_circle_outline, size: 18),
+          color: onPlus != null
+              ? const Color(0xFF006E2A)
+              : const Color(0xFFCBD5E1),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+        ),
+      ],
     );
   }
 
