@@ -726,80 +726,89 @@ class _ClanAssetInventoryScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Mã định danh tem kèm nút sao chép nhanh
-              InkWell(
-                onTap: () {
-                  Clipboard.setData(ClipboardData(text: asset.assetId));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Đã sao chép mã bảo vật: ${asset.assetId}'),
-                      duration: const Duration(seconds: 2),
-                      backgroundColor: const Color(0xFF8B1E1E),
-                    ),
-                  );
-                },
-                borderRadius: BorderRadius.circular(6),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF8B1E1E).withAlpha(15),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: const Color(0xFF8B1E1E).withAlpha(40),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        asset.assetId,
-                        style: const TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF8B1E1E),
+              Expanded(
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    // Mã định danh tem kèm nút sao chép nhanh
+                    InkWell(
+                      onTap: () {
+                        Clipboard.setData(ClipboardData(text: asset.assetId));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Đã sao chép mã bảo vật: ${asset.assetId}'),
+                            duration: const Duration(seconds: 2),
+                            backgroundColor: const Color(0xFF8B1E1E),
+                          ),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF8B1E1E).withAlpha(15),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: const Color(0xFF8B1E1E).withAlpha(40),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              asset.assetId,
+                              style: const TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF8B1E1E),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.copy, size: 12, color: Color(0xFF8B1E1E)),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.copy, size: 12, color: Color(0xFF8B1E1E)),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD4A017).withAlpha(30),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: const Color(0xFFD4A017).withAlpha(120),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.verified, size: 12, color: Color(0xFF8A5300)),
-                    SizedBox(width: 4),
-                    Text(
-                      'Bảo Vật Từ Đường',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF8A5300),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD4A017).withAlpha(30),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: const Color(0xFFD4A017).withAlpha(120),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.verified, size: 12, color: Color(0xFF8A5300)),
+                          SizedBox(width: 4),
+                          Text(
+                            'Bảo Vật Từ Đường',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF8A5300),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               Text(
                 currencyFormatter.format(asset.assessedValue),
                 style: const TextStyle(
                   fontFamily: 'monospace',
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF2E8B43),
                 ),
@@ -3168,9 +3177,12 @@ class _ClanAssetInventoryScreenState
             ),
           ],
         ),
-        content: SizedBox(
-          width: 520,
-          child: Consumer(
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520, maxHeight: 520),
+          child: SingleChildScrollView(
+            child: SizedBox(
+              width: 520,
+              child: Consumer(
             builder: (context, ref, _) {
               final auditsAsync = ref.watch(clanAssetAuditsProvider(asset.assetId));
               return auditsAsync.when(
@@ -3266,6 +3278,8 @@ class _ClanAssetInventoryScreenState
               );
             },
           ),
+            ),
+          ),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Đóng')),
@@ -3293,9 +3307,12 @@ class _ClanAssetInventoryScreenState
             ),
           ],
         ),
-        content: SizedBox(
-          width: 480,
-          child: Consumer(
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480, maxHeight: 520),
+          child: SingleChildScrollView(
+            child: SizedBox(
+              width: 480,
+              child: Consumer(
             builder: (context, ref, _) {
               final checkAsync = ref.watch(eventPendingInKindCheckProvider('EVT-GIO-TO-2026'));
               return checkAsync.when(
@@ -3348,6 +3365,8 @@ class _ClanAssetInventoryScreenState
                 },
               );
             },
+          ),
+            ),
           ),
         ),
         actions: [

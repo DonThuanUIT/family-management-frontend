@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/data/models/auth_models.dart';
+import '../../features/auth/presentation/providers/auth_state_provider.dart';
+import '../security/rbac_models.dart';
 import '../../features/auth/presentation/screens/auth_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/invite_code_screen.dart';
@@ -171,11 +173,35 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/branches/root/edit',
         name: 'edit-root-branch',
         builder: (context, state) => const EditRootBranchScreen(),
+        redirect: (context, state) {
+          final auth = ref.read(authStateProvider);
+          final session = ref.read(dualRbacSessionProvider);
+          final isClanHead = session.isClanHead ||
+              session.isAdmin ||
+              auth.user?.roles.contains('ROLE_CLAN_HEAD') == true ||
+              auth.user?.roles.contains('ROLE_ADMIN') == true;
+          if (!isClanHead) {
+            return '/home';
+          }
+          return null;
+        },
       ),
       GoRoute(
         path: '/genealogy/root/edit',
         name: 'edit-root-branch-alt',
         builder: (context, state) => const EditRootBranchScreen(),
+        redirect: (context, state) {
+          final auth = ref.read(authStateProvider);
+          final session = ref.read(dualRbacSessionProvider);
+          final isClanHead = session.isClanHead ||
+              session.isAdmin ||
+              auth.user?.roles.contains('ROLE_CLAN_HEAD') == true ||
+              auth.user?.roles.contains('ROLE_ADMIN') == true;
+          if (!isClanHead) {
+            return '/home';
+          }
+          return null;
+        },
       ),
 
       // 10. Phân hệ Quản lý & Khởi tạo Sự Kiện Dòng Họ (US-21 & US-22)
@@ -268,6 +294,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               final eventId = state.uri.queryParameters['eventId'];
               return BankReconciliationScreen(eventId: eventId);
             },
+            redirect: (context, state) {
+              final auth = ref.read(authStateProvider);
+              final session = ref.read(dualRbacSessionProvider);
+              final canReconcile = session.isClanHead ||
+                  session.isAdmin ||
+                  session.isBranchHead ||
+                  auth.user?.roles.any((r) =>
+                          r == 'ROLE_CLAN_HEAD' ||
+                          r == 'ROLE_ADMIN' ||
+                          r == 'ROLE_TREASURER') ==
+                      true;
+              if (!canReconcile) {
+                return '/contributions';
+              }
+              return null;
+            },
           ),
           // US-53 Task #187: Giao diện 'Đóng góp trực tuyến' cho con cháu ở xa
           GoRoute(
@@ -279,6 +321,45 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             },
           ),
         ],
+      ),
+
+      // Bug #8 Route Aliases: Cho phép truy cập trực tiếp các URL độc lập
+      GoRoute(
+        path: '/online-contributions',
+        name: 'online-contributions-alias',
+        builder: (context, state) {
+          final eventId = state.uri.queryParameters['eventId'];
+          return OnlineContributionScreen(initialEventId: eventId);
+        },
+      ),
+      GoRoute(
+        path: '/my-contributions',
+        name: 'my-contributions-alias',
+        builder: (context, state) => const MyContributionHistoryScreen(),
+      ),
+      GoRoute(
+        path: '/bank-reconciliation',
+        name: 'bank-reconciliation-alias',
+        builder: (context, state) {
+          final eventId = state.uri.queryParameters['eventId'];
+          return BankReconciliationScreen(eventId: eventId);
+        },
+        redirect: (context, state) {
+          final auth = ref.read(authStateProvider);
+          final session = ref.read(dualRbacSessionProvider);
+          final canReconcile = session.isClanHead ||
+              session.isAdmin ||
+              session.isBranchHead ||
+              auth.user?.roles.any((r) =>
+                      r == 'ROLE_CLAN_HEAD' ||
+                      r == 'ROLE_ADMIN' ||
+                      r == 'ROLE_TREASURER') ==
+                  true;
+          if (!canReconcile) {
+            return '/contributions';
+          }
+          return null;
+        },
       ),
 
       // 13. Kho Hiện Vật & Bảo Vật Từ Đường (Task #74)

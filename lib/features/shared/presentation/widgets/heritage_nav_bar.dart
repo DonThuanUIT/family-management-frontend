@@ -92,7 +92,7 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
         : (session.branchName.isNotEmpty ? session.branchName : 'Chi 2 (Đời 5)');
 
     final screenWidth = MediaQuery.of(context).size.width;
-    final isWide = screenWidth >= 860;
+    final isWide = screenWidth >= 900;
     final isUltraWide = screenWidth >= 1280;
     final isMediumWide = screenWidth >= 1100;
 
@@ -122,7 +122,7 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                 // 1. Brand Logo & Name
                 Flexible(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 280),
+                    constraints: BoxConstraints(maxWidth: isWide ? 280 : 170),
                     child: InkWell(
                     onTap: () => context.go('/home'),
                     borderRadius: BorderRadius.circular(8),

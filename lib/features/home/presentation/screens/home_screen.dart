@@ -855,6 +855,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     isSelected: activeBranchId == tree.branchId && _selectedMember == null,
                                     isCurrentUser: isRootCurrentUser,
                                     isHighlighted: _highlightedBranchId == tree.branchId,
+                                    isClanHead: isClanHead,
                                     onTap: () => _handleSelectBranch(tree.branchId, selectedDetail, isWide),
                                     onShowPopover: () => _showNodePopover(context, rootUiDetail, tree),
                                   ),
@@ -1047,9 +1048,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     _isSidebarOpen = false;
                     _selectedMember = null;
                   }),
-                  onEdit: selectedDetail.isRoot
+                  onEdit: (selectedDetail.isRoot && isClanHead)
                       ? () => context.push('/branches/root/edit')
-                      : () => _showTransferDialog(tree, initialBranchId: selectedDetail.id),
+                      : (!selectedDetail.isRoot && (isClanHead || (session.isBranchHead && session.branchId == selectedDetail.id)))
+                          ? () => _showTransferDialog(tree, initialBranchId: selectedDetail.id)
+                          : null,
                 ),
             ],
           );
@@ -1066,6 +1069,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
 
     if (!isWide) {
+      final session = ref.read(dualRbacSessionProvider);
+      final auth = ref.read(authStateProvider);
+      final isClanHead = session.isClanHead ||
+          session.isAdmin ||
+          auth.user?.roles.contains('ROLE_CLAN_HEAD') == true ||
+          auth.user?.roles.contains('ROLE_ADMIN') == true;
+
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
@@ -1080,7 +1090,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: BranchDetailSidebar(
               branch: detail,
               onClose: () => Navigator.of(ctx).pop(),
-              onEdit: detail.isRoot ? () => context.push('/branches/root/edit') : null,
+              onEdit: (detail.isRoot && isClanHead) ? () => context.push('/branches/root/edit') : null,
             ),
           ),
         ),
@@ -1097,6 +1107,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     required VoidCallback onTap,
     required VoidCallback onShowPopover,
     bool isHighlighted = false,
+    bool isClanHead = false,
   }) {
     const kPrimaryColor = Color(0xFF8F482F);
 
@@ -1231,17 +1242,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         icon: const Icon(Icons.visibility, size: 14, color: Colors.white),
                         label: const Text('Tóm tắt', style: TextStyle(fontSize: 11, color: Colors.white)),
                       ),
-                      const SizedBox(width: 4),
-                      ElevatedButton.icon(
-                        onPressed: () => context.push('/branches/root/edit'),
-                        icon: const Icon(Icons.edit, size: 14),
-                        label: const Text('Chỉnh sửa', style: TextStyle(fontSize: 11)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: kPrimaryColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      if (isClanHead) ...[
+                        const SizedBox(width: 4),
+                        ElevatedButton.icon(
+                          onPressed: () => context.push('/branches/root/edit'),
+                          icon: const Icon(Icons.edit, size: 14),
+                          label: const Text('Chỉnh sửa', style: TextStyle(fontSize: 11)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPrimaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ],

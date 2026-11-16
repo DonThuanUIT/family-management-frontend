@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/security/rbac_models.dart';
 import '../../../../core/utils/vietnamese_money_converter.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../data/models/contribution_models.dart';
 import '../providers/contribution_ui_provider.dart';
 import '../widgets/electronic_receipt_dialog.dart';
@@ -52,6 +54,16 @@ class _ReceiveContributionScreenState
   @override
   Widget build(BuildContext context) {
     final uiState = ref.watch(contributionUiProvider);
+    final session = ref.watch(dualRbacSessionProvider);
+    final authState = ref.watch(authStateProvider);
+    final canManageContributions = session.isClanHead ||
+        session.isAdmin ||
+        session.isBranchHead ||
+        authState.user?.roles.any((r) =>
+                r == 'ROLE_CLAN_HEAD' ||
+                r == 'ROLE_ADMIN' ||
+                r == 'ROLE_TREASURER') ==
+            true;
 
     final filteredCash = _getFilteredCash(uiState.cashReceipts);
     final filteredInKind = _getFilteredInKind(uiState.inKindReceipts);
@@ -71,7 +83,7 @@ class _ReceiveContributionScreenState
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Banner Sự Kiện & Nút Tiếp Nhận Nhanh
-                _buildEventBanner(context),
+                _buildEventBanner(context, canManageContributions: canManageContributions),
                 const SizedBox(height: 20),
 
                 // 4 Thẻ chỉ số tổng kết tài chính sự kiện
@@ -85,13 +97,14 @@ class _ReceiveContributionScreenState
                   filteredInKind: filteredInKind,
                   totalTransactions: totalTransactions,
                   isDesktop: isDesktop,
+                  canManageContributions: canManageContributions,
                 ),
               ],
             ),
           ),
         ),
       ),
-      floatingActionButton: isDesktop
+      floatingActionButton: (isDesktop || !canManageContributions)
           ? null
           : FloatingActionButton.extended(
               onPressed: () => _showAddContributionModal(context),
@@ -157,7 +170,7 @@ class _ReceiveContributionScreenState
     }).toList();
   }
 
-  Widget _buildEventBanner(BuildContext context) {
+  Widget _buildEventBanner(BuildContext context, {bool canManageContributions = true}) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -264,17 +277,18 @@ class _ReceiveContributionScreenState
           spacing: 8,
           runSpacing: 8,
           children: [
-            ElevatedButton.icon(
-              onPressed: () => _showAddContributionModal(context),
-              icon: const Icon(Icons.post_add, size: 18),
-              label: const Text('Tiếp Nhận Tại Bàn'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF8B1E1E),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            if (canManageContributions)
+              ElevatedButton.icon(
+                onPressed: () => _showAddContributionModal(context),
+                icon: const Icon(Icons.post_add, size: 18),
+                label: const Text('Tiếp Nhận Tại Bàn'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF8B1E1E),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
               ),
-            ),
             OutlinedButton.icon(
               onPressed: () => context.push('/contributions/online'),
               icon: const Icon(Icons.qr_code_2, size: 18),
@@ -286,17 +300,18 @@ class _ReceiveContributionScreenState
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
             ),
-            OutlinedButton.icon(
-              onPressed: () => context.push('/contributions/reconcile'),
-              icon: const Icon(Icons.rule, size: 18),
-              label: const Text('Đối Soát Chuyển Khoản'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF006E2A),
-                side: const BorderSide(color: Color(0xFF006E2A)),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            if (canManageContributions)
+              OutlinedButton.icon(
+                onPressed: () => context.push('/contributions/reconcile'),
+                icon: const Icon(Icons.rule, size: 18),
+                label: const Text('Đối Soát Chuyển Khoản'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF006E2A),
+                  side: const BorderSide(color: Color(0xFF006E2A)),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
               ),
-            ),
             OutlinedButton.icon(
               onPressed: () => context.push('/contributions/my-history'),
               icon: const Icon(Icons.history_edu, size: 18),
@@ -546,6 +561,7 @@ class _ReceiveContributionScreenState
     required List<InKindElectronicReceiptDto> filteredInKind,
     required int totalTransactions,
     required bool isDesktop,
+    bool canManageContributions = true,
   }) {
     final cashCount = uiState.cashReceipts
         .where((r) => r.paymentMethod == PaymentMethod.Cash)
@@ -643,21 +659,22 @@ class _ReceiveContributionScreenState
                         ),
                       ),
                     ),
-                    ElevatedButton.icon(
-                      onPressed: () => _showAddContributionModal(context),
-                      icon: const Icon(Icons.add_circle_outline, size: 18),
-                      label: const Text('Lập Phiếu Đóng Góp Mới'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8B1E1E),
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(0, 42),
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        elevation: 1,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                    if (canManageContributions)
+                      ElevatedButton.icon(
+                        onPressed: () => _showAddContributionModal(context),
+                        icon: const Icon(Icons.add_circle_outline, size: 18),
+                        label: const Text('Lập Phiếu Đóng Góp Mới'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF8B1E1E),
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(0, 42),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          elevation: 1,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ],
