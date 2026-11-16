@@ -2886,6 +2886,8 @@ class _ClanAssetInventoryScreenState
               lostCount +
               liquidatedCount;
           final currentActualStock = goodCount + repairCount + damagedCount;
+          final totalIssues =
+              repairCount + damagedCount + lostCount + liquidatedCount;
 
           return AlertDialog(
             backgroundColor: Colors.white,
@@ -3081,41 +3083,95 @@ class _ClanAssetInventoryScreenState
                         ),
                       ),
                       const SizedBox(height: 14),
-                      if (repairCount > 0 ||
-                          damagedCount > 0 ||
-                          lostCount > 0 ||
-                          liquidatedCount > 0) ...[
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'CHỈ ĐỊNH VẬT PHẨM BỊ ẢNH HƯỞNG (ĐÃ CHỌN ${selectedAffectedItems.length} MÓN):',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF64748B),
-                              ),
-                            ),
-                            if (selectedAffectedItems.isNotEmpty)
-                              TextButton(
-                                onPressed: () => setModalState(
-                                  () => selectedAffectedItems.clear(),
+                      if (totalIssues > 0) ...[
+                        Builder(
+                          builder: (context) {
+                            String issueTitle;
+                            Color issueColor;
+                            if (repairCount > 0 &&
+                                damagedCount == 0 &&
+                                lostCount == 0 &&
+                                liquidatedCount == 0) {
+                              issueTitle =
+                                  'CHỈ ĐỊNH VẬT PHẨM CẦN BẢO DƯỠNG / LAU MEN (ĐÃ CHỌN ${selectedAffectedItems.length}/$repairCount MÓN):';
+                              issueColor = const Color(0xFFD97706);
+                            } else if (damagedCount > 0 &&
+                                repairCount == 0 &&
+                                lostCount == 0 &&
+                                liquidatedCount == 0) {
+                              issueTitle =
+                                  'CHỈ ĐỊNH VẬT PHẨM HƯ HỎNG NHẸ / MẺ NỨT (ĐÃ CHỌN ${selectedAffectedItems.length}/$damagedCount MÓN):';
+                              issueColor = const Color(0xFFEA580C);
+                            } else if (lostCount > 0 &&
+                                repairCount == 0 &&
+                                damagedCount == 0 &&
+                                liquidatedCount == 0) {
+                              issueTitle =
+                                  'CHỈ ĐỊNH VẬT PHẨM THẤT LẠC / KHÔNG THẤY (ĐÃ CHỌN ${selectedAffectedItems.length}/$lostCount MÓN):';
+                              issueColor = const Color(0xFFDC2626);
+                            } else if (liquidatedCount > 0 &&
+                                repairCount == 0 &&
+                                damagedCount == 0 &&
+                                lostCount == 0) {
+                              issueTitle =
+                                  'CHỈ ĐỊNH VẬT PHẨM ĐỀ XUẤT THANH LÝ (ĐÃ CHỌN ${selectedAffectedItems.length}/$liquidatedCount MÓN):';
+                              issueColor = const Color(0xFF475569);
+                            } else {
+                              issueTitle =
+                                  'CHỈ ĐỊNH VẬT PHẨM BỊ ẢNH HƯỞNG (ĐÃ CHỌN ${selectedAffectedItems.length}/$totalIssues MÓN):';
+                              issueColor = const Color(0xFF64748B);
+                            }
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        issueTitle,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: issueColor,
+                                        ),
+                                      ),
+                                    ),
+                                    if (selectedAffectedItems.isNotEmpty)
+                                      TextButton(
+                                        onPressed: () => setModalState(
+                                          () => selectedAffectedItems.clear(),
+                                        ),
+                                        style: TextButton.styleFrom(
+                                          padding: EdgeInsets.zero,
+                                          minimumSize: const Size(50, 24),
+                                          tapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                        child: const Text(
+                                          'Bỏ chọn tất cả',
+                                          style: TextStyle(
+                                            fontSize: 10.5,
+                                            color: Color(0xFFDC2626),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
                                 ),
-                                style: TextButton.styleFrom(
-                                  padding: EdgeInsets.zero,
-                                  minimumSize: const Size(50, 24),
-                                  tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                ),
-                                child: const Text(
-                                  'Bỏ chọn tất cả',
-                                  style: TextStyle(
+                                const SizedBox(height: 2),
+                                Text(
+                                  '💡 Đang có $totalIssues vật phẩm không ở tình trạng "Tốt". Chọn đúng $totalIssues tem tương ứng (các tem còn lại là Tốt - Nguyên vẹn).',
+                                  style: const TextStyle(
                                     fontSize: 10.5,
-                                    color: Color(0xFFDC2626),
+                                    color: Color(0xFF64748B),
+                                    fontStyle: FontStyle.italic,
                                   ),
                                 ),
-                              ),
-                          ],
+                              ],
+                            );
+                          },
                         ),
                         const SizedBox(height: 6),
                         Wrap(
