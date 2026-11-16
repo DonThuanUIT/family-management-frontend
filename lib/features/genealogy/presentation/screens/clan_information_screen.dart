@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/security/rbac_models.dart';
+import '../../../../core/widgets/error_message_box.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../contribution/data/models/contribution_models.dart';
 import '../../../contribution/presentation/providers/contribution_ui_provider.dart';
@@ -1211,7 +1212,6 @@ class _ClanInformationScreenState extends ConsumerState<ClanInformationScreen>
 
     String selectedTemplate = current.qrTemplate;
     bool isSubmitting = false;
-    String? errorText;
 
     showDialog(
       context: context,
@@ -1375,17 +1375,6 @@ class _ClanInformationScreenState extends ConsumerState<ClanInformationScreen>
                       contentPadding: EdgeInsets.all(10),
                     ),
                   ),
-                  if (errorText != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      errorText!,
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
@@ -1404,30 +1393,32 @@ class _ClanInformationScreenState extends ConsumerState<ClanInformationScreen>
                       final accName = accNameCtrl.text.trim();
 
                       if (bin.length != 6 || int.tryParse(bin) == null) {
-                        setDialogState(
-                          () => errorText =
-                              'Mã BIN phải gồm đúng 6 chữ số theo chuẩn Napas!',
+                        showWarningMessageBox(
+                          context: ctx,
+                          title: 'Mã BIN Chưa Hợp Lệ',
+                          message: 'Mã BIN ngân hàng phải gồm đúng 6 chữ số theo chuẩn Napas (Ví dụ: 970436 cho Vietcombank)!',
                         );
                         return;
                       }
                       if (accNum.isEmpty) {
-                        setDialogState(
-                          () => errorText =
-                              'Vui lòng nhập số tài khoản ngân hàng!',
+                        showWarningMessageBox(
+                          context: ctx,
+                          title: 'Thiếu Số Tài Khoản',
+                          message: 'Vui lòng nhập số tài khoản ngân hàng thụ hưởng của dòng họ!',
                         );
                         return;
                       }
                       if (accName.isEmpty) {
-                        setDialogState(
-                          () => errorText =
-                              'Vui lòng nhập tên chủ tài khoản ngân hàng!',
+                        showWarningMessageBox(
+                          context: ctx,
+                          title: 'Thiếu Tên Chủ Tài Khoản',
+                          message: 'Vui lòng nhập họ và tên chủ tài khoản ngân hàng!',
                         );
                         return;
                       }
 
                       setDialogState(() {
                         isSubmitting = true;
-                        errorText = null;
                       });
 
                       try {
@@ -1461,8 +1452,14 @@ class _ClanInformationScreenState extends ConsumerState<ClanInformationScreen>
                       } catch (e) {
                         setDialogState(() {
                           isSubmitting = false;
-                          errorText = 'Lỗi cập nhật: $e';
                         });
+                        if (ctx.mounted) {
+                          showErrorMessageBox(
+                            context: ctx,
+                            title: 'Lỗi Cập Nhật Tài Khoản Dòng Họ',
+                            error: e,
+                          );
+                        }
                       }
                     },
               style: ElevatedButton.styleFrom(
@@ -1494,7 +1491,6 @@ class _ClanInformationScreenState extends ConsumerState<ClanInformationScreen>
     final noteCtrl = TextEditingController();
 
     bool isSubmitting = false;
-    String? errorText;
 
     showDialog(
       context: context,
@@ -1602,17 +1598,6 @@ class _ClanInformationScreenState extends ConsumerState<ClanInformationScreen>
                       contentPadding: EdgeInsets.all(10),
                     ),
                   ),
-                  if (errorText != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      errorText!,
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
@@ -1633,29 +1618,34 @@ class _ClanInformationScreenState extends ConsumerState<ClanInformationScreen>
                       );
 
                       if (name.isEmpty) {
-                        setDialogState(
-                          () => errorText =
-                              'Vui lòng nhập tên hiện vật cúng tiến!',
+                        showWarningMessageBox(
+                          context: ctx,
+                          title: 'Thiếu Tên Hiện Vật',
+                          message:
+                              'Vui lòng nhập tên hiện vật / đồ lễ cúng tiến!',
                         );
                         return;
                       }
                       if (unit.isEmpty) {
-                        setDialogState(
-                          () => errorText = 'Vui lòng nhập đơn vị tính!',
+                        showWarningMessageBox(
+                          context: ctx,
+                          title: 'Thiếu Đơn Vị Tính',
+                          message: 'Vui lòng nhập đơn vị tính (ví dụ: con, mâm, kg, bình)!',
                         );
                         return;
                       }
                       if (price == null || price <= 0) {
-                        setDialogState(
-                          () => errorText =
-                              'Đơn giá định mức phải lớn hơn 0 VNĐ!',
+                        showWarningMessageBox(
+                          context: ctx,
+                          title: 'Định Mức Giá Không Hợp Lệ',
+                          message:
+                              'Đơn giá định mức quy đổi phải lớn hơn 0 VNĐ!',
                         );
                         return;
                       }
 
                       setDialogState(() {
                         isSubmitting = true;
-                        errorText = null;
                       });
 
                       try {
@@ -1690,8 +1680,14 @@ class _ClanInformationScreenState extends ConsumerState<ClanInformationScreen>
                       } catch (e) {
                         setDialogState(() {
                           isSubmitting = false;
-                          errorText = 'Lỗi tạo định mức: $e';
                         });
+                        if (ctx.mounted) {
+                          showErrorMessageBox(
+                            context: ctx,
+                            title: 'Lỗi Tạo Định Mức Benchmark',
+                            error: e,
+                          );
+                        }
                       }
                     },
               style: ElevatedButton.styleFrom(

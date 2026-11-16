@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../data/models/contribution_models.dart';
 import '../../../../core/utils/vietnamese_money_converter.dart';
+import '../../../../core/widgets/error_message_box.dart';
 import '../providers/contribution_ui_provider.dart';
 import '../widgets/electronic_receipt_dialog.dart';
 
@@ -2864,7 +2865,6 @@ class _ClanAssetInventoryScreenState
     final notesCtrl = TextEditingController();
     String condition = 'Tốt (Good)';
     bool isSubmitting = false;
-    String? errorText;
 
     // Phân loại chi tiết từng món khi số lượng > 1
     int goodCount = asset.quantity;
@@ -3197,13 +3197,26 @@ class _ClanAssetInventoryScreenState
                                     : const Color(0xFF334155),
                               ),
                               onSelected: (selected) {
-                                setModalState(() {
-                                  if (selected) {
-                                    selectedAffectedItems.add(itemNo);
-                                  } else {
-                                    selectedAffectedItems.remove(itemNo);
+                                if (selected) {
+                                  if (totalIssues > 0 &&
+                                      selectedAffectedItems.length >=
+                                          totalIssues) {
+                                    showWarningMessageBox(
+                                      context: ctx,
+                                      title: 'Giới Hạn Chọn Tem Vật Phẩm',
+                                      message:
+                                          'Bạn chỉ có thể chọn tối đa $totalIssues vật phẩm ứng với số lượng đã phân loại cần bảo dưỡng/hư hỏng ở trên.\n\nNếu muốn đổi sang món khác, vui lòng bỏ chọn bớt tem hiện tại!',
+                                    );
+                                    return;
                                   }
-                                });
+                                  setModalState(() {
+                                    selectedAffectedItems.add(itemNo);
+                                  });
+                                } else {
+                                  setModalState(() {
+                                    selectedAffectedItems.remove(itemNo);
+                                  });
+                                }
                               },
                             );
                           }),
@@ -3380,17 +3393,6 @@ class _ClanAssetInventoryScreenState
                         contentPadding: const EdgeInsets.all(10),
                       ),
                     ),
-                    if (errorText != null) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        errorText!,
-                        style: const TextStyle(
-                          color: Colors.red,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
@@ -3410,12 +3412,26 @@ class _ClanAssetInventoryScreenState
 
                         if (isMultiple) {
                           if (totalAllocated != asset.quantity) {
-                            setModalState(
-                              () => errorText =
-                                  'Tổng phân bổ ($totalAllocated) phải bằng đúng định mức ban đầu (${asset.quantity} ${asset.unit})',
+                            showWarningMessageBox(
+                              context: ctx,
+                              title: 'Số Lượng Chưa Khớp',
+                              message:
+                                  'Tổng số lượng phân bổ ($totalAllocated ${asset.unit}) phải bằng đúng định mức ban đầu của hiện vật (${asset.quantity} ${asset.unit})!',
                             );
                             return;
                           }
+
+                          if (totalIssues > 0 &&
+                              selectedAffectedItems.length != totalIssues) {
+                            showWarningMessageBox(
+                              context: ctx,
+                              title: 'Chưa Chọn Đủ Tem Vật Phẩm',
+                              message:
+                                  'Bạn đã phân loại $totalIssues vật phẩm không ở tình trạng "Tốt", nhưng hiện tại mới chỉ định ${selectedAffectedItems.length} tem.\n\nVui lòng bấm chọn đúng $totalIssues tem vật phẩm tương ứng trước khi lưu kết quả!',
+                            );
+                            return;
+                          }
+
                           finalActualQty = currentActualStock;
                           final List<String> statusParts = [];
                           if (goodCount > 0) statusParts.add('$goodCount Tốt');
@@ -3434,10 +3450,7 @@ class _ClanAssetInventoryScreenState
                           finalConditionStatus =
                               'Phân loại: ${statusParts.join(', ')}';
 
-                          if (repairCount > 0 ||
-                              damagedCount > 0 ||
-                              lostCount > 0 ||
-                              liquidatedCount > 0) {
+                          if (totalIssues > 0) {
                             final sortedItems = selectedAffectedItems.toList()
                               ..sort();
                             final itemsLabel = sortedItems.isNotEmpty
@@ -3458,9 +3471,10 @@ class _ClanAssetInventoryScreenState
                         } else {
                           final parsedQty = int.tryParse(qtyCtrl.text.trim());
                           if (parsedQty == null || parsedQty < 0) {
-                            setModalState(
-                              () =>
-                                  errorText = 'Số lượng kiểm đếm không hợp lệ',
+                            showWarningMessageBox(
+                              context: ctx,
+                              title: 'Số Lượng Không Hợp Lệ',
+                              message: 'Vui lòng nhập số lượng kiểm đếm thực tế hợp lệ!',
                             );
                             return;
                           }
@@ -3469,9 +3483,11 @@ class _ClanAssetInventoryScreenState
                                   condition.contains('Liquidated')) &&
                               parsedQty >= asset.quantity &&
                               asset.quantity > 0) {
-                            setModalState(
-                              () => errorText =
-                                  'Đang chọn "$condition", số lượng kiểm đếm thực tế phải giảm bớt so với định mức ban đầu (${asset.quantity} ${asset.unit})',
+                            showWarningMessageBox(
+                              context: ctx,
+                              title: 'Số Lượng Không Hợp Lệ',
+                              message:
+                                  'Đang chọn "$condition", số lượng kiểm đếm thực tế phải giảm bớt so với định mức ban đầu (${asset.quantity} ${asset.unit})!',
                             );
                             return;
                           }
@@ -3481,7 +3497,6 @@ class _ClanAssetInventoryScreenState
 
                         setModalState(() {
                           isSubmitting = true;
-                          errorText = null;
                         });
 
                         try {
@@ -3509,8 +3524,14 @@ class _ClanAssetInventoryScreenState
                         } catch (e) {
                           setModalState(() {
                             isSubmitting = false;
-                            errorText = 'Lỗi cập nhật: $e';
                           });
+                          if (ctx.mounted) {
+                            showErrorMessageBox(
+                              context: ctx,
+                              title: 'Lỗi Cập Nhật Kiểm Kê',
+                              error: e,
+                            );
+                          }
                         }
                       },
                 icon: isSubmitting
