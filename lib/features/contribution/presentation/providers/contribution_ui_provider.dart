@@ -293,6 +293,31 @@ class ContributionUiNotifier extends Notifier<ContributionUiState> {
     ref.invalidate(clanBankingInfoProvider);
     return updated;
   }
+
+  Future<EventItemBenchmarkDto> createEventItemBenchmark({
+    required String eventId,
+    required CreateEventItemBenchmarkRequestDto request,
+  }) async {
+    final result = await _repository.createEventItemBenchmark(
+      eventId: eventId,
+      request: request,
+    );
+    ref.invalidate(clanBenchmarksProvider);
+    ref.invalidate(eventBenchmarksProvider(eventId));
+    return result;
+  }
+
+  Future<void> deleteEventItemBenchmark({
+    required String eventId,
+    required String benchmarkId,
+  }) async {
+    await _repository.deleteEventItemBenchmark(
+      eventId: eventId,
+      benchmarkId: benchmarkId,
+    );
+    ref.invalidate(clanBenchmarksProvider);
+    ref.invalidate(eventBenchmarksProvider(eventId));
+  }
 }
 
 final contributionUiProvider =
@@ -334,4 +359,16 @@ final clanBankingInfoProvider = FutureProvider<ClanBankingInfoDto>((ref) async {
 final branchRecursiveContributionSummaryProvider = FutureProvider.family<BranchRecursiveContributionDto, String>((ref, branchId) async {
   final repo = ref.watch(contributionRepositoryProvider);
   return repo.getBranchRecursiveContributionSummary(branchId);
+});
+
+/// Provider Danh sách định mức hiện vật cúng tiến của toàn Dòng Họ (US-10)
+final clanBenchmarksProvider = FutureProvider<List<EventItemBenchmarkDto>>((ref) async {
+  final repo = ref.watch(contributionRepositoryProvider);
+  return repo.getAllClanBenchmarks();
+});
+
+/// Provider Danh sách định mức hiện vật theo Sự kiện (US-10)
+final eventBenchmarksProvider = FutureProvider.family<List<EventItemBenchmarkDto>, String>((ref, eventId) async {
+  final repo = ref.watch(contributionRepositoryProvider);
+  return repo.getEventItemBenchmarks(eventId);
 });

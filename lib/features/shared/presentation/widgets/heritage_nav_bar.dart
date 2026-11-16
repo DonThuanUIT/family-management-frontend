@@ -89,7 +89,9 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
         : (session.fullName.isNotEmpty ? session.fullName : 'Lê Hữu Tuấn');
     final branchRole = authState.user?.roles.contains('ROLE_CLAN_HEAD') == true
         ? 'Trưởng Tộc • Chi Gốc'
-        : (session.branchName.isNotEmpty ? session.branchName : 'Chi 2 (Đời 5)');
+        : (session.branchName.isNotEmpty
+              ? session.branchName
+              : 'Chi 2 (Đời 5)');
 
     final screenWidth = MediaQuery.of(context).size.width;
     final isWide = screenWidth >= 900;
@@ -100,9 +102,7 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
       height: 68,
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFE6DFD8), width: 1),
-        ),
+        border: Border(bottom: BorderSide(color: Color(0xFFE6DFD8), width: 1)),
         boxShadow: [
           BoxShadow(
             color: Color(0x08000000),
@@ -124,88 +124,100 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                   child: ConstrainedBox(
                     constraints: BoxConstraints(maxWidth: isWide ? 280 : 170),
                     child: InkWell(
-                    onTap: () => context.go('/home'),
-                    borderRadius: BorderRadius.circular(8),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF8B1E1E), Color(0xFF6B1414)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                  color: const Color(0xFFD4A017), width: 1.2),
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.account_balance,
-                                color: Color(0xFFD4A017),
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Flexible(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  customTitle ?? 'FamilyFund',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF2B1810),
-                                    letterSpacing: -0.3,
-                                  ),
+                      onTap: () => context.go('/home'),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 6,
+                          horizontal: 4,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFF8B1E1E),
+                                    Color(0xFF6B1414),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
                                 ),
-                                if (isUltraWide)
-                                  Container(
-                                    margin: const EdgeInsets.only(top: 1.5),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 6, vertical: 1.5),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF0EDEB),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
-                                          color: const Color(0xFFDAC1BA), width: 0.8),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: const Color(0xFFD4A017),
+                                  width: 1.2,
+                                ),
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.account_balance,
+                                  color: Color(0xFFD4A017),
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Flexible(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    customTitle ?? 'FamilyFund',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF2B1810),
+                                      letterSpacing: -0.3,
                                     ),
-                                    child: Text(
-                                      fullName.startsWith('Nguyễn')
-                                          ? 'DÒNG HỌ NGUYỄN VIỆT NAM'
-                                          : (fullName.startsWith('Lê')
-                                              ? 'DÒNG HỌ LÊ VIỆT NAM'
-                                              : 'GIA TỘC VIỆT NAM'),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontFamily: 'monospace',
-                                        fontSize: 9.0,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 0.5,
-                                        color: Color(0xFF8B1E1E),
+                                  ),
+                                  if (isUltraWide)
+                                    Container(
+                                      margin: const EdgeInsets.only(top: 1.5),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 1.5,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF0EDEB),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: const Color(0xFFDAC1BA),
+                                          width: 0.8,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        fullName.startsWith('Nguyễn')
+                                            ? 'DÒNG HỌ NGUYỄN VIỆT NAM'
+                                            : (fullName.startsWith('Lê')
+                                                  ? 'DÒNG HỌ LÊ VIỆT NAM'
+                                                  : 'GIA TỘC VIỆT NAM'),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontFamily: 'monospace',
+                                          fontSize: 9.0,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 0.5,
+                                          color: Color(0xFF8B1E1E),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
                 ),
 
                 const SizedBox(width: 8),
@@ -223,10 +235,13 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: kHeritageNavItems.map((item) {
                               final isActive = currentRoute == item.route;
-                              final displayLabel =
-                                  isMediumWide ? item.label : item.shortLabel;
+                              final displayLabel = isMediumWide
+                                  ? item.label
+                                  : item.shortLabel;
                               return Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 2,
+                                ),
                                 child: InkWell(
                                   onTap: () {
                                     if (!isActive) {
@@ -236,7 +251,9 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                                   borderRadius: BorderRadius.circular(8),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 7.5, vertical: 6),
+                                      horizontal: 7.5,
+                                      vertical: 6,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: isActive
                                           ? const Color(0xFFF5EBE6)
@@ -246,14 +263,17 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                                           ? Border.all(
                                               color: const Color(0xFF8B1E1E)
                                                   .withAlpha(60),
-                                              width: 1)
+                                              width: 1,
+                                            )
                                           : null,
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Icon(
-                                          isActive ? item.activeIcon : item.icon,
+                                          isActive
+                                              ? item.activeIcon
+                                              : item.icon,
                                           size: 15,
                                           color: isActive
                                               ? const Color(0xFF8B1E1E)
@@ -297,19 +317,25 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                       if (screenWidth >= 1180) ...[
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFF006E2A).withAlpha(18),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                                color: const Color(0xFF006E2A).withAlpha(40),
-                                width: 1),
+                              color: const Color(0xFF006E2A).withAlpha(40),
+                              width: 1,
+                            ),
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.verified,
-                                  size: 14, color: Color(0xFF006E2A)),
+                              Icon(
+                                Icons.verified,
+                                size: 14,
+                                color: Color(0xFF006E2A),
+                              ),
                               SizedBox(width: 4),
                               Text(
                                 'Niêm Phong 2026',
@@ -325,23 +351,28 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                         ),
                       ] else if (screenWidth >= 960) ...[
                         Tooltip(
-                          message:
-                              'Sổ cái & Hồ sơ gia phả đã được niêm phong số 2026',
+                          message: 'Sổ cái & Hồ sơ gia phả đã được niêm phong số 2026',
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 3.5),
+                              horizontal: 6,
+                              vertical: 3.5,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFF006E2A).withAlpha(18),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                  color: const Color(0xFF006E2A).withAlpha(40),
-                                  width: 1),
+                                color: const Color(0xFF006E2A).withAlpha(40),
+                                width: 1,
+                              ),
                             ),
                             child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.verified,
-                                    size: 13, color: Color(0xFF006E2A)),
+                                Icon(
+                                  Icons.verified,
+                                  size: 13,
+                                  color: Color(0xFF006E2A),
+                                ),
                                 SizedBox(width: 3),
                                 Text(
                                   '2026',
@@ -359,7 +390,10 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                       ],
                       const SizedBox(width: 8),
                       Container(
-                          width: 1, height: 24, color: const Color(0xFFE6DFD8)),
+                        width: 1,
+                        height: 24,
+                        color: const Color(0xFFE6DFD8),
+                      ),
                       const SizedBox(width: 8),
                     ],
 
@@ -408,13 +442,20 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(fullName,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF2B1810))),
-                              Text(branchRole,
-                                  style: const TextStyle(
-                                      fontSize: 12, color: Color(0xFF6B584E))),
+                              Text(
+                                fullName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF2B1810),
+                                ),
+                              ),
+                              Text(
+                                branchRole,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF6B584E),
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -424,35 +465,67 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                             value: nav.route,
                             child: Row(
                               children: [
-                                Icon(nav.icon,
-                                    size: 18,
+                                Icon(
+                                  nav.icon,
+                                  size: 18,
+                                  color: currentRoute == nav.route
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF54433E),
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  nav.label,
+                                  style: TextStyle(
+                                    fontWeight: currentRoute == nav.route
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
                                     color: currentRoute == nav.route
                                         ? const Color(0xFF8B1E1E)
-                                        : const Color(0xFF54433E)),
-                                const SizedBox(width: 10),
-                                Text(nav.label,
-                                    style: TextStyle(
-                                      fontWeight: currentRoute == nav.route
-                                          ? FontWeight.bold
-                                          : FontWeight.normal,
-                                      color: currentRoute == nav.route
-                                          ? const Color(0xFF8B1E1E)
-                                          : const Color(0xFF2B1810),
-                                    )),
+                                        : const Color(0xFF2B1810),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
                         ),
                         const PopupMenuDivider(),
                         PopupMenuItem(
+                          value: '/clan-info',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.assured_workload_outlined,
+                                size: 18,
+                                color: currentRoute == '/clan-info'
+                                    ? const Color(0xFF8B1E1E)
+                                    : const Color(0xFF54433E),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                'Thông Tin Dòng Họ & Ngân Hàng',
+                                style: TextStyle(
+                                  fontWeight: currentRoute == '/clan-info'
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  color: currentRoute == '/clan-info'
+                                      ? const Color(0xFF8B1E1E)
+                                      : const Color(0xFF2B1810),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
                           value: '/roles',
                           child: Row(
                             children: [
-                              Icon(Icons.admin_panel_settings_outlined,
-                                  size: 18,
-                                  color: currentRoute == '/roles'
-                                      ? const Color(0xFF8B1E1E)
-                                      : const Color(0xFF54433E)),
+                              Icon(
+                                Icons.admin_panel_settings_outlined,
+                                size: 18,
+                                color: currentRoute == '/roles'
+                                    ? const Color(0xFF8B1E1E)
+                                    : const Color(0xFF54433E),
+                              ),
                               const SizedBox(width: 10),
                               Text(
                                 'Phân Quyền Vai Trò',
@@ -472,11 +545,13 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                           value: '/join-requests',
                           child: Row(
                             children: [
-                              Icon(Icons.how_to_reg_outlined,
-                                  size: 18,
-                                  color: currentRoute == '/join-requests'
-                                      ? const Color(0xFF8B1E1E)
-                                      : const Color(0xFF54433E)),
+                              Icon(
+                                Icons.how_to_reg_outlined,
+                                size: 18,
+                                color: currentRoute == '/join-requests'
+                                    ? const Color(0xFF8B1E1E)
+                                    : const Color(0xFF54433E),
+                              ),
                               const SizedBox(width: 10),
                               Text(
                                 'Quản Lý Đơn Gia Nhập',
@@ -496,11 +571,13 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                           value: '/notifications',
                           child: Row(
                             children: [
-                              Icon(Icons.notifications_active_outlined,
-                                  size: 18,
-                                  color: currentRoute == '/notifications'
-                                      ? const Color(0xFF8B1E1E)
-                                      : const Color(0xFF54433E)),
+                              Icon(
+                                Icons.notifications_active_outlined,
+                                size: 18,
+                                color: currentRoute == '/notifications'
+                                    ? const Color(0xFF8B1E1E)
+                                    : const Color(0xFF54433E),
+                              ),
                               const SizedBox(width: 10),
                               Text(
                                 'Trung Tâm Thông Báo',
@@ -520,11 +597,13 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                           value: '/audit-logs',
                           child: Row(
                             children: [
-                              Icon(Icons.history_edu_outlined,
-                                  size: 18,
-                                  color: currentRoute == '/audit-logs'
-                                      ? const Color(0xFF8B1E1E)
-                                      : const Color(0xFF54433E)),
+                              Icon(
+                                Icons.history_edu_outlined,
+                                size: 18,
+                                color: currentRoute == '/audit-logs'
+                                    ? const Color(0xFF8B1E1E)
+                                    : const Color(0xFF54433E),
+                              ),
                               const SizedBox(width: 10),
                               Text(
                                 'Nhật Ký Thao Tác (Audit Log)',
@@ -544,11 +623,13 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                           value: '/profile',
                           child: Row(
                             children: [
-                              Icon(Icons.person_outline,
-                                  size: 18,
-                                  color: currentRoute == '/profile'
-                                      ? const Color(0xFF8B1E1E)
-                                      : const Color(0xFF54433E)),
+                              Icon(
+                                Icons.person_outline,
+                                size: 18,
+                                color: currentRoute == '/profile'
+                                    ? const Color(0xFF8B1E1E)
+                                    : const Color(0xFF54433E),
+                              ),
                               const SizedBox(width: 10),
                               Text(
                                 'Hồ Sơ Cá Nhân',
@@ -568,16 +649,19 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                           value: '/privacy-settings',
                           child: Row(
                             children: [
-                              Icon(Icons.shield_outlined,
-                                  size: 18,
-                                  color: currentRoute == '/privacy-settings'
-                                      ? const Color(0xFF8B1E1E)
-                                      : const Color(0xFF54433E)),
+                              Icon(
+                                Icons.shield_outlined,
+                                size: 18,
+                                color: currentRoute == '/privacy-settings'
+                                    ? const Color(0xFF8B1E1E)
+                                    : const Color(0xFF54433E),
+                              ),
                               const SizedBox(width: 10),
                               Text(
                                 'Quyền Riêng Tư Cá Nhân',
                                 style: TextStyle(
-                                  fontWeight: currentRoute == '/privacy-settings'
+                                  fontWeight:
+                                      currentRoute == '/privacy-settings'
                                       ? FontWeight.bold
                                       : FontWeight.normal,
                                   color: currentRoute == '/privacy-settings'
@@ -593,11 +677,16 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                           value: 'logout',
                           child: Row(
                             children: [
-                              Icon(Icons.logout,
-                                  size: 18, color: Color(0xFF9B1C1C)),
+                              Icon(
+                                Icons.logout,
+                                size: 18,
+                                color: Color(0xFF9B1C1C),
+                              ),
                               SizedBox(width: 10),
-                              Text('Đăng Xuất Dòng Họ',
-                                  style: TextStyle(color: Color(0xFF9B1C1C))),
+                              Text(
+                                'Đăng Xuất Dòng Họ',
+                                style: TextStyle(color: Color(0xFF9B1C1C)),
+                              ),
                             ],
                           ),
                         ),
@@ -638,12 +727,18 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                               color: const Color(0xFF7A1518),
                               shape: BoxShape.circle,
                               border: Border.all(
-                                  color: const Color(0xFFD4A017), width: 1.2),
+                                color: const Color(0xFFD4A017),
+                                width: 1.2,
+                              ),
                             ),
                             child: Center(
                               child: Text(
                                 fullName.isNotEmpty
-                                    ? fullName.trim().split(' ').last[0].toUpperCase()
+                                    ? fullName
+                                          .trim()
+                                          .split(' ')
+                                          .last[0]
+                                          .toUpperCase()
                                     : 'T',
                                 style: const TextStyle(
                                   color: Colors.white,
@@ -654,8 +749,11 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
                             ),
                           ),
                           const SizedBox(width: 4),
-                          const Icon(Icons.arrow_drop_down,
-                              color: Color(0xFF54433E), size: 18),
+                          const Icon(
+                            Icons.arrow_drop_down,
+                            color: Color(0xFF54433E),
+                            size: 18,
+                          ),
                         ],
                       ),
                     ),
@@ -674,25 +772,22 @@ class HeritageNavBar extends ConsumerWidget implements PreferredSizeWidget {
 class HeritageBottomNavBar extends StatelessWidget {
   final String currentRoute;
 
-  const HeritageBottomNavBar({
-    super.key,
-    required this.currentRoute,
-  });
+  const HeritageBottomNavBar({super.key, required this.currentRoute});
 
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 860;
     if (!isMobile) return const SizedBox.shrink();
 
-    int currentIndex = kHeritageNavItems.indexWhere((i) => i.route == currentRoute);
+    int currentIndex = kHeritageNavItems.indexWhere(
+      (i) => i.route == currentRoute,
+    );
     if (currentIndex < 0) currentIndex = 0;
 
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(
-          top: BorderSide(color: Color(0xFFE6DFD8), width: 1),
-        ),
+        border: Border(top: BorderSide(color: Color(0xFFE6DFD8), width: 1)),
       ),
       child: BottomNavigationBar(
         currentIndex: currentIndex,

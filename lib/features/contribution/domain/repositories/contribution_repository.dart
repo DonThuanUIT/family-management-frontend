@@ -83,6 +83,17 @@ abstract class ContributionRepository {
   Future<ClanBankingInfoDto> getClanBankingInfo();
   Future<ClanBankingInfoDto> updateClanBankingInfo(UpdateClanBankingRequestDto request);
 
+  Future<List<EventItemBenchmarkDto>> getEventItemBenchmarks(String eventId);
+  Future<List<EventItemBenchmarkDto>> getAllClanBenchmarks();
+  Future<EventItemBenchmarkDto> createEventItemBenchmark({
+    required String eventId,
+    required CreateEventItemBenchmarkRequestDto request,
+  });
+  Future<void> deleteEventItemBenchmark({
+    required String eventId,
+    required String benchmarkId,
+  });
+
   Future<Map<String, dynamic>> simulatePaymentWebhook({
     required double amount,
     required String content,

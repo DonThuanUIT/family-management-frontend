@@ -25,6 +25,7 @@ import '../../features/event/presentation/screens/event_budget_dashboard_screen.
 import '../../features/event/presentation/screens/event_list_screen.dart';
 import '../../features/event/presentation/screens/event_logistics_dashboard_screen.dart';
 import '../../features/finance/presentation/screens/overdue_advance_vouchers_screen.dart';
+import '../../features/genealogy/presentation/screens/clan_information_screen.dart';
 import '../../features/genealogy/presentation/screens/edit_root_branch_screen.dart';
 import '../../features/genealogy/presentation/screens/member_import_screen.dart';
 import '../../features/genealogy/presentation/screens/privacy_settings_screen.dart';
@@ -391,6 +392,23 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/privacy-settings',
         name: 'privacy-settings',
         builder: (context, state) => const PrivacySettingsScreen(),
+      ),
+
+      // 17. Thông Tin Dòng Họ, Ngân Hàng Thụ Hưởng & Định Giá Benchmark Hiện Vật
+      GoRoute(
+        path: '/clan-info',
+        name: 'clan-info',
+        builder: (context, state) => const ClanInformationScreen(),
+      ),
+      GoRoute(
+        path: '/clan-settings',
+        name: 'clan-settings',
+        builder: (context, state) => const ClanInformationScreen(),
+      ),
+      GoRoute(
+        path: '/clan-profile',
+        name: 'clan-profile',
+        builder: (context, state) => const ClanInformationScreen(),
       ),
 
       // 17. Hồ sơ cá nhân và đổi mật khẩu (US-22)

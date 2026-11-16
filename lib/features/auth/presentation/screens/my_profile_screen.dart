@@ -1,14 +1,9 @@
-﻿import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../shared/presentation/widgets/heritage_nav_bar.dart';
-import '../../../contribution/data/models/contribution_models.dart';
-import '../../../contribution/presentation/providers/contribution_ui_provider.dart';
-import '../providers/auth_state_provider.dart';
 import '../providers/profile_provider.dart';
 
 /// Màn hình Hồ sơ cá nhân của thành viên (US-22).
@@ -120,7 +115,8 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
 
     // Lắng nghe sự kiện thông báo lỗi hoặc thành công
     ref.listen<ProfileState>(profileProvider, (prev, next) {
-      if (next.errorMessage != null && next.errorMessage != prev?.errorMessage) {
+      if (next.errorMessage != null &&
+          next.errorMessage != prev?.errorMessage) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -140,7 +136,11 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+                const Icon(
+                  Icons.check_circle_outline,
+                  color: Colors.white,
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
                 Expanded(child: Text(next.successMessage!)),
               ],
@@ -167,12 +167,14 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
               color: AppTheme.primaryCrimson,
               onRefresh: () async {
                 _isContactInitialized = false;
-                ref.invalidate(clanBankingInfoProvider);
                 await notifier.loadProfile();
               },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 24,
+                ),
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 720),
@@ -186,9 +188,13 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 16),
                             child: OutlinedButton.icon(
-                              onPressed: () => context.push('/members/${Uri.encodeComponent(state.profile!.memberId!)}'),
+                              onPressed: () => context.push(
+                                '/members/${Uri.encodeComponent(state.profile!.memberId!)}',
+                              ),
                               icon: const Icon(Icons.auto_stories_outlined),
-                              label: const Text('Ảnh chân dung, tiểu sử và tư liệu gia sử'),
+                              label: const Text(
+                                'Ảnh chân dung, tiểu sử và tư liệu gia sử',
+                              ),
                             ),
                           ),
                         const SizedBox(height: 20),
@@ -285,7 +291,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                     if (profile?.roles != null && profile!.roles.isNotEmpty)
                       ...profile.roles.map(
                         (r) => Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFF8B1E1E).withAlpha(16),
                             borderRadius: BorderRadius.circular(6),
@@ -305,7 +314,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                       )
                     else
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFF8B1E1E).withAlpha(16),
                           borderRadius: BorderRadius.circular(6),
@@ -320,7 +332,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                         ),
                       ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF006E2A).withAlpha(16),
                         borderRadius: BorderRadius.circular(6),
@@ -329,7 +344,9 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                         ),
                       ),
                       child: Text(
-                        profile?.accountStatus == 'ACTIVE' ? 'Đã kích hoạt' : 'Hợp lệ',
+                        profile?.accountStatus == 'ACTIVE'
+                            ? 'Đã kích hoạt'
+                            : 'Hợp lệ',
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -348,7 +365,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
   }
 
   // Khối 1: Thông tin phả hệ & nhân khẩu cố định (Read-Only)
-  Widget _buildGenealogyImmutableCard(BuildContext context, ProfileState state) {
+  Widget _buildGenealogyImmutableCard(
+    BuildContext context,
+    ProfileState state,
+  ) {
     final p = state.profile;
 
     return Container(
@@ -390,10 +410,7 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                     ),
                     Text(
                       'Bảo vệ tính toàn vẹn lịch sử dòng họ (Chỉ xem)',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF7D6E66),
-                      ),
+                      style: TextStyle(fontSize: 12, color: Color(0xFF7D6E66)),
                     ),
                   ],
                 ),
@@ -408,7 +425,11 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.lock_outline, size: 13, color: Color(0xFF7D6E66)),
+                    Icon(
+                      Icons.lock_outline,
+                      size: 13,
+                      color: Color(0xFF7D6E66),
+                    ),
                     SizedBox(width: 4),
                     Text(
                       'Read-only',
@@ -476,7 +497,9 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
               ),
               _buildReadOnlyField(
                 label: 'Đời thứ (Thế hệ)',
-                value: p?.generation != null ? 'Đời thứ ${p!.generation}' : 'Chưa gán',
+                value: p?.generation != null
+                    ? 'Đời thứ ${p!.generation}'
+                    : 'Chưa gán',
                 icon: Icons.account_tree_outlined,
                 widthFactor: 0.47,
               ),
@@ -553,22 +576,8 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
     );
   }
 
-  // Khối: Tài khoản thụ hưởng & Cấu hình VietQR của Dòng họ
+  // Khối: Tài khoản thụ hưởng & Cấu hình VietQR của Dòng họ (Chuyển sang phân hệ /clan-info)
   Widget _buildClanBankingCard(BuildContext context, ProfileState state) {
-    final authState = ref.watch(authStateProvider);
-    final isClanHead = authState.user?.roles.any((r) =>
-            r.toUpperCase() == 'ROLE_CLAN_HEAD' ||
-            r.toUpperCase() == 'TRUONG_TOC' ||
-            r.toUpperCase() == 'ROLE_ADMIN' ||
-            r.toUpperCase() == 'ADMIN') == true ||
-        (state.profile?.roles.any((r) =>
-            r.toUpperCase() == 'ROLE_CLAN_HEAD' ||
-            r.toUpperCase() == 'TRUONG_TOC' ||
-            r.toUpperCase() == 'ROLE_ADMIN' ||
-            r.toUpperCase() == 'ADMIN') == true);
-
-    final clanBankingAsync = ref.watch(clanBankingInfoProvider);
-
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -595,7 +604,7 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
-                  Icons.account_balance,
+                  Icons.assured_workload_outlined,
                   color: Color(0xFF8B1E1E),
                   size: 20,
                 ),
@@ -606,7 +615,7 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Tài Khoản Thụ Hưởng Quỹ Dòng Họ (VietQR)',
+                      'Tài Khoản & Thông Tin Dòng Họ',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -614,697 +623,66 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                       ),
                     ),
                     Text(
-                      'Thông tin tài khoản nhận công đức, cúng tiến để tự động sinh mã VietQR',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF7D6E66),
-                      ),
+                      'Tài khoản thụ hưởng VietQR, định giá hiện vật và hồ sơ gia tộc',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF7D6E66)),
                     ),
                   ],
                 ),
               ),
-              if (isClanHead)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF9E6),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: const Color(0xFFFFD54F)),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.stars, size: 13, color: Color(0xFFB8860B)),
-                      SizedBox(width: 4),
-                      Text(
-                        'Trưởng tộc',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFFB8860B),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
             ],
           ),
-          const SizedBox(height: 16),
-          clanBankingAsync.when(
-            data: (banking) => _buildClanBankingContent(context, banking, isClanHead),
-            loading: () => const Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 24),
-                child: CircularProgressIndicator(color: AppTheme.primaryCrimson),
-              ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFDF8),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFF1EAE2)),
             ),
-            error: (err, _) => Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFDEDED),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFF5C2C7)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.error_outline, color: Color(0xFF842029), size: 18),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Không thể tải thông tin tài khoản: $err',
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF842029)),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () => ref.invalidate(clanBankingInfoProvider),
-                    child: const Text('Thử lại', style: TextStyle(fontSize: 12)),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildClanBankingContent(
-    BuildContext context,
-    ClanBankingInfoDto banking,
-    bool isClanHead,
-  ) {
-    final qrData = _buildPreviewVietQrPayload(
-      bankBin: banking.bankBin,
-      accountNumber: banking.bankAccountNumber,
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final isNarrow = constraints.maxWidth < 560;
-
-            final infoColumn = Column(
+            child: const Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildBankingField(
-                  label: 'Dòng họ thụ hưởng',
-                  value: banking.clanName ?? 'Dòng họ',
-                  icon: Icons.temple_buddhist_outlined,
-                ),
-                const SizedBox(height: 10),
-                _buildBankingField(
-                  label: 'Ngân hàng thụ hưởng',
-                  value: '${banking.bankName ?? "Napas"} (BIN: ${banking.bankBin})',
-                  icon: Icons.account_balance_outlined,
-                ),
-                const SizedBox(height: 10),
-                _buildBankingField(
-                  label: 'Số tài khoản nhận tiền',
-                  value: banking.bankAccountNumber.isNotEmpty
-                      ? banking.bankAccountNumber
-                      : 'Chưa cấu hình',
-                  icon: Icons.credit_card_outlined,
-                  onCopy: banking.bankAccountNumber.isNotEmpty
-                      ? () {
-                          Clipboard.setData(ClipboardData(text: banking.bankAccountNumber));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Đã sao chép số tài khoản vào bộ nhớ tạm'),
-                              duration: Duration(seconds: 2),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        }
-                      : null,
-                ),
-                const SizedBox(height: 10),
-                _buildBankingField(
-                  label: 'Tên chủ tài khoản (Người đại diện quỹ)',
-                  value: banking.bankAccountName.isNotEmpty
-                      ? banking.bankAccountName
-                      : 'Chưa cấu hình',
-                  icon: Icons.badge_outlined,
-                ),
-                const SizedBox(height: 10),
-                _buildBankingField(
-                  label: 'Mẫu mã QR chuẩn',
-                  value: banking.qrTemplate == 'compact2'
-                      ? 'Khung thông minh (compact2)'
-                      : banking.qrTemplate == 'compact'
-                          ? 'Rút gọn (compact)'
-                          : 'Mã QR thuần (qr_only)',
-                  icon: Icons.qr_code_2_outlined,
+                Icon(Icons.info_outline, size: 18, color: Color(0xFF8B1E1E)),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Để đảm bảo tính bảo mật và phân quyền rõ ràng giữa cá nhân và tập thể, thông tin tài khoản ngân hàng thụ hưởng dòng họ, biểu mẫu VietQR, lược sử dòng họ và bảng định giá benchmark đã được chuyển sang phân hệ Thông Tin Dòng Họ chuyên biệt.',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      color: Color(0xFF54433E),
+                      height: 1.45,
+                    ),
+                  ),
                 ),
               ],
-            );
-
-            final qrColumn = Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFDFBF7),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFEADBCE)),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (banking.bankAccountNumber.isNotEmpty && banking.bankBin.isNotEmpty)
-                    QrImageView(
-                      data: qrData,
-                      version: QrVersions.auto,
-                      size: 150,
-                      backgroundColor: Colors.white,
-                      eyeStyle: const QrEyeStyle(
-                        eyeShape: QrEyeShape.square,
-                        color: Color(0xFF8B1E1E),
-                      ),
-                      dataModuleStyle: const QrDataModuleStyle(
-                        dataModuleShape: QrDataModuleShape.square,
-                        color: Color(0xFF2B1810),
-                      ),
-                      errorCorrectionLevel: QrErrorCorrectLevel.M,
-                    )
-                  else
-                    Container(
-                      width: 150,
-                      height: 150,
-                      alignment: Alignment.center,
-                      child: const Text(
-                        'Chưa có mã QR\nVui lòng cập nhật STK',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 11, color: Color(0xFF7D6E66)),
-                      ),
-                    ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Mã QR Thử Nghiệm',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2B1810),
-                    ),
-                  ),
-                  const Text(
-                    'Quét bằng app ngân hàng',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Color(0xFF7D6E66),
-                    ),
-                  ),
-                ],
-              ),
-            );
-
-            if (isNarrow) {
-              return Column(
-                children: [
-                  infoColumn,
-                  const SizedBox(height: 16),
-                  Center(child: qrColumn),
-                ],
-              );
-            } else {
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: infoColumn),
-                  const SizedBox(width: 20),
-                  qrColumn,
-                ],
-              );
-            }
-          },
-        ),
-        const SizedBox(height: 18),
-        if (isClanHead)
+            ),
+          ),
+          const SizedBox(height: 14),
           Align(
             alignment: Alignment.centerRight,
             child: ElevatedButton.icon(
-              onPressed: () => _showEditClanBankingDialog(context, banking),
-              icon: const Icon(Icons.edit_note, size: 20),
+              onPressed: () => context.push('/clan-info'),
+              icon: const Icon(Icons.arrow_forward, size: 18),
               label: const Text(
-                'Cập Nhật Tài Khoản Ngân Hàng Dòng Họ',
+                'Đến Trang Thông Tin Dòng Họ',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF8B1E1E),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                elevation: 1,
               ),
             ),
-          )
-        else
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF9F7F5),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.info_outline, size: 16, color: Color(0xFF7D6E66)),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Chỉ Trưởng tộc hoặc Quản trị viên mới có quyền cập nhật tài khoản ngân hàng chính thức của dòng họ.',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF7D6E66)),
-                  ),
-                ),
-              ],
-            ),
           ),
-      ],
-    );
-  }
-
-  Widget _buildBankingField({
-    required String label,
-    required String value,
-    required IconData icon,
-    VoidCallback? onCopy,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFBF9F6),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFECE6DF)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: const Color(0xFF8B1E1E)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF8C7E77),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF2B1810),
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          if (onCopy != null)
-            IconButton(
-              icon: const Icon(Icons.copy_outlined, size: 16, color: Color(0xFF8B1E1E)),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              tooltip: 'Sao chép',
-              onPressed: onCopy,
-            ),
         ],
       ),
     );
-  }
-
-  Future<void> _showEditClanBankingDialog(
-    BuildContext context,
-    ClanBankingInfoDto currentBanking,
-  ) async {
-    final formKey = GlobalKey<FormState>();
-
-    BankInfoItem selectedBank = kSupportedBanks.firstWhere(
-      (b) => b.bin == currentBanking.bankBin,
-      orElse: () => kSupportedBanks.first,
-    );
-
-    final accountCtrl = TextEditingController(text: currentBanking.bankAccountNumber);
-    final holderCtrl = TextEditingController(text: currentBanking.bankAccountName);
-    String selectedTemplate = currentBanking.qrTemplate.isNotEmpty ? currentBanking.qrTemplate : 'compact2';
-    bool isSubmitting = false;
-
-    await showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogCtx) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              backgroundColor: const Color(0xFFFFFDF8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF8B1E1E).withAlpha(16),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(Icons.account_balance, color: Color(0xFF8B1E1E), size: 22),
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Cập Nhật Tài Khoản Dòng Họ',
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF2B1810),
-                          ),
-                        ),
-                        Text(
-                          'Đồng bộ với hệ thống VietQR tự động',
-                          style: TextStyle(fontSize: 11.5, color: Color(0xFF7D6E66)),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              content: SizedBox(
-                width: 520,
-                child: SingleChildScrollView(
-                  child: Form(
-                    key: formKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Chọn Ngân hàng
-                        const Text(
-                          'Ngân hàng thụ hưởng *',
-                          style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF2B1810)),
-                        ),
-                        const SizedBox(height: 6),
-                        DropdownButtonFormField<BankInfoItem>(
-                          initialValue: selectedBank,
-                          isExpanded: true,
-                          decoration: InputDecoration(
-                            prefixIcon: const Icon(Icons.account_balance_outlined, color: Color(0xFF8B1E1E), size: 20),
-                            filled: true,
-                            fillColor: const Color(0xFFFCFAF7),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                          ),
-                          items: kSupportedBanks.map((bank) {
-                            return DropdownMenuItem<BankInfoItem>(
-                              value: bank,
-                              child: Text(
-                                bank.name,
-                                style: const TextStyle(fontSize: 13, color: Color(0xFF2B1810)),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: isSubmitting
-                              ? null
-                              : (val) {
-                                  if (val != null) {
-                                    setDialogState(() {
-                                      selectedBank = val;
-                                    });
-                                  }
-                                },
-                        ),
-                        const SizedBox(height: 14),
-
-                        // Số tài khoản ngân hàng
-                        const Text(
-                          'Số tài khoản ngân hàng *',
-                          style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF2B1810)),
-                        ),
-                        const SizedBox(height: 6),
-                        TextFormField(
-                          controller: accountCtrl,
-                          enabled: !isSubmitting,
-                          keyboardType: TextInputType.text,
-                          decoration: InputDecoration(
-                            hintText: 'Nhập số tài khoản ngân hàng chính thức',
-                            prefixIcon: const Icon(Icons.credit_card_outlined, color: Color(0xFF8B1E1E), size: 20),
-                            filled: true,
-                            fillColor: const Color(0xFFFCFAF7),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                          ),
-                          validator: (val) {
-                            if (val == null || val.trim().isEmpty) {
-                              return 'Vui lòng nhập số tài khoản ngân hàng';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 14),
-
-                        // Tên chủ tài khoản
-                        const Text(
-                          'Tên chủ tài khoản (Viết hoa không dấu hoặc có dấu) *',
-                          style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF2B1810)),
-                        ),
-                        const SizedBox(height: 6),
-                        TextFormField(
-                          controller: holderCtrl,
-                          enabled: !isSubmitting,
-                          textCapitalization: TextCapitalization.characters,
-                          inputFormatters: [
-                            TextInputFormatter.withFunction(
-                              (oldVal, newVal) => TextEditingValue(
-                                text: newVal.text.toUpperCase(),
-                                selection: newVal.selection,
-                              ),
-                            ),
-                          ],
-                          decoration: InputDecoration(
-                            hintText: 'Ví dụ: NGUYEN TRONG HOANG',
-                            prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF8B1E1E), size: 20),
-                            filled: true,
-                            fillColor: const Color(0xFFFCFAF7),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                          ),
-                          validator: (val) {
-                            if (val == null || val.trim().isEmpty) {
-                              return 'Vui lòng nhập tên chủ tài khoản';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 14),
-
-                        // Mẫu hiển thị mã VietQR
-                        const Text(
-                          'Kiểu mẫu hiển thị VietQR',
-                          style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF2B1810)),
-                        ),
-                        const SizedBox(height: 6),
-                        DropdownButtonFormField<String>(
-                          initialValue: selectedTemplate,
-                          isExpanded: true,
-                          decoration: InputDecoration(
-                            prefixIcon: const Icon(Icons.qr_code_2_outlined, color: Color(0xFF8B1E1E), size: 20),
-                            filled: true,
-                            fillColor: const Color(0xFFFCFAF7),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                          ),
-                          items: const [
-                            DropdownMenuItem(
-                              value: 'compact2',
-                              child: Text('Khung thông minh (compact2 - Khuyên dùng)'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'compact',
-                              child: Text('Khung rút gọn (compact)'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'qr_only',
-                              child: Text('Chỉ mã QR thuần (qr_only)'),
-                            ),
-                          ],
-                          onChanged: isSubmitting
-                              ? null
-                              : (val) {
-                                  if (val != null) {
-                                    setDialogState(() {
-                                      selectedTemplate = val;
-                                    });
-                                  }
-                                },
-                        ),
-                        const SizedBox(height: 16),
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFF9E6),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: const Color(0xFFFFE082)),
-                          ),
-                          child: const Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(Icons.info_outline, size: 16, color: Color(0xFFB8860B)),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Sau khi lưu, mọi mã QR cúng tiến trên toàn hệ thống sẽ tự động cập nhật ngay lập tức theo số tài khoản mới này.',
-                                  style: TextStyle(fontSize: 11.5, color: Color(0xFF5D4037)),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isSubmitting ? null : () => Navigator.pop(dialogCtx),
-                  child: const Text('Hủy Bỏ', style: TextStyle(color: Color(0xFF7D6E66))),
-                ),
-                ElevatedButton.icon(
-                  onPressed: isSubmitting
-                      ? null
-                      : () async {
-                          if (formKey.currentState?.validate() ?? false) {
-                            setDialogState(() {
-                              isSubmitting = true;
-                            });
-                            try {
-                              final request = UpdateClanBankingRequestDto(
-                                bankBin: selectedBank.bin,
-                                bankAccountNumber: accountCtrl.text.trim(),
-                                bankAccountName: holderCtrl.text.trim(),
-                                qrTemplate: selectedTemplate,
-                              );
-
-                              await ref.read(contributionUiProvider.notifier).updateClanBankingInfo(request);
-
-                              if (dialogCtx.mounted) {
-                                Navigator.pop(dialogCtx);
-                              }
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Row(
-                                      children: [
-                                        Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
-                                        SizedBox(width: 8),
-                                        Expanded(child: Text('Cập nhật tài khoản ngân hàng dòng họ thành công!')),
-                                      ],
-                                    ),
-                                    backgroundColor: Color(0xFF006E2A),
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              setDialogState(() {
-                                isSubmitting = false;
-                              });
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Row(
-                                      children: [
-                                        const Icon(Icons.error_outline, color: Colors.white, size: 20),
-                                        const SizedBox(width: 8),
-                                        Expanded(child: Text('Lỗi khi cập nhật tài khoản: $e')),
-                                      ],
-                                    ),
-                                    backgroundColor: const Color(0xFF9B1C1C),
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                              }
-                            }
-                          }
-                        },
-                  icon: isSubmitting
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Icon(Icons.save_outlined, size: 18),
-                  label: Text(
-                    isSubmitting ? 'Đang lưu...' : 'Lưu Cập Nhật',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryCrimson,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  String _buildPreviewVietQrPayload({
-    required String bankBin,
-    required String accountNumber,
-  }) {
-    if (bankBin.isEmpty || accountNumber.isEmpty) {
-      return 'vietqr://$bankBin/$accountNumber';
-    }
-
-    String tlv(String tag, String value) {
-      final len = value.length.toString().padLeft(2, '0');
-      return '$tag$len$value';
-    }
-
-    String calcCrc16(String str) {
-      int crc = 0xFFFF;
-      for (int i = 0; i < str.length; i++) {
-        int c = str.codeUnitAt(i);
-        crc ^= (c << 8);
-        for (int j = 0; j < 8; j++) {
-          if ((crc & 0x8000) != 0) {
-            crc = ((crc << 1) ^ 0x1021) & 0xFFFF;
-          } else {
-            crc = (crc << 1) & 0xFFFF;
-          }
-        }
-      }
-      return crc.toRadixString(16).toUpperCase().padLeft(4, '0');
-    }
-
-    final f00 = tlv('00', '01');
-    final f01 = tlv('01', '11');
-
-    final guid = tlv('00', 'A000000727');
-    final beneficiary = tlv('00', bankBin) + tlv('01', accountNumber);
-    final sub38_01 = tlv('01', beneficiary);
-    final serviceCode = tlv('02', 'QRIBFTTA');
-    final f38 = tlv('38', guid + sub38_01 + serviceCode);
-
-    final f53 = tlv('53', '704');
-    final f58 = tlv('58', 'VN');
-
-    final rawWithoutCrc = '$f00$f01$f38$f53$f58' '6304';
-    final crc = calcCrc16(rawWithoutCrc);
-    return '$rawWithoutCrc$crc';
   }
 
   // Khối 2: Cập nhật thông tin liên lạc (Chỉnh sửa được)
@@ -1372,7 +750,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
               decoration: InputDecoration(
                 labelText: 'Số điện thoại liên lạc *',
                 hintText: 'Ví dụ: 0912345678',
-                prefixIcon: const Icon(Icons.phone_outlined, color: Color(0xFF8B1E1E)),
+                prefixIcon: const Icon(
+                  Icons.phone_outlined,
+                  color: Color(0xFF8B1E1E),
+                ),
                 filled: true,
                 fillColor: const Color(0xFFFCFAF7),
                 border: OutlineInputBorder(
@@ -1385,7 +766,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFF8B1E1E), width: 1.5),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF8B1E1E),
+                    width: 1.5,
+                  ),
                 ),
               ),
               validator: (val) {
@@ -1408,7 +792,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
               decoration: InputDecoration(
                 labelText: 'Địa chỉ Email (Tùy chọn)',
                 hintText: 'thanhvien@dongho.vn',
-                prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF8B1E1E)),
+                prefixIcon: const Icon(
+                  Icons.email_outlined,
+                  color: Color(0xFF8B1E1E),
+                ),
                 filled: true,
                 fillColor: const Color(0xFFFCFAF7),
                 border: OutlineInputBorder(
@@ -1421,13 +808,17 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFF8B1E1E), width: 1.5),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF8B1E1E),
+                    width: 1.5,
+                  ),
                 ),
               ),
               validator: (val) {
                 if (val != null && val.trim().isNotEmpty) {
-                  final emailRegex =
-                      RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+                  final emailRegex = RegExp(
+                    r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+                  );
                   if (!emailRegex.hasMatch(val.trim())) {
                     return 'Định dạng email không hợp lệ';
                   }
@@ -1442,10 +833,14 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
               maxLines: 2,
               decoration: InputDecoration(
                 labelText: 'Địa chỉ thường trú (Tùy chọn)',
-                hintText: 'Số nhà, ngõ/xóm, xã/phường, quận/huyện, tỉnh/thành phố...',
+                hintText:
+                    'Số nhà, ngõ/xóm, xã/phường, quận/huyện, tỉnh/thành phố...',
                 prefixIcon: const Padding(
                   padding: EdgeInsets.only(bottom: 24),
-                  child: Icon(Icons.location_on_outlined, color: Color(0xFF8B1E1E)),
+                  child: Icon(
+                    Icons.location_on_outlined,
+                    color: Color(0xFF8B1E1E),
+                  ),
                 ),
                 filled: true,
                 fillColor: const Color(0xFFFCFAF7),
@@ -1459,7 +854,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFF8B1E1E), width: 1.5),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF8B1E1E),
+                    width: 1.5,
+                  ),
                 ),
               ),
             ),
@@ -1502,7 +900,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryCrimson,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 22,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -1581,7 +982,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
               decoration: InputDecoration(
                 labelText: 'Mật khẩu hiện tại *',
                 hintText: 'Nhập mật khẩu bạn đang dùng',
-                prefixIcon: const Icon(Icons.lock_open_outlined, color: Color(0xFF7D6E66)),
+                prefixIcon: const Icon(
+                  Icons.lock_open_outlined,
+                  color: Color(0xFF7D6E66),
+                ),
                 suffixIcon: IconButton(
                   icon: Icon(
                     _obscureCurrentPassword
@@ -1608,7 +1012,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFF8B1E1E), width: 1.5),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF8B1E1E),
+                    width: 1.5,
+                  ),
                 ),
               ),
               validator: (val) {
@@ -1626,7 +1033,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
               decoration: InputDecoration(
                 labelText: 'Mật khẩu mới * (Tối thiểu 6 ký tự)',
                 hintText: 'Nhập mật khẩu mới an toàn',
-                prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF7D6E66)),
+                prefixIcon: const Icon(
+                  Icons.lock_outline,
+                  color: Color(0xFF7D6E66),
+                ),
                 suffixIcon: IconButton(
                   icon: Icon(
                     _obscureNewPassword
@@ -1653,7 +1063,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFF8B1E1E), width: 1.5),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF8B1E1E),
+                    width: 1.5,
+                  ),
                 ),
               ),
               validator: (val) {
@@ -1677,7 +1090,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
               decoration: InputDecoration(
                 labelText: 'Xác nhận lại mật khẩu mới *',
                 hintText: 'Nhập lại chính xác mật khẩu mới',
-                prefixIcon: const Icon(Icons.check_circle_outline, color: Color(0xFF7D6E66)),
+                prefixIcon: const Icon(
+                  Icons.check_circle_outline,
+                  color: Color(0xFF7D6E66),
+                ),
                 suffixIcon: IconButton(
                   icon: Icon(
                     _obscureConfirmPassword
@@ -1704,7 +1120,10 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFF8B1E1E), width: 1.5),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF8B1E1E),
+                    width: 1.5,
+                  ),
                 ),
               ),
               validator: (val) {
@@ -1725,7 +1144,8 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                 onPressed: state.isChangingPassword
                     ? null
                     : () async {
-                        if (_passwordFormKey.currentState?.validate() ?? false) {
+                        if (_passwordFormKey.currentState?.validate() ??
+                            false) {
                           final success = await notifier.changePassword(
                             currentPassword: _currentPasswordController.text,
                             newPassword: _newPasswordController.text,
@@ -1749,13 +1169,18 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                       )
                     : const Icon(Icons.vpn_key_outlined, size: 18),
                 label: Text(
-                  state.isChangingPassword ? 'Đang xử lý...' : 'Cập Nhật Mật Khẩu',
+                  state.isChangingPassword
+                      ? 'Đang xử lý...'
+                      : 'Cập Nhật Mật Khẩu',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2B1810),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 22,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -1784,18 +1209,74 @@ class BankInfoItem {
 }
 
 const List<BankInfoItem> kSupportedBanks = [
-  BankInfoItem(bin: '970422', shortName: 'MBBank', name: 'MBBank - Ngân hàng TMCP Quân Đội'),
-  BankInfoItem(bin: '970436', shortName: 'Vietcombank', name: 'Vietcombank - Ngân hàng TMCP Ngoại Thương VN'),
-  BankInfoItem(bin: '970407', shortName: 'Techcombank', name: 'Techcombank - Ngân hàng TMCP Kỹ Thương VN'),
-  BankInfoItem(bin: '970415', shortName: 'VietinBank', name: 'VietinBank - Ngân hàng TMCP Công Thương VN'),
-  BankInfoItem(bin: '970418', shortName: 'BIDV', name: 'BIDV - Ngân hàng TMCP Đầu Tư & Phát Triển VN'),
-  BankInfoItem(bin: '970423', shortName: 'TPBank', name: 'TPBank - Ngân hàng TMCP Tiên Phong'),
-  BankInfoItem(bin: '970432', shortName: 'VPBank', name: 'VPBank - Ngân hàng TMCP Việt Nam Thịnh Vượng'),
-  BankInfoItem(bin: '970416', shortName: 'ACB', name: 'ACB - Ngân hàng TMCP Á Châu'),
-  BankInfoItem(bin: '970405', shortName: 'Agribank', name: 'Agribank - Ngân hàng Nông Nghiệp & PTNT VN'),
-  BankInfoItem(bin: '970441', shortName: 'VIB', name: 'VIB - Ngân Hàng Quốc Tế'),
-  BankInfoItem(bin: '970448', shortName: 'OCB', name: 'OCB - Ngân hàng TMCP Phương Đông'),
-  BankInfoItem(bin: '970443', shortName: 'SHB', name: 'SHB - Ngân hàng TMCP Sài Gòn - Hà Nội'),
-  BankInfoItem(bin: '970428', shortName: 'NamABank', name: 'NamABank - Ngân hàng TMCP Nam Á'),
-  BankInfoItem(bin: '970454', shortName: 'VietCapitalBank', name: 'BVBank - Ngân hàng Bản Việt'),
+  BankInfoItem(
+    bin: '970422',
+    shortName: 'MBBank',
+    name: 'MBBank - Ngân hàng TMCP Quân Đội',
+  ),
+  BankInfoItem(
+    bin: '970436',
+    shortName: 'Vietcombank',
+    name: 'Vietcombank - Ngân hàng TMCP Ngoại Thương VN',
+  ),
+  BankInfoItem(
+    bin: '970407',
+    shortName: 'Techcombank',
+    name: 'Techcombank - Ngân hàng TMCP Kỹ Thương VN',
+  ),
+  BankInfoItem(
+    bin: '970415',
+    shortName: 'VietinBank',
+    name: 'VietinBank - Ngân hàng TMCP Công Thương VN',
+  ),
+  BankInfoItem(
+    bin: '970418',
+    shortName: 'BIDV',
+    name: 'BIDV - Ngân hàng TMCP Đầu Tư & Phát Triển VN',
+  ),
+  BankInfoItem(
+    bin: '970423',
+    shortName: 'TPBank',
+    name: 'TPBank - Ngân hàng TMCP Tiên Phong',
+  ),
+  BankInfoItem(
+    bin: '970432',
+    shortName: 'VPBank',
+    name: 'VPBank - Ngân hàng TMCP Việt Nam Thịnh Vượng',
+  ),
+  BankInfoItem(
+    bin: '970416',
+    shortName: 'ACB',
+    name: 'ACB - Ngân hàng TMCP Á Châu',
+  ),
+  BankInfoItem(
+    bin: '970405',
+    shortName: 'Agribank',
+    name: 'Agribank - Ngân hàng Nông Nghiệp & PTNT VN',
+  ),
+  BankInfoItem(
+    bin: '970441',
+    shortName: 'VIB',
+    name: 'VIB - Ngân Hàng Quốc Tế',
+  ),
+  BankInfoItem(
+    bin: '970448',
+    shortName: 'OCB',
+    name: 'OCB - Ngân hàng TMCP Phương Đông',
+  ),
+  BankInfoItem(
+    bin: '970443',
+    shortName: 'SHB',
+    name: 'SHB - Ngân hàng TMCP Sài Gòn - Hà Nội',
+  ),
+  BankInfoItem(
+    bin: '970428',
+    shortName: 'NamABank',
+    name: 'NamABank - Ngân hàng TMCP Nam Á',
+  ),
+  BankInfoItem(
+    bin: '970454',
+    shortName: 'VietCapitalBank',
+    name: 'BVBank - Ngân hàng Bản Việt',
+  ),
 ];
