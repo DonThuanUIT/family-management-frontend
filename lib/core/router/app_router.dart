@@ -24,7 +24,13 @@ import '../../features/contribution/presentation/screens/online_contribution_scr
 import '../../features/event/presentation/screens/event_budget_dashboard_screen.dart';
 import '../../features/event/presentation/screens/event_list_screen.dart';
 import '../../features/event/presentation/screens/event_logistics_dashboard_screen.dart';
+import '../../features/finance/presentation/screens/annual_ledger_audit_screen.dart';
+import '../../features/finance/presentation/screens/immutable_ledger_screen.dart';
 import '../../features/finance/presentation/screens/overdue_advance_vouchers_screen.dart';
+import '../../features/finance/presentation/screens/propose_common_fund_disbursement_screen.dart';
+import '../../features/finance/presentation/screens/propose_ledger_adjustment_screen.dart';
+import '../../features/finance/presentation/screens/review_common_fund_disbursement_screen.dart';
+import '../../features/finance/presentation/screens/review_ledger_adjustment_screen.dart';
 import '../../features/genealogy/presentation/screens/clan_information_screen.dart';
 import '../../features/genealogy/presentation/screens/edit_root_branch_screen.dart';
 import '../../features/genealogy/presentation/screens/member_import_screen.dart';
@@ -264,6 +270,73 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return OverdueAdvanceVouchersScreen(
             eventId: eventId,
             eventName: eventName,
+          );
+        },
+      ),
+
+      // Route Sổ Cái Quỹ Chung Bất Biến & Kiểm Toán SHA-256 (US-61 / US-62)
+      GoRoute(
+        path: '/finance/ledger',
+        name: 'immutable-ledger',
+        builder: (context, state) {
+          final transactionId = state.uri.queryParameters['transactionId'];
+          return ImmutableLedgerScreen(
+            initialTransactionId: transactionId,
+          );
+        },
+      ),
+
+      // Route Biên Bản Kiểm Kê Quỹ Hằng Năm (AnnualAuditUI)
+      GoRoute(
+        path: '/finance/ledger/annual-audit',
+        name: 'annual-ledger-audit',
+        builder: (context, state) {
+          final rawYear = state.uri.queryParameters['year'];
+          final parsedYear =
+              rawYear != null ? int.tryParse(rawYear.trim()) : null;
+          return AnnualLedgerAuditScreen(initialYear: parsedYear);
+        },
+      ),
+
+      // Route Lập Đề Xuất Bù Trừ Sổ Cái Quỹ Chung (US-15)
+      GoRoute(
+        path: '/finance/ledger/propose-adjustment',
+        name: 'propose-ledger-adjustment',
+        builder: (context, state) {
+          final transactionId = state.uri.queryParameters['transactionId'];
+          return ProposeLedgerAdjustmentScreen(
+            initialTransactionId: transactionId,
+          );
+        },
+      ),
+
+      // Route Duyệt Đề Xuất Bù Trừ Sổ Cái cho Trưởng tộc (US-59)
+      GoRoute(
+        path: '/finance/ledger/review-adjustments',
+        name: 'review-ledger-adjustments',
+        builder: (context, state) {
+          final requestId = state.uri.queryParameters['requestId'];
+          return ReviewLedgerAdjustmentScreen(
+            initialRequestId: requestId,
+          );
+        },
+      ),
+
+      // Route Đề Xuất Chi Quỹ Chung Cho Việc Lớn (US-60)
+      GoRoute(
+        path: '/finance/disbursements/propose',
+        name: 'propose-common-fund-disbursement',
+        builder: (context, state) => const ProposeCommonFundDisbursementScreen(),
+      ),
+
+      // Route Trưởng Tộc Ký Duyệt Chi Quỹ Chung Kèm Xác Thực Mật Khẩu (US-60)
+      GoRoute(
+        path: '/finance/disbursements/review',
+        name: 'review-common-fund-disbursements',
+        builder: (context, state) {
+          final requestId = state.uri.queryParameters['requestId'];
+          return ReviewCommonFundDisbursementScreen(
+            initialRequestId: requestId,
           );
         },
       ),

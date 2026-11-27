@@ -200,6 +200,10 @@ class _ReceiveContributionScreenState
     BuildContext context, {
     bool canManageContributions = true,
   }) {
+    final session = ref.watch(dualRbacSessionProvider);
+    final canApproveLedger = session.canApproveLedgerAdjustment;
+    final canProposeDisbursement = session.canProposeCommonFundDisbursement;
+    final canReviewDisbursement = session.canReviewCommonFundDisbursement;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -462,6 +466,119 @@ class _ReceiveContributionScreenState
                   ),
                 ),
               ),
+              OutlinedButton.icon(
+                onPressed: () => context.push('/finance/ledger'),
+                icon: const Icon(Icons.verified_user_outlined, size: 18),
+                label: const Text('Sổ Cái Quỹ Chung (SHA-256)'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF0F766E),
+                  side: const BorderSide(color: Color(0xFF0F766E), width: 1.3),
+                  backgroundColor: const Color(0xFFECFDF5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => context.push('/finance/ledger/annual-audit'),
+                icon: const Icon(Icons.assignment_turned_in_outlined, size: 18),
+                label: const Text('Kiểm Kê Quỹ Hằng Năm'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF8B1E1E),
+                  side: const BorderSide(color: Color(0xFF8B1E1E), width: 1.3),
+                  backgroundColor: const Color(0xFFFDF2F2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: () =>
+                    context.push('/finance/ledger/propose-adjustment'),
+                icon: const Icon(Icons.balance_outlined, size: 18),
+                label: const Text('Đề Xuất Bù Trừ Sổ Cái'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF0F766E),
+                  side: const BorderSide(color: Color(0xFF0F766E)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+              if (canApproveLedger)
+                OutlinedButton.icon(
+                  onPressed: () =>
+                      context.push('/finance/ledger/review-adjustments'),
+                  icon: const Icon(Icons.verified_user_outlined, size: 18),
+                  label: const Text('Duyệt Bù Trừ Sổ Cái'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF8B1E1E),
+                    side: const BorderSide(
+                      color: Color(0xFFB8860B),
+                      width: 1.3,
+                    ),
+                    backgroundColor: const Color(0xFFFFFBEB),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              if (canProposeDisbursement)
+                OutlinedButton.icon(
+                  onPressed: () =>
+                      context.push('/finance/disbursements/propose'),
+                  icon: const Icon(Icons.request_quote_outlined, size: 18),
+                  label: const Text('Đề Xuất Chi Quỹ Chung'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF8B1E1E),
+                    side: const BorderSide(color: Color(0xFF8B1E1E)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              if (canReviewDisbursement)
+                OutlinedButton.icon(
+                  onPressed: () =>
+                      context.push('/finance/disbursements/review'),
+                  icon: const Icon(Icons.lock_outline_rounded, size: 18),
+                  label: const Text('Ký Duyệt Chi Quỹ Chung'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF8B1E1E),
+                    side: const BorderSide(
+                      color: Color(0xFFB8860B),
+                      width: 1.3,
+                    ),
+                    backgroundColor: const Color(0xFFFFFBEB),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
             ],
           );
 
