@@ -192,8 +192,53 @@ class DualRbacSession {
       isBranchHead ||
       eventRolesByEventId.isNotEmpty;
 
-  /// Quy tắc D: Chỉ Trưởng tộc (`ROLE_CLAN_HEAD`) mới có quyền phê duyệt bút toán bù trừ Sổ cái bất biến.
-  bool get canApproveLedgerAdjustment => isClanHead;
+  /// Quy tắc D / US-59: Trưởng tộc (`ROLE_CLAN_HEAD`) hoặc Quản trị viên (`ROLE_ADMIN`)
+  /// có quyền phê duyệt / từ chối bút toán bù trừ Sổ cái bất biến
+  /// (khớp `validateReviewerAuthorization` trên Backend).
+  bool get canApproveLedgerAdjustment => isClanHead || isAdmin;
+
+  /// Kiểm tra quyền Trưởng tộc / Quản trị viên thực hiện kiểm kê quỹ hằng năm & chốt số dư đầu kỳ.
+  bool get canPerformAnnualLedgerAudit => isClanHead || isAdmin;
+
+  /// [US-60] Kiểm tra quyền lập đề xuất chi Quỹ chung cho việc lớn
+  /// (khớp `CommonFundDisbursementServiceImpl.validateProposerAuthorization`:
+  /// ADMIN, CLAN_HEAD, BRANCH_HEAD hoặc thành viên giữ vai trò EventTreasurer).
+  bool get canProposeCommonFundDisbursement {
+    if (isAdmin || isClanHead || isBranchHead) return true;
+    return eventRolesByEventId.values.any(
+      (ctx) => ctx.role == EventContextualRole.eventTreasurer,
+    );
+  }
+
+  /// [US-60] Kiểm tra quyền Trưởng tộc / Admin ký duyệt chi Quỹ chung kèm xác thực mật khẩu.
+  bool get canReviewCommonFundDisbursement => isClanHead || isAdmin;
+
+  /// [US-15] Kiểm tra quyền đề xuất bút toán bù trừ Sổ cái Quỹ chung.
+  /// Khớp `validateProposerAuthorization` trên Backend:
+  /// - `ROLE_ADMIN` hoặc `ROLE_CLAN_HEAD`: Được phép đề xuất trên mọi bút toán.
+  /// - `EventTreasurer` hoặc `HeadOfOrganizer` của sự kiện gắn với bút toán gốc
+  ///   (kể cả khi sự kiện đã Closed, vì quyết toán/bù trừ diễn ra sau bế mạc).
+  bool canProposeLedgerAdjustment({String? eventId}) {
+    if (isAdmin || isClanHead) return true;
+    if (eventId != null && eventRolesByEventId.containsKey(eventId)) {
+      final ctx = eventRolesByEventId[eventId]!;
+      if (ctx.role == EventContextualRole.eventTreasurer ||
+          ctx.role == EventContextualRole.headOfOrganizer) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Kiểm tra người dùng có vai trò tối thiểu để truy cập màn hình Lập Đề Xuất Bù Trừ Sổ Cái hay không.
+  bool get canAccessLedgerAdjustmentProposal {
+    if (isAdmin || isClanHead) return true;
+    return eventRolesByEventId.values.any(
+      (ctx) =>
+          ctx.role == EventContextualRole.eventTreasurer ||
+          ctx.role == EventContextualRole.headOfOrganizer,
+    );
+  }
 
   /// Quy tắc A & Luồng 1: Trưởng tộc hoặc Trưởng chi duyệt đơn gia nhập & sinh mã mời.
   bool get canReviewBranchJoinRequests => isClanHead || isBranchHead || isAdmin;
