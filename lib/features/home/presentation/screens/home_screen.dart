@@ -1,4 +1,5 @@
-﻿import 'dart:async';
+import 'dart:async';
+
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,10 +21,12 @@ import '../../../event/presentation/providers/event_providers.dart';
 class TreeForkPainter extends CustomPainter {
   final Color color;
   final double strokeWidth;
+  final List<double>? dropXs;
 
   const TreeForkPainter({
     required this.color,
     this.strokeWidth = 2.0,
+    this.dropXs,
   });
 
   @override
@@ -38,17 +41,35 @@ class TreeForkPainter extends CustomPainter {
 
     // Đường đứng từ trên xuống điểm giữa (center stem up)
     canvas.drawLine(Offset(centerX, 0), Offset(centerX, midY), paint);
-    // Thanh ngang nối từ mép trái sang mép phải (crossbar)
-    canvas.drawLine(Offset(0, midY), Offset(size.width, midY), paint);
-    // Đường đứng mép trái xuống tâm Chi 1 (left drop)
-    canvas.drawLine(Offset(0, midY), Offset(0, size.height), paint);
-    // Đường đứng mép phải xuống tâm Chi 2 (right drop)
-    canvas.drawLine(Offset(size.width, midY), Offset(size.width, size.height), paint);
+
+    if (dropXs != null && dropXs!.isNotEmpty) {
+      final minX = dropXs!.reduce((a, b) => a < b ? a : b);
+      final maxX = dropXs!.reduce((a, b) => a > b ? a : b);
+      // Thanh ngang từ tâm cột ngoài cùng bên trái sang tâm cột ngoài cùng bên phải
+      canvas.drawLine(Offset(minX, midY), Offset(maxX, midY), paint);
+      // Đường đứng mép nối từ thanh ngang xuống đỉnh từng cột
+      for (final x in dropXs!) {
+        canvas.drawLine(Offset(x, midY), Offset(x, size.height), paint);
+      }
+    } else {
+      // Thanh ngang nối từ mép trái sang mép phải (crossbar)
+      canvas.drawLine(Offset(0, midY), Offset(size.width, midY), paint);
+      // Đường đứng mép trái xuống tâm Chi 1 (left drop)
+      canvas.drawLine(Offset(0, midY), Offset(0, size.height), paint);
+      // Đường đứng mép phải xuống tâm Chi 2 (right drop)
+      canvas.drawLine(
+        Offset(size.width, midY),
+        Offset(size.width, size.height),
+        paint,
+      );
+    }
   }
 
   @override
   bool shouldRepaint(covariant TreeForkPainter oldDelegate) =>
-      oldDelegate.color != color || oldDelegate.strokeWidth != strokeWidth;
+      oldDelegate.color != color ||
+      oldDelegate.strokeWidth != strokeWidth ||
+      oldDelegate.dropXs != dropXs;
 }
 
 /// Màn hình Cây Phả Hệ Trực Quan Đa Chi Phái (Stitch Warm Editorial Heritage)
@@ -64,7 +85,8 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   // Bộ điều khiển Pan & Zoom (InteractiveViewer) (US-29, Task #110)
-  final TransformationController _transformationController = TransformationController();
+  final TransformationController _transformationController =
+      TransformationController();
 
   // Danh sách các chi nhánh đang bị thu gọn (Collapse/Expand theo từng nhánh) (US-29, Task #110)
   final Set<String> _collapsedBranchIds = {};
@@ -133,7 +155,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   // Tìm kiếm thông minh nối API thực tế `GET /api/v1/members/search` (US-30, Task #112)
   void _onSearchChanged(String query) {
     _searchDebounce?.cancel();
-    if (query.trim().isEmpty && _selectedGenerationFilter == null && _selectedBranchFilter == null) {
+    if (query.trim().isEmpty &&
+        _selectedGenerationFilter == null &&
+        _selectedBranchFilter == null) {
       setState(() {
         _searchResults = [];
         _isSearching = false;
@@ -170,7 +194,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   // Khi chọn một kết quả tìm kiếm: auto-expand, auto-focus & highlight (US-30, Task #112)
-  void _selectSearchResult(MemberSearchDto member, BranchTreeNodeDto tree, bool isWide) {
+  void _selectSearchResult(
+    MemberSearchDto member,
+    BranchTreeNodeDto tree,
+    bool isWide,
+  ) {
     setState(() {
       _showSearchOverlay = false;
       _highlightedMemberId = member.memberId;
@@ -180,6 +208,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       if (member.branchId != null) {
         _collapsedBranchIds.remove(member.branchId!);
       }
+      _collapsedBranchIds.remove('ROOT_SUBMEMBERS');
       _isFullTreeExpanded = true;
 
       // Tự động cuộn & focus lại trung tâm khung nhìn
@@ -190,7 +219,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         memberId: member.memberId,
         fullName: member.fullName,
         generation: member.generation,
-        birthDeathInfo: member.dateOfBirth != null ? 'Sinh ${member.dateOfBirth!.split('-').first}' : null,
+        birthDeathInfo: member.dateOfBirth != null
+            ? 'Sinh ${member.dateOfBirth!.split('-').first}'
+            : null,
         roleInBranch: 'Đời ${member.generation}',
         isActivated: !member.isPlaceholder,
       );
@@ -202,7 +233,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Đã định vị & làm nổi bật: ${member.fullName} (Đời ${member.generation})'),
+        content: Text(
+          'Đã định vị & làm nổi bật: ${member.fullName} (Đời ${member.generation})',
+        ),
         backgroundColor: const Color(0xFF006E2A),
         duration: const Duration(seconds: 2),
       ),
@@ -210,7 +243,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   // Mở hộp thoại Popover xem tóm tắt khi click nút (US-29, Task #110)
-  void _showNodePopover(BuildContext context, BranchUiDetail detail, BranchTreeNodeDto rootTree) {
+  void _showNodePopover(
+    BuildContext context,
+    BranchUiDetail detail,
+    BranchTreeNodeDto rootTree,
+  ) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -227,7 +264,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 color: const Color(0xFF8F482F).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.account_tree, color: Color(0xFF8F482F), size: 22),
+              child: const Icon(
+                Icons.account_tree,
+                color: Color(0xFF8F482F),
+                size: 22,
+              ),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -263,7 +304,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           children: [
             _popoverRow(Icons.person, 'Người đại diện', detail.representative),
             const SizedBox(height: 8),
-            _popoverRow(Icons.groups, 'Tổng thành viên', '${detail.memberCount} thành viên (${detail.activatedMemberCount} đã kích hoạt)'),
+            _popoverRow(
+              Icons.groups,
+              'Tổng thành viên',
+              '${detail.memberCount} thành viên (${detail.activatedMemberCount} đã kích hoạt)',
+            ),
             const SizedBox(height: 8),
             _popoverRow(Icons.qr_code, 'Mã chi phái', detail.code),
             const SizedBox(height: 8),
@@ -312,9 +357,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         Expanded(
           child: RichText(
             text: TextSpan(
-              style: const TextStyle(fontFamily: 'Plus Jakarta Sans', fontSize: 13, color: Color(0xFF1C1C1A)),
+              style: const TextStyle(
+                fontFamily: 'Plus Jakarta Sans',
+                fontSize: 13,
+                color: Color(0xFF1C1C1A),
+              ),
               children: [
-                TextSpan(text: '$label: ', style: const TextStyle(fontWeight: FontWeight.bold)),
+                TextSpan(
+                  text: '$label: ',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
                 TextSpan(text: value),
               ],
             ),
@@ -325,7 +377,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   // Mở hộp thoại điều chuyển (US-28, Task #108)
-  void _showTransferDialog(BranchTreeNodeDto rootTree, {String? initialBranchId, BranchMemberItem? initialMember}) {
+  void _showTransferDialog(
+    BranchTreeNodeDto rootTree, {
+    String? initialBranchId,
+    BranchMemberItem? initialMember,
+  }) {
     showDialog(
       context: context,
       builder: (_) => TransferNodeDialog(
@@ -347,7 +403,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ? authState.user!.fullName
         : (session.fullName.isNotEmpty ? session.fullName : '');
     final currentMemberId = authState.user?.memberId ?? session.memberId;
-    final isClanHead = authState.user?.roles.contains('ROLE_CLAN_HEAD') == true ||
+    final isClanHead =
+        authState.user?.roles.contains('ROLE_CLAN_HEAD') == true ||
         session.globalRoles.contains(SystemRole.roleClanHead);
 
     const kPrimaryColor = Color(0xFF8F482F);
@@ -367,7 +424,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.hourglass_top_outlined, color: kPrimaryColor, size: 28),
+                Icon(
+                  Icons.hourglass_top_outlined,
+                  color: kPrimaryColor,
+                  size: 28,
+                ),
                 SizedBox(height: 12),
                 Text(
                   'Đang tải cấu trúc cây phả hệ dòng họ...',
@@ -388,7 +449,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.error_outline, size: 48, color: Color(0xFFBA1A1A)),
+                const Icon(
+                  Icons.error_outline,
+                  size: 48,
+                  color: Color(0xFFBA1A1A),
+                ),
                 const SizedBox(height: 12),
                 Text(
                   'Lỗi tải cây phả hệ: $err',
@@ -404,7 +469,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   onPressed: () => ref.refresh(branchTreeProvider),
                   icon: const Icon(Icons.refresh, size: 18),
                   label: const Text('Thử lại'),
-                  style: ElevatedButton.styleFrom(backgroundColor: kPrimaryColor, foregroundColor: Colors.white),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPrimaryColor,
+                    foregroundColor: Colors.white,
+                  ),
                 ),
               ],
             ),
@@ -413,17 +481,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         data: (tree) {
           // Khởi tạo nhánh chọn mặc định là Nhánh Gốc nếu chưa chọn
           final activeBranchId = _selectedBranchId ?? tree.branchId;
-          final activeBranchMembersAsync = ref.watch(branchMembersProvider(activeBranchId));
+          final activeBranchMembersAsync = ref.watch(
+            branchMembersProvider(activeBranchId),
+          );
           final activeBranchMembers = activeBranchMembersAsync.value ?? [];
 
-          final rootMembersAsync = ref.watch(branchMembersProvider(tree.branchId));
+          final rootMembersAsync = ref.watch(
+            branchMembersProvider(tree.branchId),
+          );
           final rootMembers = rootMembersAsync.value ?? [];
 
           // Tự động phân giải tên Khởi Tổ thông minh nếu backend chưa set representativeName
-          final effectiveRootRepresentative = (tree.representativeName != null && tree.representativeName!.trim().isNotEmpty)
+          final effectiveRootRepresentative =
+              (tree.representativeName != null &&
+                  tree.representativeName!.trim().isNotEmpty)
               ? tree.representativeName!
-              : (rootMembers.firstWhereOrNull((m) => m.generation == 1)?.fullName ??
-                  (rootMembers.isNotEmpty ? rootMembers.first.fullName : 'Chưa cập nhật'));
+              : (rootMembers
+                        .firstWhereOrNull((m) => m.generation == 1)
+                        ?.fullName ??
+                    (rootMembers.isNotEmpty
+                        ? rootMembers.first.fullName
+                        : 'Chưa cập nhật'));
 
           // Xác định nhánh được chọn để hiển thị ở Sidebar
           final BranchUiDetail selectedDetail;
@@ -434,34 +512,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               badge: 'ĐỜI ${_selectedMember!.generation}',
               code: _selectedMember!.memberId,
               representative: _selectedMember!.fullName,
-              representativeSubtext: _selectedMember!.birthDeathInfo ?? 'Thành viên Đời ${_selectedMember!.generation}',
+              representativeSubtext:
+                  _selectedMember!.birthDeathInfo ??
+                  'Thành viên Đời ${_selectedMember!.generation}',
               memberCount: 1,
               activatedMemberCount: _selectedMember!.isActivated ? 1 : 0,
               fundAmount: '0 đ',
-              description: 'Hồ sơ thành viên chính thức thuộc phả hệ dòng họ ${tree.clanName}.',
+              description:
+                  'Hồ sơ thành viên chính thức thuộc phả hệ dòng họ ${tree.clanName}.',
               members: [_selectedMember!],
               isRoot: false,
             );
           } else if (activeBranchId == tree.branchId) {
-            final isRootCurrentUser = isClanHead ||
+            final isRootCurrentUser =
+                isClanHead ||
                 currentMemberId == tree.representativeId ||
                 currentUserName == tree.representativeName ||
                 currentUserName == effectiveRootRepresentative;
             selectedDetail = BranchUiDetail(
               id: tree.branchId,
               name: tree.branchName,
-              badge: isRootCurrentUser ? '★ VỊ TRÍ CỦA BẠN • TRƯỞNG TỘC' : 'CỤ KHỞI TỔ • ĐỜI 1',
+              badge: isRootCurrentUser
+                  ? '★ VỊ TRÍ CỦA BẠN • TRƯỞNG TỘC'
+                  : 'CỤ KHỞI TỔ • ĐỜI 1',
               code: tree.branchId,
               representative: effectiveRootRepresentative,
               representativeSubtext: 'Trưởng Tộc • Đại diện Dòng họ',
               representativeId: tree.representativeId,
               memberCount: tree.memberCount,
-              activatedMemberCount: rootMembers.where((m) => m.isActivated).isNotEmpty
+              activatedMemberCount:
+                  rootMembers.where((m) => m.isActivated).isNotEmpty
                   ? rootMembers.where((m) => m.isActivated).length
                   : tree.memberCount,
               fundAmount: '0 đ',
-              description: rootBranchState.branch?.description ??
-                  'Chi nhánh gốc khởi lập gia phả dòng họ, nơi quy tụ toàn thể con cháu.',
+              description: rootBranchState.branch?.description ?? 'Chi nhánh gốc khởi lập gia phả dòng họ, nơi quy tụ toàn thể con cháu.',
               successionChain: [effectiveRootRepresentative],
               members: rootMembers,
               isRoot: true,
@@ -478,17 +562,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 searchNode(c);
               }
             }
+
             searchNode(tree);
 
-            final childNode = foundChild ?? (tree.children.isNotEmpty ? tree.children.first : tree);
-            final childMembersAsync = ref.watch(branchMembersProvider(childNode.branchId));
+            final childNode =
+                foundChild ??
+                (tree.children.isNotEmpty ? tree.children.first : tree);
+            final childMembersAsync = ref.watch(
+              branchMembersProvider(childNode.branchId),
+            );
             final childMembers = childMembersAsync.value ?? [];
-            final effectiveChildRep = (childNode.representativeName != null && childNode.representativeName!.trim().isNotEmpty)
+            final effectiveChildRep =
+                (childNode.representativeName != null &&
+                    childNode.representativeName!.trim().isNotEmpty)
                 ? childNode.representativeName!
-                : (childMembers.firstWhereOrNull((m) => m.roleInBranch.contains('Trưởng') || m.generation == childNode.generationLevel)?.fullName ??
-                    (childMembers.isNotEmpty ? childMembers.first.fullName : 'Chưa cập nhật'));
+                : (childMembers
+                          .firstWhereOrNull(
+                            (m) =>
+                                m.roleInBranch.contains('Trưởng') ||
+                                m.generation == childNode.generationLevel,
+                          )
+                          ?.fullName ??
+                      (childMembers.isNotEmpty
+                          ? childMembers.first.fullName
+                          : 'Chưa cập nhật'));
 
-            final isChildCurrentUser = currentMemberId == childNode.representativeId ||
+            final isChildCurrentUser =
+                currentMemberId == childNode.representativeId ||
                 currentUserName == childNode.representativeName ||
                 currentUserName == effectiveChildRep;
 
@@ -500,21 +600,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   : 'Chi ${childNode.branchName} • Đời ${childNode.generationLevel}',
               code: childNode.branchId,
               representative: effectiveChildRep,
-              representativeSubtext: 'Đại diện Chi • Đời ${childNode.generationLevel}',
+              representativeSubtext:
+                  'Đại diện Chi • Đời ${childNode.generationLevel}',
               representativeId: childNode.representativeId,
               memberCount: childNode.memberCount,
-              activatedMemberCount: activeBranchMembers.where((m) => m.isActivated).isNotEmpty
+              activatedMemberCount:
+                  activeBranchMembers.where((m) => m.isActivated).isNotEmpty
                   ? activeBranchMembers.where((m) => m.isActivated).length
                   : childNode.memberCount,
               fundAmount: '0 đ',
-              description: 'Chi nhánh trực thuộc phả hệ dòng họ ${tree.clanName}.',
+              description:
+                  'Chi nhánh trực thuộc phả hệ dòng họ ${tree.clanName}.',
               successionChain: [effectiveRootRepresentative, effectiveChildRep],
               members: activeBranchMembers,
               isRoot: false,
             );
           }
 
-          final isRootCurrentUser = isClanHead ||
+          final isRootCurrentUser =
+              isClanHead ||
               currentMemberId == tree.representativeId ||
               currentUserName == tree.representativeName ||
               currentUserName == effectiveRootRepresentative;
@@ -522,21 +626,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           final rootUiDetail = BranchUiDetail(
             id: tree.branchId,
             name: tree.branchName,
-            badge: isRootCurrentUser ? '★ VỊ TRÍ CỦA BẠN • TRƯỞNG TỘC' : 'CỤ KHỞI TỔ • ĐỜI 1',
+            badge: isRootCurrentUser
+                ? '★ VỊ TRÍ CỦA BẠN • TRƯỞNG TỘC'
+                : 'CỤ KHỞI TỔ • ĐỜI 1',
             code: tree.branchId,
             representative: effectiveRootRepresentative,
             representativeSubtext: 'Trưởng Tộc • Đại diện Dòng họ',
             representativeId: tree.representativeId,
             memberCount: tree.memberCount,
-            activatedMemberCount: rootMembers.where((m) => m.isActivated).length > 0
+            activatedMemberCount:
+                rootMembers.where((m) => m.isActivated).isNotEmpty
                 ? rootMembers.where((m) => m.isActivated).length
                 : tree.memberCount,
             fundAmount: '0 đ',
-            description: rootBranchState.branch?.description ??
-                'Chi nhánh gốc khởi lập gia phả dòng họ, nơi quy tụ toàn thể con cháu.',
+            description: rootBranchState.branch?.description ?? 'Chi nhánh gốc khởi lập gia phả dòng họ, nơi quy tụ toàn thể con cháu.',
             members: rootMembers,
             isRoot: true,
           );
+
+          final rootSubMembers =
+              rootMembers
+                  .where(
+                    (m) =>
+                        m.fullName != rootUiDetail.representative &&
+                        m.memberId != tree.representativeId,
+                  )
+                  .toList()
+                ..sort((a, b) => a.generation.compareTo(b.generation));
+          final totalColumns =
+              (rootSubMembers.isNotEmpty ? 1 : 0) + tree.children.length;
 
           return Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -549,21 +667,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       children: [
                         // THANH TÌM KIẾM THÔNG MINH KÈM BỘ LỌC (US-30, Task #112)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                           decoration: const BoxDecoration(
                             color: Colors.white,
-                            border: Border(bottom: BorderSide(color: kBorderColor, width: 1)),
+                            border: Border(
+                              bottom: BorderSide(color: kBorderColor, width: 1),
+                            ),
                           ),
                           child: Column(
                             children: [
                               // Dòng 1: Tên Dòng Họ + Các Nút Action (Thu gọn/Mở rộng, US-11 Công đức đệ quy, Online badge)
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(Icons.account_tree_outlined, color: kPrimaryColor, size: 20),
+                                      const Icon(
+                                        Icons.account_tree_outlined,
+                                        color: kPrimaryColor,
+                                        size: 20,
+                                      ),
                                       const SizedBox(width: 8),
                                       Flexible(
                                         child: Text(
@@ -579,163 +707,263 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       ),
                                     ],
                                   ),
-                                  Wrap(
-                                    crossAxisAlignment: WrapCrossAlignment.center,
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: [
-                                      // NÚT CHUYỂN ĐỔI: THU GỌN / HIỆN ĐẦY ĐỦ CÂY
-                                      OutlinedButton.icon(
-                                        onPressed: () {
-                                          setState(() {
-                                            _isFullTreeExpanded = !_isFullTreeExpanded;
-                                          });
-                                        },
-                                        icon: Icon(
-                                          _isFullTreeExpanded ? Icons.unfold_less : Icons.unfold_more,
-                                          size: 16,
-                                          color: kPrimaryColor,
-                                        ),
-                                        label: Text(
-                                          _isFullTreeExpanded ? 'Thu Gọn Sơ Đồ' : 'Hiện Đầy Đủ Cây (Tất Cả Đời)',
-                                          style: const TextStyle(
-                                            fontFamily: 'Plus Jakarta Sans',
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
+                                  Flexible(
+                                    child: Wrap(
+                                      alignment: WrapAlignment.end,
+                                      crossAxisAlignment:
+                                          WrapCrossAlignment.center,
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: [
+                                        // NÚT CHUYỂN ĐỔI: THU GỌN / HIỆN ĐẦY ĐỦ CÂY
+                                        OutlinedButton.icon(
+                                          onPressed: () {
+                                            setState(() {
+                                              _isFullTreeExpanded =
+                                                  !_isFullTreeExpanded;
+                                            });
+                                          },
+                                          icon: Icon(
+                                            _isFullTreeExpanded
+                                                ? Icons.unfold_less
+                                                : Icons.unfold_more,
+                                            size: 16,
                                             color: kPrimaryColor,
                                           ),
+                                          label: Text(
+                                            _isFullTreeExpanded
+                                                ? 'Thu Gọn Sơ Đồ'
+                                                : 'Hiện Đầy Đủ Cây (Tất Cả Đời)',
+                                            style: const TextStyle(
+                                              fontFamily: 'Plus Jakarta Sans',
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: kPrimaryColor,
+                                            ),
+                                          ),
+                                          style: OutlinedButton.styleFrom(
+                                            side: const BorderSide(
+                                              color: kPrimaryColor,
+                                            ),
+                                            backgroundColor: _isFullTreeExpanded
+                                                ? kPrimaryColor.withValues(
+                                                    alpha: 0.08,
+                                                  )
+                                                : Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 8,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                          ),
                                         ),
-                                        style: OutlinedButton.styleFrom(
-                                          side: const BorderSide(color: kPrimaryColor),
-                                          backgroundColor: _isFullTreeExpanded
-                                              ? kPrimaryColor.withValues(alpha: 0.08)
-                                              : Colors.white,
-                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      // [US-11] NÚT CHUYỂN ĐỔI CHẾ ĐỘ XEM CÔNG ĐỨC ĐỆ QUY
-                                      Builder(
-                                        builder: (context) {
-                                          final treeContribFilter = ref.watch(treeContributionFilterProvider);
-                                          final treeContribNotifier = ref.read(treeContributionFilterProvider.notifier);
-                                          final isEnabled = treeContribFilter.isContributionViewEnabled;
+                                        const SizedBox(width: 8),
+                                        // [US-11] NÚT CHUYỂN ĐỔI CHẾ ĐỘ XEM CÔNG ĐỨC ĐỆ QUY
+                                        Builder(
+                                          builder: (context) {
+                                            final treeContribFilter = ref.watch(
+                                              treeContributionFilterProvider,
+                                            );
+                                            final treeContribNotifier = ref
+                                                .read(
+                                                  treeContributionFilterProvider
+                                                      .notifier,
+                                                );
+                                            final isEnabled = treeContribFilter
+                                                .isContributionViewEnabled;
 
-                                          return Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              OutlinedButton.icon(
-                                                onPressed: () => treeContribNotifier.toggleContributionView(),
-                                                icon: Icon(
-                                                  isEnabled ? Icons.visibility_off : Icons.stars,
-                                                  size: 16,
-                                                  color: isEnabled ? const Color(0xFFD4AF37) : const Color(0xFF8B1E1E),
-                                                ),
-                                                label: Text(
-                                                  isEnabled ? 'Ẩn Công Đức' : 'Xem Công Đức Đệ Quy',
-                                                  style: TextStyle(
-                                                    fontFamily: 'Be Vietnam Pro',
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: isEnabled ? Colors.white : const Color(0xFF8B1E1E),
+                                            return Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                OutlinedButton.icon(
+                                                  onPressed: () =>
+                                                      treeContribNotifier
+                                                          .toggleContributionView(),
+                                                  icon: Icon(
+                                                    isEnabled
+                                                        ? Icons.visibility_off
+                                                        : Icons.stars,
+                                                    size: 16,
+                                                    color: isEnabled
+                                                        ? const Color(
+                                                            0xFFD4AF37,
+                                                          )
+                                                        : const Color(
+                                                            0xFF8B1E1E,
+                                                          ),
+                                                  ),
+                                                  label: Text(
+                                                    isEnabled
+                                                        ? 'Ẩn Công Đức'
+                                                        : 'Xem Công Đức Đệ Quy',
+                                                    style: TextStyle(
+                                                      fontFamily:
+                                                          'Be Vietnam Pro',
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: isEnabled
+                                                          ? Colors.white
+                                                          : const Color(
+                                                              0xFF8B1E1E,
+                                                            ),
+                                                    ),
+                                                  ),
+                                                  style: OutlinedButton.styleFrom(
+                                                    backgroundColor: isEnabled
+                                                        ? const Color(
+                                                            0xFF8B1E1E,
+                                                          )
+                                                        : Colors.white,
+                                                    side: const BorderSide(
+                                                      color: Color(0xFF8B1E1E),
+                                                    ),
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 12,
+                                                          vertical: 8,
+                                                        ),
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            20,
+                                                          ),
+                                                    ),
                                                   ),
                                                 ),
-                                                style: OutlinedButton.styleFrom(
-                                                  backgroundColor: isEnabled
-                                                      ? const Color(0xFF8B1E1E)
-                                                      : Colors.white,
-                                                  side: const BorderSide(
-                                                    color: Color(0xFF8B1E1E),
-                                                  ),
-                                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                                ),
-                                              ),
-                                              if (isEnabled) ...[
-                                                const SizedBox(width: 8),
-                                                Consumer(
-                                                  builder: (context, ref, _) {
-                                                    final eventList = ref.watch(eventListProvider);
-                                                    return Container(
-                                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                                                      decoration: BoxDecoration(
-                                                        color: const Color(0xFFFAF9F6),
-                                                        borderRadius: BorderRadius.circular(20),
-                                                        border: Border.all(color: const Color(0xFFE5E5E5)),
-                                                      ),
-                                                      child: DropdownButtonHideUnderline(
-                                                        child: DropdownButton<String?>(
-                                                          value: treeContribFilter.selectedEventId,
-                                                          isDense: true,
-                                                          hint: const Text(
-                                                            'Tất cả sự kiện',
-                                                            style: TextStyle(
-                                                              fontFamily: 'Be Vietnam Pro',
-                                                              fontSize: 11,
-                                                              color: Color(0xFF58413F),
+                                                if (isEnabled) ...[
+                                                  const SizedBox(width: 8),
+                                                  Consumer(
+                                                    builder: (context, ref, _) {
+                                                      final eventList = ref
+                                                          .watch(
+                                                            eventListProvider,
+                                                          );
+                                                      return Container(
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 10,
+                                                              vertical: 2,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          color: const Color(
+                                                            0xFFFAF9F6,
+                                                          ),
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                20,
+                                                              ),
+                                                          border: Border.all(
+                                                            color: const Color(
+                                                              0xFFE5E5E5,
                                                             ),
                                                           ),
-                                                          items: [
-                                                            const DropdownMenuItem<String?>(
-                                                              value: null,
-                                                              child: Text(
-                                                                'Tất cả sự kiện',
-                                                                style: TextStyle(
-                                                                  fontFamily: 'Be Vietnam Pro',
-                                                                  fontSize: 11,
+                                                        ),
+                                                        child: DropdownButtonHideUnderline(
+                                                          child: DropdownButton<String?>(
+                                                            value: treeContribFilter
+                                                                .selectedEventId,
+                                                            isDense: true,
+                                                            hint: const Text(
+                                                              'Tất cả sự kiện',
+                                                              style: TextStyle(
+                                                                fontFamily: 'Be Vietnam Pro',
+                                                                fontSize: 11,
+                                                                color: Color(
+                                                                  0xFF58413F,
                                                                 ),
                                                               ),
                                                             ),
-                                                            ...eventList.events.map((e) => DropdownMenuItem<String?>(
-                                                                  value: e.eventId,
+                                                            items: [
+                                                              const DropdownMenuItem<
+                                                                String?
+                                                              >(
+                                                                value: null,
+                                                                child: Text(
+                                                                  'Tất cả sự kiện',
+                                                                  style: TextStyle(
+                                                                    fontFamily: 'Be Vietnam Pro',
+                                                                    fontSize:
+                                                                        11,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                              ...eventList.events.map(
+                                                                (
+                                                                  e,
+                                                                ) => DropdownMenuItem<String?>(
+                                                                  value:
+                                                                      e.eventId,
                                                                   child: Text(
                                                                     e.eventName,
                                                                     style: const TextStyle(
                                                                       fontFamily: 'Be Vietnam Pro',
-                                                                      fontSize: 11,
+                                                                      fontSize:
+                                                                          11,
                                                                     ),
                                                                   ),
-                                                                )),
-                                                          ],
-                                                          onChanged: (val) {
-                                                            final ev = eventList.events.where((e) => e.eventId == val).firstOrNull;
-                                                            treeContribNotifier.setEventFilter(eventId: val, eventName: ev?.eventName);
-                                                          },
+                                                                ),
+                                                              ),
+                                                            ],
+                                                            onChanged: (val) {
+                                                              final ev = eventList
+                                                                  .events
+                                                                  .where(
+                                                                    (e) =>
+                                                                        e.eventId ==
+                                                                        val,
+                                                                  )
+                                                                  .firstOrNull;
+                                                              treeContribNotifier
+                                                                  .setEventFilter(
+                                                                    eventId:
+                                                                        val,
+                                                                    eventName: ev
+                                                                        ?.eventName,
+                                                                  );
+                                                            },
+                                                          ),
                                                         ),
-                                                      ),
-                                                    );
-                                                  },
-                                                ),
+                                                      );
+                                                    },
+                                                  ),
+                                                ],
                                               ],
-                                            ],
-                                          );
-                                        },
-                                      ),
-                                      const SizedBox(width: 8),
-                                      // Badge trạng thái kết nối API
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFF99F8A2).withValues(alpha: 0.3),
-                                          borderRadius: BorderRadius.circular(20),
+                                            );
+                                          },
                                         ),
-                                        child: Text(
-                                          '● Trực tuyến ${tree.children.length + 1} chi',
-                                          style: const TextStyle(
-                                            fontFamily: 'JetBrains Mono',
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                            color: Color(0xFF006E2A),
+                                        // Badge trạng thái kết nối API
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 6,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF99F8A2)
+                                                .withValues(alpha: 0.3),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            '● Trực tuyến ${tree.children.length + 1} chi',
+                                            style: const TextStyle(
+                                              fontFamily: 'JetBrains Mono',
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF006E2A),
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 12),
-
 
                               // Dòng 3: THANH TÌM KIẾM THÀNH VIÊN VÀ ĐIỀU CHUYỂN
                               Row(
@@ -746,30 +974,52 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       onChanged: _onSearchChanged,
                                       decoration: InputDecoration(
                                         hintText: 'Tìm kiếm thành viên theo tên, mã thành viên, đời thứ...',
-                                        hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
+                                        hintStyle: const TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey,
+                                        ),
                                         prefixIcon: _isSearching
                                             ? const Padding(
                                                 padding: EdgeInsets.all(12),
                                                 child: SizedBox(
                                                   width: 16,
                                                   height: 16,
-                                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                      ),
                                                 ),
                                               )
-                                            : const Icon(Icons.search, color: kPrimaryColor, size: 20),
-                                        suffixIcon: _searchController.text.isNotEmpty
+                                            : const Icon(
+                                                Icons.search,
+                                                color: kPrimaryColor,
+                                                size: 20,
+                                              ),
+                                        suffixIcon:
+                                            _searchController.text.isNotEmpty
                                             ? IconButton(
-                                                icon: const Icon(Icons.clear, size: 18),
+                                                icon: const Icon(
+                                                  Icons.clear,
+                                                  size: 18,
+                                                ),
                                                 onPressed: () {
                                                   _searchController.clear();
                                                   _onSearchChanged('');
                                                 },
                                               )
                                             : null,
-                                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 14,
+                                              vertical: 10,
+                                            ),
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(10),
-                                          borderSide: const BorderSide(color: kBorderColor),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          borderSide: const BorderSide(
+                                            color: kBorderColor,
+                                          ),
                                         ),
                                         filled: true,
                                         fillColor: const Color(0xFFFAF9F6),
@@ -781,14 +1031,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   // Bộ lọc Thế Hệ / Đời
                                   DropdownButton<int?>(
                                     value: _selectedGenerationFilter,
-                                    hint: const Text('Tất cả đời', style: TextStyle(fontSize: 12.5)),
+                                    hint: const Text(
+                                      'Tất cả đời',
+                                      style: TextStyle(fontSize: 12.5),
+                                    ),
                                     items: [
-                                      const DropdownMenuItem(value: null, child: Text('Tất cả đời')),
+                                      const DropdownMenuItem(
+                                        value: null,
+                                        child: Text('Tất cả đời'),
+                                      ),
                                       for (int g = 1; g <= 10; g++)
-                                        DropdownMenuItem(value: g, child: Text('Đời $g')),
+                                        DropdownMenuItem(
+                                          value: g,
+                                          child: Text('Đời $g'),
+                                        ),
                                     ],
                                     onChanged: (val) {
-                                      setState(() => _selectedGenerationFilter = val);
+                                      setState(
+                                        () => _selectedGenerationFilter = val,
+                                      );
                                       _onSearchChanged(_searchController.text);
                                     },
                                   ),
@@ -797,13 +1058,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   // Nút điều chuyển nhanh (US-28)
                                   ElevatedButton.icon(
                                     onPressed: () => _showTransferDialog(tree),
-                                    icon: const Icon(Icons.swap_horiz, size: 16),
+                                    icon: const Icon(
+                                      Icons.swap_horiz,
+                                      size: 16,
+                                    ),
                                     label: const Text('Điều Chuyển'),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: kPrimaryColor,
                                       foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                      textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 10,
+                                      ),
+                                      textStyle: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -821,7 +1091,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             maxScale: 2.5,
                             constrained: false,
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 40),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 80,
+                                vertical: 40,
+                              ),
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -829,52 +1102,118 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   _buildRootAncestorCard(
                                     context: context,
                                     detail: rootUiDetail,
-                                    isSelected: activeBranchId == tree.branchId && _selectedMember == null,
+                                    isSelected:
+                                        activeBranchId == tree.branchId &&
+                                        _selectedMember == null,
                                     isCurrentUser: isRootCurrentUser,
-                                    isHighlighted: _highlightedBranchId == tree.branchId,
-                                    onTap: () => _handleSelectBranch(tree.branchId, selectedDetail, isWide),
-                                    onShowPopover: () => _showNodePopover(context, rootUiDetail, tree),
+                                    isHighlighted:
+                                        _highlightedBranchId == tree.branchId,
+                                    isClanHead: isClanHead,
+                                    onTap: () => _handleSelectBranch(
+                                      tree.branchId,
+                                      selectedDetail,
+                                      isWide,
+                                    ),
+                                    onShowPopover: () => _showNodePopover(
+                                      context,
+                                      rootUiDetail,
+                                      tree,
+                                    ),
                                   ),
 
-
-                                  // HIỂN THỊ CÁC CHI NHÁNH CON
-                                  if (tree.children.isNotEmpty) ...[
-                                    if (tree.children.length == 1) ...[
-                                      Container(width: 2, height: 28, color: kPrimaryColor),
-                                      _buildChildBranchColumn(
-                                        context: context,
-                                        child: tree.children.first,
-                                        isWide: isWide,
-                                        currentMemberId: currentMemberId,
-                                        currentUserName: currentUserName,
-                                        activeBranchId: activeBranchId,
-                                        rootTree: tree,
+                                  // HIỂN THỊ CÁC CỘT HẠ THỰC THẾ (GỒM THÀNH VIÊN CHI GỐC VÀ CÁC CHI NHÁNH CON)
+                                  if (totalColumns > 0) ...[
+                                    if (totalColumns == 1) ...[
+                                      Container(
+                                        width: 2,
+                                        height: 28,
+                                        color: kPrimaryColor,
                                       ),
-                                    ] else ...[
-                                      SizedBox(
-                                        width: (tree.children.length * 360.0) / 1.8,
-                                        height: 36,
-                                        child: const CustomPaint(
-                                          painter: TreeForkPainter(color: kPrimaryColor, strokeWidth: 2),
+                                      if (rootSubMembers.isNotEmpty)
+                                        _buildRootSubMembersColumn(
+                                          context: context,
+                                          members: rootSubMembers,
+                                          branchId: tree.branchId,
+                                          isWide: isWide,
+                                        )
+                                      else
+                                        _buildChildBranchColumn(
+                                          context: context,
+                                          child: tree.children.first,
+                                          isWide: isWide,
+                                          currentMemberId: currentMemberId,
+                                          currentUserName: currentUserName,
+                                          activeBranchId: activeBranchId,
+                                          rootTree: tree,
                                         ),
-                                      ),
-                                      Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          for (int i = 0; i < tree.children.length; i++) ...[
-                                            if (i > 0) const SizedBox(width: 32),
-                                            _buildChildBranchColumn(
-                                              context: context,
-                                              child: tree.children[i],
-                                              isWide: isWide,
-                                              currentMemberId: currentMemberId,
-                                              currentUserName: currentUserName,
-                                              activeBranchId: activeBranchId,
-                                              rootTree: tree,
-                                            ),
-                                          ],
-                                        ],
+                                    ] else ...[
+                                      // Nhiều nhánh (>= 2): Vẽ đường chẽ fork chuẩn pixel-perfect đến tâm từng cột
+                                      Builder(
+                                        builder: (ctx) {
+                                          final forkWidth =
+                                              totalColumns * 320.0 +
+                                              (totalColumns - 1) * 32.0;
+                                          final dropXs = List.generate(
+                                            totalColumns,
+                                            (i) => i * 352.0 + 160.0,
+                                          );
+                                          return Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              SizedBox(
+                                                width: forkWidth,
+                                                height: 36,
+                                                child: CustomPaint(
+                                                  painter: TreeForkPainter(
+                                                    color: kPrimaryColor,
+                                                    strokeWidth: 2,
+                                                    dropXs: dropXs,
+                                                  ),
+                                                ),
+                                              ),
+                                              Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  if (rootSubMembers
+                                                      .isNotEmpty) ...[
+                                                    _buildRootSubMembersColumn(
+                                                      context: context,
+                                                      members: rootSubMembers,
+                                                      branchId: tree.branchId,
+                                                      isWide: isWide,
+                                                    ),
+                                                    if (tree
+                                                        .children
+                                                        .isNotEmpty)
+                                                      const SizedBox(width: 32),
+                                                  ],
+                                                  for (
+                                                    int i = 0;
+                                                    i < tree.children.length;
+                                                    i++
+                                                  ) ...[
+                                                    if (i > 0)
+                                                      const SizedBox(width: 32),
+                                                    _buildChildBranchColumn(
+                                                      context: context,
+                                                      child: tree.children[i],
+                                                      isWide: isWide,
+                                                      currentMemberId:
+                                                          currentMemberId,
+                                                      currentUserName:
+                                                          currentUserName,
+                                                      activeBranchId:
+                                                          activeBranchId,
+                                                      rootTree: tree,
+                                                    ),
+                                                  ],
+                                                ],
+                                              ),
+                                            ],
+                                          );
+                                        },
                                       ),
                                     ],
                                   ],
@@ -905,28 +1244,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             child: ListView.separated(
                               shrinkWrap: true,
                               itemCount: _searchResults.length,
-                              separatorBuilder: (_, __) => const Divider(height: 1),
+                              separatorBuilder: (_, __) =>
+                                  const Divider(height: 1),
                               itemBuilder: (ctx, i) {
                                 final m = _searchResults[i];
                                 return ListTile(
                                   dense: true,
                                   leading: CircleAvatar(
-                                    backgroundColor: kPrimaryColor.withValues(alpha: 0.1),
+                                    backgroundColor: kPrimaryColor.withValues(
+                                      alpha: 0.1,
+                                    ),
                                     child: Text(
                                       '${m.generation}',
-                                      style: const TextStyle(fontWeight: FontWeight.bold, color: kPrimaryColor),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: kPrimaryColor,
+                                      ),
                                     ),
                                   ),
                                   title: Text(
                                     m.fullName,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13.5,
+                                    ),
                                   ),
                                   subtitle: Text(
                                     'Mã: ${m.memberId} • Đời ${m.generation} • Chi: ${m.branchName ?? 'Chưa gán'}',
                                     style: const TextStyle(fontSize: 11.5),
                                   ),
-                                  trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: kPrimaryColor),
-                                  onTap: () => _selectSearchResult(m, tree, isWide),
+                                  trailing: const Icon(
+                                    Icons.arrow_forward_ios,
+                                    size: 14,
+                                    color: kPrimaryColor,
+                                  ),
+                                  onTap: () =>
+                                      _selectSearchResult(m, tree, isWide),
                                 );
                               },
                             ),
@@ -944,7 +1297,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           borderRadius: BorderRadius.circular(24),
                           border: Border.all(color: kBorderColor),
                           boxShadow: const [
-                            BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
                           ],
                         ),
                         child: Row(
@@ -953,24 +1310,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             IconButton(
                               onPressed: _zoomIn,
                               tooltip: 'Phóng to (+)',
-                              icon: const Icon(Icons.add, size: 20, color: kPrimaryColor),
+                              icon: const Icon(
+                                Icons.add,
+                                size: 20,
+                                color: kPrimaryColor,
+                              ),
                             ),
                             IconButton(
                               onPressed: _zoomOut,
                               tooltip: 'Thu nhỏ (-)',
-                              icon: const Icon(Icons.remove, size: 20, color: kPrimaryColor),
+                              icon: const Icon(
+                                Icons.remove,
+                                size: 20,
+                                color: kPrimaryColor,
+                              ),
                             ),
                             IconButton(
                               onPressed: _resetZoom,
                               tooltip: 'Khôi phục tỷ lệ (1:1)',
-                              icon: const Icon(Icons.center_focus_strong, size: 20, color: kPrimaryColor),
+                              icon: const Icon(
+                                Icons.center_focus_strong,
+                                size: 20,
+                                color: kPrimaryColor,
+                              ),
                             ),
                             if (isWide)
                               IconButton(
-                                onPressed: () => setState(() => _isSidebarOpen = !_isSidebarOpen),
-                                tooltip: _isSidebarOpen ? 'Thu gọn bảng chi tiết' : 'Mở bảng chi tiết',
+                                onPressed: () => setState(
+                                  () => _isSidebarOpen = !_isSidebarOpen,
+                                ),
+                                tooltip: _isSidebarOpen
+                                    ? 'Thu gọn bảng chi tiết'
+                                    : 'Mở bảng chi tiết',
                                 icon: Icon(
-                                  _isSidebarOpen ? Icons.view_sidebar : Icons.view_sidebar_outlined,
+                                  _isSidebarOpen
+                                      ? Icons.view_sidebar
+                                      : Icons.view_sidebar_outlined,
                                   size: 20,
                                   color: kPrimaryColor,
                                 ),
@@ -979,41 +1354,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                       ),
                     ),
-
-                    // Nút mở nhanh bảng chi tiết chi khi đang đóng trên màn hình rộng
-                    if (isWide && !_isSidebarOpen)
-                      Positioned(
-                        top: 16,
-                        right: 16,
-                        child: Material(
-                          elevation: 3,
-                          borderRadius: BorderRadius.circular(20),
-                          color: Colors.white,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(20),
-                            onTap: () => setState(() => _isSidebarOpen = true),
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.view_sidebar_outlined, size: 18, color: kPrimaryColor),
-                                  SizedBox(width: 6),
-                                  Text(
-                                    'Mở bảng chi tiết chi',
-                                    style: TextStyle(
-                                      fontFamily: 'Be Vietnam Pro',
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: kPrimaryColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
                   ],
                 ),
               ),
@@ -1026,9 +1366,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     _isSidebarOpen = false;
                     _selectedMember = null;
                   }),
-                  onEdit: selectedDetail.isRoot
+                  onEdit: (selectedDetail.isRoot && isClanHead)
                       ? () => context.push('/branches/root/edit')
-                      : () => _showTransferDialog(tree, initialBranchId: selectedDetail.id),
+                      : (!selectedDetail.isRoot &&
+                            session.canManageBranch(
+                              branchId: selectedDetail.id,
+                            ))
+                      ? () => _showTransferDialog(
+                          tree,
+                          initialBranchId: selectedDetail.id,
+                        )
+                      : null,
                 ),
             ],
           );
@@ -1037,7 +1385,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  void _handleSelectBranch(String branchId, BranchUiDetail detail, bool isWide) {
+  void _handleSelectBranch(
+    String branchId,
+    BranchUiDetail detail,
+    bool isWide,
+  ) {
     setState(() {
       _selectedBranchId = branchId;
       _selectedMember = null;
@@ -1045,6 +1397,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
 
     if (!isWide) {
+      final session = ref.read(dualRbacSessionProvider);
+      final auth = ref.read(authStateProvider);
+      final isClanHead =
+          session.isClanHead ||
+          session.isAdmin ||
+          auth.user?.roles.contains('ROLE_CLAN_HEAD') == true ||
+          auth.user?.roles.contains('ROLE_ADMIN') == true;
+
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
@@ -1059,7 +1419,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: BranchDetailSidebar(
               branch: detail,
               onClose: () => Navigator.of(ctx).pop(),
-              onEdit: detail.isRoot ? () => context.push('/branches/root/edit') : null,
+              onEdit: (detail.isRoot && isClanHead)
+                  ? () => context.push('/branches/root/edit')
+                  : null,
             ),
           ),
         ),
@@ -1076,6 +1438,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     required VoidCallback onTap,
     required VoidCallback onShowPopover,
     bool isHighlighted = false,
+    bool isClanHead = false,
   }) {
     const kPrimaryColor = Color(0xFF8F482F);
 
@@ -1095,8 +1458,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           border: Border.all(
             color: isHighlighted
                 ? const Color(0xFFFFD700)
-                : (isCurrentUser ? const Color(0xFF006E2A) : const Color(0xFFD4A017)),
-            width: isHighlighted ? 3 : (isCurrentUser || isSelected ? 2.5 : 1.5),
+                : (isCurrentUser
+                      ? const Color(0xFF006E2A)
+                      : const Color(0xFFD4A017)),
+            width: isHighlighted
+                ? 3
+                : (isCurrentUser || isSelected ? 2.5 : 1.5),
           ),
           boxShadow: [
             BoxShadow(
@@ -1120,7 +1487,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFD4A017),
                           borderRadius: BorderRadius.circular(6),
@@ -1137,7 +1507,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       IconButton(
                         onPressed: onShowPopover,
-                        icon: const Icon(Icons.info_outline, color: Color(0xFFFFB59D), size: 18),
+                        icon: const Icon(
+                          Icons.info_outline,
+                          color: Color(0xFFFFB59D),
+                          size: 18,
+                        ),
                         tooltip: 'Xem tóm tắt (Popover)',
                       ),
                     ],
@@ -1148,7 +1522,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       CircleAvatar(
                         radius: 22,
                         backgroundColor: const Color(0xFFD4A017),
-                        child: const Icon(Icons.account_balance, color: Color(0xFF2C1E1A), size: 24),
+                        child: const Icon(
+                          Icons.account_balance,
+                          color: Color(0xFF2C1E1A),
+                          size: 24,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -1193,34 +1571,55 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.black.withValues(alpha: 0.2),
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+                borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(16),
+                ),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     '${detail.memberCount} Thành viên',
-                    style: const TextStyle(fontSize: 11.5, color: Color(0xFFFFB59D), fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      color: Color(0xFFFFB59D),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       TextButton.icon(
                         onPressed: onShowPopover,
-                        icon: const Icon(Icons.visibility, size: 14, color: Colors.white),
-                        label: const Text('Tóm tắt', style: TextStyle(fontSize: 11, color: Colors.white)),
-                      ),
-                      const SizedBox(width: 4),
-                      ElevatedButton.icon(
-                        onPressed: () => context.push('/branches/root/edit'),
-                        icon: const Icon(Icons.edit, size: 14),
-                        label: const Text('Chỉnh sửa', style: TextStyle(fontSize: 11)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: kPrimaryColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        icon: const Icon(
+                          Icons.visibility,
+                          size: 14,
+                          color: Colors.white,
+                        ),
+                        label: const Text(
+                          'Tóm tắt',
+                          style: TextStyle(fontSize: 11, color: Colors.white),
                         ),
                       ),
+                      if (isClanHead) ...[
+                        const SizedBox(width: 4),
+                        ElevatedButton.icon(
+                          onPressed: () => context.push('/branches/root/edit'),
+                          icon: const Icon(Icons.edit, size: 14),
+                          label: const Text(
+                            'Chỉnh sửa',
+                            style: TextStyle(fontSize: 11),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPrimaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ],
@@ -1228,6 +1627,198 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // 1.1 Cột Thành Viên Chi Gốc (Đại Tôn) tiếp nối
+  Widget _buildRootSubMembersColumn({
+    required BuildContext context,
+    required List<BranchMemberItem> members,
+    required String branchId,
+    required bool isWide,
+  }) {
+    const kPrimaryColor = Color(0xFF8F482F);
+    const kBorderColor = Color(0xFFDAC1BA);
+    final isCollapsed = _collapsedBranchIds.contains('ROOT_SUBMEMBERS');
+
+    return SizedBox(
+      width: 320,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header card cho nhánh Chi Gốc (Đại Tôn)
+          Container(
+            width: 320,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: _selectedBranchId == branchId && _selectedMember == null
+                    ? kPrimaryColor
+                    : kBorderColor,
+                width: _selectedBranchId == branchId && _selectedMember == null
+                    ? 2
+                    : 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: const Color(0xFFD4A017)
+                            .withValues(alpha: 0.15),
+                        child: const Icon(
+                          Icons.account_balance,
+                          color: Color(0xFF8F482F),
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFD4A017)
+                                    .withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'CHI GỐC • ĐẠI TÔN',
+                                style: TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF8F482F),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Hậu Duệ Chi Gốc',
+                              style: TextStyle(
+                                fontFamily: 'Merriweather',
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF2B1810),
+                              ),
+                            ),
+                            Text(
+                              '${members.length} thành viên tiếp nối',
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                color: Color(0xFF755B53),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          isCollapsed
+                              ? Icons.add_circle_outline
+                              : Icons.remove_circle_outline,
+                          color: kPrimaryColor,
+                          size: 20,
+                        ),
+                        tooltip: isCollapsed ? 'Mở rộng' : 'Thu gọn',
+                        onPressed: () {
+                          setState(() {
+                            if (isCollapsed) {
+                              _collapsedBranchIds.remove('ROOT_SUBMEMBERS');
+                            } else {
+                              _collapsedBranchIds.add('ROOT_SUBMEMBERS');
+                            }
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      _selectedBranchId = branchId;
+                      _selectedMember = null;
+                      _isSidebarOpen = true;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    decoration: const BoxDecoration(
+                      border: Border(top: BorderSide(color: Color(0xFFF0EDEB))),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Xem bảng chi tiết chi',
+                          style: TextStyle(
+                            fontFamily: 'Plus Jakarta Sans',
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: kPrimaryColor,
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward,
+                          size: 14,
+                          color: kPrimaryColor,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Danh sách thành viên Chi Gốc (Quản Trị Viên, Nguyễn Văn QA Role, Nguyễn Thị E2E Join, ...)
+          if (!isCollapsed && _isFullTreeExpanded) ...[
+            for (final member in members) ...[
+              Container(width: 2, height: 16, color: kPrimaryColor),
+              _buildSubGenerationCard(
+                generation: 'Đời ${member.generation}',
+                title: member.fullName,
+                subtitle:
+                    member.birthDeathInfo ??
+                    (member.generation == 1
+                        ? 'Khởi Tổ / Tiền Hiền'
+                        : 'Thành viên Chi Gốc'),
+                color: kPrimaryColor,
+                isSelected: _selectedMember?.memberId == member.memberId,
+                isHighlighted: _highlightedMemberId == member.memberId,
+                onTap: () {
+                  setState(() {
+                    _selectedMember = member;
+                    _selectedBranchId = branchId;
+                    _isSidebarOpen = true;
+                  });
+                },
+              ),
+            ],
+          ],
+        ],
       ),
     );
   }
@@ -1248,17 +1839,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final childMembersAsync = ref.watch(branchMembersProvider(child.branchId));
     final childMembers = childMembersAsync.value ?? [];
 
-    final effectiveRepresentative = (child.representativeName != null && child.representativeName!.trim().isNotEmpty)
+    final effectiveRepresentative =
+        (child.representativeName != null &&
+            child.representativeName!.trim().isNotEmpty)
         ? child.representativeName!
-        : (childMembers.firstWhereOrNull((m) => m.roleInBranch.contains('Trưởng') || m.generation == child.generationLevel)?.fullName ??
-            (childMembers.isNotEmpty ? childMembers.first.fullName : 'Chưa cập nhật'));
+        : (childMembers
+                  .firstWhereOrNull(
+                    (m) =>
+                        m.roleInBranch.contains('Trưởng') ||
+                        m.generation == child.generationLevel,
+                  )
+                  ?.fullName ??
+              (childMembers.isNotEmpty
+                  ? childMembers.first.fullName
+                  : 'Chưa cập nhật'));
 
-    final isChildCurrentUser = currentMemberId == child.representativeId ||
+    final isChildCurrentUser =
+        currentMemberId == child.representativeId ||
         currentUserName == child.representativeName ||
         currentUserName == effectiveRepresentative;
 
-    final subMembers = childMembers.where((m) => m.memberId != child.representativeId && m.fullName != effectiveRepresentative).toList()
-      ..sort((a, b) => a.generation.compareTo(b.generation));
+    final subMembers =
+        childMembers
+            .where(
+              (m) =>
+                  m.memberId != child.representativeId &&
+                  m.fullName != effectiveRepresentative,
+            )
+            .toList()
+          ..sort((a, b) => a.generation.compareTo(b.generation));
 
     final childUiDetail = BranchUiDetail(
       id: child.branchId,
@@ -1288,15 +1897,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           _buildBranchNodeCard(
             context: context,
             detail: childUiDetail,
-            isSelected: activeBranchId == child.branchId && _selectedMember == null,
+            isSelected:
+                activeBranchId == child.branchId && _selectedMember == null,
             isWide: isWide,
             isCurrentUser: isChildCurrentUser,
             isCollapsed: isCollapsed,
             isHighlighted: _highlightedBranchId == child.branchId,
-            onSelect: () => _handleSelectBranch(child.branchId, childUiDetail, isWide),
+            onSelect: () =>
+                _handleSelectBranch(child.branchId, childUiDetail, isWide),
             onToggleCollapse: () => _toggleBranchCollapse(child.branchId),
-            onShowPopover: () => _showNodePopover(context, childUiDetail, rootTree),
-            onTransfer: () => _showTransferDialog(rootTree, initialBranchId: child.branchId),
+            onShowPopover: () =>
+                _showNodePopover(context, childUiDetail, rootTree),
+            onTransfer: () =>
+                _showTransferDialog(rootTree, initialBranchId: child.branchId),
           ),
 
           // Render nhánh con và thành viên nếu KHÔNG bị thu gọn (Collapse/Expand)
@@ -1368,8 +1981,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           color: isHighlighted
               ? const Color(0xFFFFD700)
               : (isCurrentUser
-                  ? const Color(0xFF006E2A)
-                  : (isSelected ? kPrimaryColor : kBorderColor)),
+                    ? const Color(0xFF006E2A)
+                    : (isSelected ? kPrimaryColor : kBorderColor)),
           width: isHighlighted ? 3 : (isCurrentUser || isSelected ? 2 : 1),
         ),
         boxShadow: [
@@ -1408,23 +2021,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   onTap: onToggleCollapse,
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
-                      color: isCollapsed ? const Color(0xFFE8DEF8) : const Color(0xFFF0EDEB),
+                      color: isCollapsed
+                          ? const Color(0xFFE8DEF8)
+                          : const Color(0xFFF0EDEB),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          isCollapsed ? Icons.add_circle_outline : Icons.remove_circle_outline,
+                          isCollapsed
+                              ? Icons.add_circle_outline
+                              : Icons.remove_circle_outline,
                           size: 13,
                           color: kPrimaryColor,
                         ),
                         const SizedBox(width: 3),
                         Text(
                           isCollapsed ? 'Mở nhánh' : 'Thu gọn',
-                          style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: kPrimaryColor),
+                          style: const TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.bold,
+                            color: kPrimaryColor,
+                          ),
                         ),
                       ],
                     ),
@@ -1445,7 +2069,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   CircleAvatar(
                     radius: 18,
                     backgroundColor: const Color(0xFFF0EDEB),
-                    child: const Icon(Icons.person, color: kPrimaryColor, size: 20),
+                    child: const Icon(
+                      Icons.person,
+                      color: kPrimaryColor,
+                      size: 20,
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -1488,13 +2116,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               children: [
                 Text(
                   '${detail.memberCount} thành viên',
-                  style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF54433E)),
+                  style: const TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF54433E),
+                  ),
                 ),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.info_outline, size: 16, color: kPrimaryColor),
+                      icon: const Icon(
+                        Icons.info_outline,
+                        size: 16,
+                        color: kPrimaryColor,
+                      ),
                       onPressed: onShowPopover,
                       tooltip: 'Xem tóm tắt (Popover)',
                       padding: EdgeInsets.zero,
@@ -1502,7 +2138,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                     const SizedBox(width: 8),
                     IconButton(
-                      icon: const Icon(Icons.swap_horiz, size: 17, color: kPrimaryColor),
+                      icon: const Icon(
+                        Icons.swap_horiz,
+                        size: 17,
+                        color: kPrimaryColor,
+                      ),
                       onPressed: onTransfer,
                       tooltip: 'Điều chuyển nhánh',
                       padding: EdgeInsets.zero,
@@ -1602,7 +2242,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               child: Text(
                 generation,
-                style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 10, fontWeight: FontWeight.bold, color: color),
+                style: TextStyle(
+                  fontFamily: 'JetBrains Mono',
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
               ),
             ),
             const SizedBox(width: 8),
@@ -1621,7 +2266,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   Text(
                     subtitle,
-                    style: const TextStyle(fontSize: 10.5, color: Color(0xFF6B584E)),
+                    style: const TextStyle(
+                      fontSize: 10.5,
+                      color: Color(0xFF6B584E),
+                    ),
                   ),
                 ],
               ),
@@ -1633,14 +2281,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   color: const Color(0xFFFFD700),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text('Tìm kiếm', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'Tìm kiếm',
+                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+                ),
               )
             else if (isSelected)
-              const Icon(Icons.check_circle, size: 16, color: Color(0xFF006E2A)),
+              const Icon(
+                Icons.check_circle,
+                size: 16,
+                color: Color(0xFF006E2A),
+              ),
           ],
         ),
       ),
     );
   }
-
 }

@@ -1,8 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../shared/presentation/widgets/heritage_nav_bar.dart';
+import '../../../../core/widgets/error_message_box.dart';
 import '../../data/models/contribution_models.dart';
 import '../providers/contribution_ui_provider.dart';
 
@@ -25,11 +26,12 @@ class _BankReconciliationScreenState
   final _dateFormat = DateFormat('dd/MM/yyyy HH:mm');
 
   void _showReconcileDialog(UnreconciledContributionDto item) {
-    final codeCtrl = TextEditingController(text: item.bankTransactionCode ?? '');
+    final codeCtrl = TextEditingController(
+      text: item.bankTransactionCode ?? '',
+    );
     final proofCtrl = TextEditingController(text: item.transferProofUrl ?? '');
     final noteCtrl = TextEditingController();
     bool isSubmitting = false;
-    String? errorText;
 
     showDialog(
       context: context,
@@ -38,7 +40,9 @@ class _BankReconciliationScreenState
         builder: (ctx, setDialogState) {
           return AlertDialog(
             backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             title: Row(
               children: [
                 Container(
@@ -47,7 +51,11 @@ class _BankReconciliationScreenState
                     color: const Color(0xFF3F51B5).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.verified, color: Color(0xFF3F51B5), size: 22),
+                  child: const Icon(
+                    Icons.verified,
+                    color: Color(0xFF3F51B5),
+                    size: 22,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 const Expanded(
@@ -65,7 +73,10 @@ class _BankReconciliationScreenState
                       ),
                       Text(
                         'Thủ quỹ đối soát với sao kê ngân hàng & đính kèm ảnh',
-                        style: TextStyle(fontSize: 11, color: Color(0xFF6B584E)),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF6B584E),
+                        ),
                       ),
                     ],
                   ),
@@ -115,12 +126,18 @@ class _BankReconciliationScreenState
                           const SizedBox(height: 4),
                           Text(
                             'Người chuyển: ${item.payerMemberName ?? item.payerMemberId}',
-                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
                           ),
                           if (item.eventName != null)
                             Text(
                               'Sự kiện: ${item.eventName}',
-                              style: const TextStyle(fontSize: 12, color: Color(0xFF6B584E)),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF6B584E),
+                              ),
                             ),
                         ],
                       ),
@@ -130,15 +147,23 @@ class _BankReconciliationScreenState
                     // Nhập mã giao dịch ngân hàng (bắt buộc)
                     const Text(
                       'Mã giao dịch ngân hàng (FT / Ref Code) *',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.5,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     TextField(
                       controller: codeCtrl,
                       decoration: InputDecoration(
                         hintText: 'VD: FT240987654321 hoặc 992834',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -146,7 +171,10 @@ class _BankReconciliationScreenState
                     // Ảnh chụp màn hình chuyển khoản / sao kê
                     const Text(
                       'Đường dẫn ảnh sao kê / ảnh chụp màn hình biên lai',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.5,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     TextField(
@@ -154,8 +182,13 @@ class _BankReconciliationScreenState
                       decoration: InputDecoration(
                         hintText: 'https://... hoặc link ảnh sao kê đối soát',
                         prefixIcon: const Icon(Icons.image, size: 20),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -163,26 +196,24 @@ class _BankReconciliationScreenState
                     // Ghi chú đối soát
                     const Text(
                       'Ghi chú đối soát (tùy chọn)',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.5,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     TextField(
                       controller: noteCtrl,
                       maxLines: 2,
                       decoration: InputDecoration(
-                        hintText: 'Đã kiểm tra khớp lệnh tài khoản Vietcombank...',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        hintText:
+                            'Đã kiểm tra khớp lệnh tài khoản Vietcombank...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                         contentPadding: const EdgeInsets.all(10),
                       ),
                     ),
-
-                    if (errorText != null) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        errorText!,
-                        style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold),
-                      ),
-                    ],
                   ],
                 ),
               ),
@@ -198,30 +229,39 @@ class _BankReconciliationScreenState
                     : () async {
                         final code = codeCtrl.text.trim();
                         if (code.isEmpty) {
-                          setDialogState(() => errorText = 'Vui lòng nhập mã giao dịch ngân hàng!');
+                          showWarningMessageBox(
+                            context: ctx,
+                            title: 'Thiếu Thông Tin Đối Soát',
+                            message: 'Vui lòng nhập mã giao dịch ngân hàng (FT / Ref Code) từ sao kê!',
+                          );
                           return;
                         }
 
                         setDialogState(() {
                           isSubmitting = true;
-                          errorText = null;
                         });
 
                         try {
-                          await ref.read(contributionUiProvider.notifier).reconcileContribution(
+                          await ref
+                              .read(contributionUiProvider.notifier)
+                              .reconcileContribution(
                                 contributionId: item.contributionId,
                                 bankTransactionCode: code,
                                 transferProofUrl: proofCtrl.text.trim(),
                                 note: noteCtrl.text.trim(),
                               );
 
-                          ref.invalidate(unreconciledContributionsProvider(widget.eventId));
+                          ref.invalidate(
+                            unreconciledContributionsProvider(widget.eventId),
+                          );
 
                           if (mounted) {
                             Navigator.of(ctx).pop();
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Đã xác nhận khớp số liệu thành công cho mã ${item.receiptNumber}!'),
+                                content: Text(
+                                  'Đã xác nhận khớp số liệu thành công cho mã ${item.receiptNumber}!',
+                                ),
                                 backgroundColor: const Color(0xFF006E2A),
                               ),
                             );
@@ -229,22 +269,34 @@ class _BankReconciliationScreenState
                         } catch (e) {
                           setDialogState(() {
                             isSubmitting = false;
-                            errorText = 'Lỗi đối soát: $e';
                           });
+                          if (ctx.mounted) {
+                            showErrorMessageBox(
+                              context: ctx,
+                              title: 'Lỗi Đối Soát Ngân Hàng',
+                              error: e,
+                            );
+                          }
                         }
                       },
                 icon: isSubmitting
                     ? const SizedBox(
                         width: 14,
                         height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
                     : const Icon(Icons.check, size: 16),
                 label: const Text('Xác Nhận Khớp Số Liệu'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF3F51B5),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                 ),
               ),
             ],
@@ -256,7 +308,9 @@ class _BankReconciliationScreenState
 
   @override
   Widget build(BuildContext context) {
-    final unreconciledAsync = ref.watch(unreconciledContributionsProvider(widget.eventId));
+    final unreconciledAsync = ref.watch(
+      unreconciledContributionsProvider(widget.eventId),
+    );
 
     const kPrimaryColor = Color(0xFF8B1E1E);
     const kBgColor = Color(0xFFFAF9F6);
@@ -277,12 +331,21 @@ class _BankReconciliationScreenState
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.error_outline, size: 48, color: Color(0xFFBA1A1A)),
+                const Icon(
+                  Icons.error_outline,
+                  size: 48,
+                  color: Color(0xFFBA1A1A),
+                ),
                 const SizedBox(height: 12),
-                Text('Lỗi tải danh sách đối soát: $err', style: const TextStyle(color: Color(0xFFBA1A1A))),
+                Text(
+                  'Lỗi tải danh sách đối soát: $err',
+                  style: const TextStyle(color: Color(0xFFBA1A1A)),
+                ),
                 const SizedBox(height: 12),
                 ElevatedButton(
-                  onPressed: () => ref.refresh(unreconciledContributionsProvider(widget.eventId)),
+                  onPressed: () => ref.refresh(
+                    unreconciledContributionsProvider(widget.eventId),
+                  ),
                   child: const Text('Thử lại'),
                 ),
               ],
@@ -307,10 +370,15 @@ class _BankReconciliationScreenState
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF3F51B5).withValues(alpha: 0.1),
+                                color: const Color(0xFF3F51B5)
+                                    .withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: const Icon(Icons.account_balance, color: Color(0xFF3F51B5), size: 26),
+                              child: const Icon(
+                                Icons.account_balance,
+                                color: Color(0xFF3F51B5),
+                                size: 26,
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Column(
@@ -338,7 +406,9 @@ class _BankReconciliationScreenState
                           ],
                         ),
                         ElevatedButton.icon(
-                          onPressed: () => ref.refresh(unreconciledContributionsProvider(widget.eventId)),
+                          onPressed: () => ref.refresh(
+                            unreconciledContributionsProvider(widget.eventId),
+                          ),
                           icon: const Icon(Icons.refresh, size: 16),
                           label: const Text('Làm mới'),
                           style: ElevatedButton.styleFrom(
@@ -361,7 +431,11 @@ class _BankReconciliationScreenState
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.pending_actions, color: Color(0xFFE65100), size: 32),
+                          const Icon(
+                            Icons.pending_actions,
+                            color: Color(0xFFE65100),
+                            size: 32,
+                          ),
                           const SizedBox(width: 16),
                           Expanded(
                             child: Column(
@@ -406,11 +480,18 @@ class _BankReconciliationScreenState
                         child: const Center(
                           child: Column(
                             children: [
-                              Icon(Icons.check_circle_outline, color: Color(0xFF006E2A), size: 48),
+                              Icon(
+                                Icons.check_circle_outline,
+                                color: Color(0xFF006E2A),
+                                size: 48,
+                              ),
                               SizedBox(height: 12),
                               Text(
                                 'Tất cả các khoản chuyển khoản ngân hàng đã được đối soát khớp số 100%!',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
                               ),
                             ],
                           ),
@@ -433,23 +514,31 @@ class _BankReconciliationScreenState
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFE6DFD8)),
+                              border: Border.all(
+                                color: const Color(0xFFE6DFD8),
+                              ),
                             ),
                             child: Row(
                               children: [
                                 Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF3F51B5).withValues(alpha: 0.1),
+                                    color: const Color(0xFF3F51B5)
+                                        .withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: const Icon(Icons.qr_code_2, color: Color(0xFF3F51B5), size: 24),
+                                  child: const Icon(
+                                    Icons.qr_code_2,
+                                    color: Color(0xFF3F51B5),
+                                    size: 24,
+                                  ),
                                 ),
                                 const SizedBox(width: 14),
                                 Expanded(
                                   flex: 4,
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         item.receiptNumber,
@@ -462,12 +551,19 @@ class _BankReconciliationScreenState
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        item.payerMemberName ?? item.payerMemberId,
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                        item.payerMemberName ??
+                                            item.payerMemberId,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
                                       ),
                                       Text(
                                         'Ngày: $dateStr • Sự kiện: ${item.eventName ?? item.eventId}',
-                                        style: const TextStyle(fontSize: 11.5, color: Color(0xFF6B584E)),
+                                        style: const TextStyle(
+                                          fontSize: 11.5,
+                                          color: Color(0xFF6B584E),
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -505,7 +601,10 @@ class _BankReconciliationScreenState
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF3F51B5),
                                     foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 10,
+                                    ),
                                   ),
                                 ),
                               ],

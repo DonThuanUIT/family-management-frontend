@@ -106,8 +106,7 @@ class _FakeGenealogyRepository implements GenealogyRepository {
     String? fullName,
     int? generation,
     String? branchId,
-    int page = 0,
-    int size = 20,
+    String? status,
   }) async => const [];
 
   @override

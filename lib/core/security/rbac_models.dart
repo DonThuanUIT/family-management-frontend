@@ -128,6 +128,7 @@ class DualRbacSession {
   bool get isClanHead => globalRoles.contains(SystemRole.roleClanHead);
   bool get isBranchHead => globalRoles.contains(SystemRole.roleBranchHead);
   bool get isAdmin => globalRoles.contains(SystemRole.roleAdmin);
+  String? get branchId => managedBranchId;
 
   /// [US-23] Kiểm tra xem người dùng hiện tại có quyền thực hiện các thao tác quản trị
   /// (Thêm thành viên, Sửa chi nhánh, Điều chuyển) trên chi nhánh mục tiêu hay không.

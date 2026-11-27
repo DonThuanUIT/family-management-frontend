@@ -89,6 +89,7 @@ class MemberAllocationDto {
     return {
       'memberId': memberId,
       'memberName': memberName,
+      'amount': amount,
       'recordedAmount': amount,
     };
   }
@@ -711,10 +712,14 @@ class EventPendingInKindCheckResponseDto {
   }
 }
 
-/// DTO Thông tin tài khoản ngân hàng dòng họ (Multi-tenant Clan Banking Info)
+/// DTO Thông tin tài khoản ngân hàng và hồ sơ dòng họ (Multi-tenant Clan Profile & Banking)
 class ClanBankingInfoDto {
   final String clanId;
   final String? clanName;
+  final String? ancestorName;
+  final String? originLocation;
+  final int? establishedYear;
+  final String? description;
   final String bankBin;
   final String? bankName;
   final String bankAccountNumber;
@@ -724,6 +729,10 @@ class ClanBankingInfoDto {
   const ClanBankingInfoDto({
     required this.clanId,
     this.clanName,
+    this.ancestorName,
+    this.originLocation,
+    this.establishedYear,
+    this.description,
     required this.bankBin,
     this.bankName,
     required this.bankAccountNumber,
@@ -735,6 +744,12 @@ class ClanBankingInfoDto {
     return ClanBankingInfoDto(
       clanId: (json['clanId'] ?? '') as String,
       clanName: json['clanName'] as String?,
+      ancestorName: json['ancestorName'] as String?,
+      originLocation: json['originLocation'] as String?,
+      establishedYear: json['establishedYear'] != null
+          ? int.tryParse(json['establishedYear'].toString())
+          : null,
+      description: json['description'] as String?,
       bankBin: (json['bankBin'] ?? '') as String,
       bankName: json['bankName'] as String?,
       bankAccountNumber: (json['bankAccountNumber'] ?? '') as String,
@@ -745,12 +760,131 @@ class ClanBankingInfoDto {
 
   Map<String, dynamic> toJson() {
     return {
+      'clanId': clanId,
+      'clanName': clanName,
+      'ancestorName': ancestorName,
+      'originLocation': originLocation,
+      'establishedYear': establishedYear,
+      'description': description,
       'bankBin': bankBin,
       'bankAccountNumber': bankAccountNumber,
       'bankAccountName': bankAccountName,
       'qrTemplate': qrTemplate,
     };
   }
+}
+
+/// Request DTO cập nhật tài khoản ngân hàng và hồ sơ dòng họ
+class UpdateClanBankingRequestDto {
+  final String bankBin;
+  final String bankAccountNumber;
+  final String bankAccountName;
+  final String qrTemplate;
+  final String? clanName;
+  final String? ancestorName;
+  final String? originLocation;
+  final int? establishedYear;
+  final String? description;
+
+  const UpdateClanBankingRequestDto({
+    required this.bankBin,
+    required this.bankAccountNumber,
+    required this.bankAccountName,
+    this.qrTemplate = 'compact2',
+    this.clanName,
+    this.ancestorName,
+    this.originLocation,
+    this.establishedYear,
+    this.description,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'bankBin': bankBin,
+    'bankAccountNumber': bankAccountNumber,
+    'bankAccountName': bankAccountName,
+    'qrTemplate': qrTemplate,
+    if (clanName != null && clanName!.isNotEmpty) 'clanName': clanName,
+    if (ancestorName != null && ancestorName!.isNotEmpty)
+      'ancestorName': ancestorName,
+    if (originLocation != null && originLocation!.isNotEmpty)
+      'originLocation': originLocation,
+    if (establishedYear != null) 'establishedYear': establishedYear,
+    if (description != null && description!.isNotEmpty)
+      'description': description,
+  };
+}
+
+/// DTO Định mức hiện vật cúng tiến (Event Item Benchmark - US-10)
+class EventItemBenchmarkDto {
+  final String benchmarkId;
+  final String eventId;
+  final String clanId;
+  final String itemName;
+  final String unit;
+  final double unitPrice;
+  final String? note;
+  final DateTime? createdAt;
+
+  const EventItemBenchmarkDto({
+    required this.benchmarkId,
+    required this.eventId,
+    required this.clanId,
+    required this.itemName,
+    required this.unit,
+    required this.unitPrice,
+    this.note,
+    this.createdAt,
+  });
+
+  factory EventItemBenchmarkDto.fromJson(Map<String, dynamic> json) {
+    DateTime? date;
+    if (json['createdAt'] != null) {
+      date = DateTime.tryParse(json['createdAt'].toString());
+    }
+    return EventItemBenchmarkDto(
+      benchmarkId: (json['benchmarkId'] ?? '') as String,
+      eventId: (json['eventId'] ?? '') as String,
+      clanId: (json['clanId'] ?? '') as String,
+      itemName: (json['itemName'] ?? '') as String,
+      unit: (json['unit'] ?? '') as String,
+      unitPrice: ((json['unitPrice'] ?? 0) as num).toDouble(),
+      note: json['note'] as String?,
+      createdAt: date,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'benchmarkId': benchmarkId,
+    'eventId': eventId,
+    'clanId': clanId,
+    'itemName': itemName,
+    'unit': unit,
+    'unitPrice': unitPrice,
+    'note': note,
+    'createdAt': createdAt?.toIso8601String(),
+  };
+}
+
+/// Request DTO tạo mới định mức hiện vật cúng tiến
+class CreateEventItemBenchmarkRequestDto {
+  final String itemName;
+  final String unit;
+  final double unitPrice;
+  final String? note;
+
+  const CreateEventItemBenchmarkRequestDto({
+    required this.itemName,
+    required this.unit,
+    required this.unitPrice,
+    this.note,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'itemName': itemName,
+    'unit': unit,
+    'unitPrice': unitPrice,
+    if (note != null && note!.isNotEmpty) 'note': note,
+  };
 }
 
 

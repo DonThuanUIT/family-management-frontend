@@ -165,6 +165,58 @@ class ContributionRepositoryImpl implements ContributionRepository {
   }
 
   @override
+  Future<ClanBankingInfoDto> updateClanBankingInfo(UpdateClanBankingRequestDto request) {
+    return _remoteDataSource.updateClanBankingInfo(request);
+  }
+
+  @override
+  Future<List<EventItemBenchmarkDto>> getEventItemBenchmarks(String eventId) {
+    return _remoteDataSource.getEventItemBenchmarks(eventId);
+  }
+
+  @override
+  Future<List<EventItemBenchmarkDto>> getAllClanBenchmarks() {
+    return _remoteDataSource.getAllClanBenchmarks();
+  }
+
+  @override
+  Future<EventItemBenchmarkDto> createEventItemBenchmark({
+    required String eventId,
+    required CreateEventItemBenchmarkRequestDto request,
+  }) {
+    return _remoteDataSource.createEventItemBenchmark(
+      eventId: eventId,
+      request: request,
+    );
+  }
+
+  @override
+  Future<void> deleteEventItemBenchmark({
+    required String eventId,
+    required String benchmarkId,
+  }) {
+    return _remoteDataSource.deleteEventItemBenchmark(
+      eventId: eventId,
+      benchmarkId: benchmarkId,
+    );
+  }
+
+  @override
+  Future<Map<String, dynamic>> simulatePaymentWebhook({
+    required double amount,
+    required String content,
+    String? referenceCode,
+    List<MemberAllocationDto> allocations = const [],
+  }) {
+    return _remoteDataSource.simulatePaymentWebhook(
+      amount: amount,
+      content: content,
+      referenceCode: referenceCode,
+      allocations: allocations,
+    );
+  }
+
+  @override
   Future<BranchRecursiveContributionDto> getBranchRecursiveContributionSummary(
     String branchId, {
     String? eventId,
